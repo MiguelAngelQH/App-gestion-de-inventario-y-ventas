@@ -1,7 +1,7 @@
 class AppConstants {
   static const String appName = 'SmartVentas';
   static const String appTagline = 'Gestión inteligente para tu negocio';
-  static const String appVersion = '1.0.0';
+  static const String appVersion = '1.1.0';
 
   static const List<String> categorias = [
     'General',
