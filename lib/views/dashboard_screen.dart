@@ -21,11 +21,14 @@ class DashboardScreen extends StatelessWidget {
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: RefreshIndicator(
+        onRefresh: () => viewModel.refresh(),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             _buildResumenCards(theme),
             const SizedBox(height: 24),
             SectionHeader(
@@ -77,6 +80,7 @@ class DashboardScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

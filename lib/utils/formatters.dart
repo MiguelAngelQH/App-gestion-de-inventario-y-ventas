@@ -10,7 +10,7 @@ class Formatters {
       buffer.write(intPart[i]);
       count++;
     }
-    return '\$${buffer.toString().split('').reversed.join()}.$decPart';
+    return 'S/${buffer.toString().split('').reversed.join()}.$decPart';
   }
 
   static String date(DateTime date) {

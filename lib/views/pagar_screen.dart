@@ -228,7 +228,7 @@ class PagarScreen extends StatelessWidget {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: 'Monto',
-                prefixText: '\$ ',
+                prefixText: 'S/ ',
                 border: const OutlineInputBorder(),
               ),
             ),

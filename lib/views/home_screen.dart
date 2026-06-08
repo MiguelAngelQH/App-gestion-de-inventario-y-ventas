@@ -70,8 +70,10 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) =>
-            setState(() => _selectedIndex = index),
+        onDestinationSelected: (index) {
+          setState(() => _selectedIndex = index);
+          if (index == 0) widget.dashboardViewModel.refresh();
+        },
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
@@ -248,6 +250,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openDrawerScreen(BuildContext context, int index) {
+    if (index < 4) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      if (index == 0) widget.dashboardViewModel.refresh();
+      return;
+    }
     Navigator.pop(context);
     switch (index) {
       case 4:

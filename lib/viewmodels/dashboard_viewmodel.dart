@@ -36,7 +36,9 @@ class DashboardViewModel extends ChangeNotifier {
 
   Future<void> _cargar() async {
     final now = DateTime.now();
-    final inicioSemana = now.subtract(const Duration(days: 7));
+    final inicioHoy = DateTime(now.year, now.month, now.day);
+    final manana = inicioHoy.add(const Duration(days: 1));
+    final inicioSemana = now.subtract(Duration(days: now.weekday - 1));
 
     try {
       final results = await Future.wait([
@@ -46,7 +48,7 @@ class DashboardViewModel extends ChangeNotifier {
         _firestore.totalCuentasCobrar(),
         _firestore.totalCuentasPagar(),
         _firestore.totalGanancia(),
-        _firestore.totalVentasPeriodo(inicioSemana, now.add(const Duration(days: 1))),
+        _firestore.totalVentasPeriodo(inicioSemana, manana),
         _firestore.ultimasVentas(),
         _firestore.topProductos(),
       ]);

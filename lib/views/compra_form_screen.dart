@@ -307,7 +307,7 @@ class _SeleccionarProductoCompraDialogState
           TextField(
             decoration: const InputDecoration(
               labelText: 'Costo unitario',
-              prefixText: '\$ ',
+                prefixText: 'S/ ',
               prefixIcon: Icon(Icons.money_off),
             ),
             keyboardType: TextInputType.number,
