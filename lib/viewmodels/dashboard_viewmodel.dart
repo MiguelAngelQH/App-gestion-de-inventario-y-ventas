@@ -1,8 +1,8 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smart_ventas/models/producto.dart';
 import 'package:smart_ventas/models/venta.dart';
-import 'package:smart_ventas/services/fcm_service.dart';
 import 'package:smart_ventas/services/firestore_service.dart';
 
 class DashboardViewModel extends ChangeNotifier {
@@ -30,50 +30,122 @@ class DashboardViewModel extends ChangeNotifier {
   List<Producto> get topProductos => _topProductos;
   bool get isLoading => _isLoading;
 
+  StreamSubscription? _productosSub;
+  StreamSubscription? _ventasSub;
+  StreamSubscription? _clientesSub;
+  StreamSubscription? _proveedoresSub;
+  StreamSubscription? _authSub;
+
   DashboardViewModel() {
-    _cargar();
+    _init();
+    _authSub =
+        FirebaseAuth.instance.authStateChanges().listen((_) => _init());
   }
 
-  Future<void> _cargar() async {
+  @override
+  void dispose() {
+    _productosSub?.cancel();
+    _ventasSub?.cancel();
+    _clientesSub?.cancel();
+    _proveedoresSub?.cancel();
+    _authSub?.cancel();
+    super.dispose();
+  }
+
+  void _init() {
+    _isLoading = true;
+    _notifyIfNeeded();
+
+    _productosSub?.cancel();
+    _ventasSub?.cancel();
+    _clientesSub?.cancel();
+    _proveedoresSub?.cancel();
+
+    _productosSub = _firestore.getProductos().listen((productos) {
+      _productosStockBajo = productos.where((p) => p.stockBajo).length;
+      _isLoading = false;
+      _notifyIfNeeded();
+    }, onError: (_) {
+      _isLoading = false;
+      _notifyIfNeeded();
+    });
+
+    _ventasSub = _firestore.getVentas().listen((ventas) {
+      _calcularMetricasVentas(ventas);
+      _isLoading = false;
+      _notifyIfNeeded();
+    }, onError: (_) {
+      _isLoading = false;
+      _notifyIfNeeded();
+    });
+
+    _clientesSub = _firestore.getClientes().listen((clientes) {
+      _totalCuentasCobrar =
+          clientes.fold(0.0, (s, c) => s + c.deuda);
+      _notifyIfNeeded();
+    });
+
+    _proveedoresSub = _firestore.getProveedores().listen((proveedores) {
+      _totalCuentasPagar =
+          proveedores.fold(0.0, (s, p) => s + p.saldoPendiente);
+      _notifyIfNeeded();
+    });
+  }
+
+  void _calcularMetricasVentas(List<Venta> ventas) {
     final now = DateTime.now();
-    final inicioHoy = DateTime(now.year, now.month, now.day);
-    final manana = inicioHoy.add(const Duration(days: 1));
-    final inicioSemana = now.subtract(Duration(days: now.weekday - 1));
+    final hoy = DateTime(now.year, now.month, now.day);
+    final inicioSemana = hoy.subtract(Duration(days: now.weekday - 1));
 
-    try {
-      final results = await Future.wait([
-        _firestore.totalVentasHoy(),
-        _firestore.ventasCountHoy(),
-        _firestore.productosStockBajoCount(),
-        _firestore.totalCuentasCobrar(),
-        _firestore.totalCuentasPagar(),
-        _firestore.totalGanancia(),
-        _firestore.totalVentasPeriodo(inicioSemana, manana),
-        _firestore.ultimasVentas(),
-        _firestore.topProductos(),
-      ]);
+    final completadas = ventas.where((v) => v.estado == 'completada').toList();
 
-      _totalVentasHoy = results[0] as double;
-      _ventasHoy = results[1] as int;
-      _productosStockBajo = results[2] as int;
-      _totalCuentasCobrar = results[3] as double;
-      _totalCuentasPagar = results[4] as double;
-      _gananciaTotal = results[5] as double;
-      _totalVentasSemana = results[6] as double;
-      _ultimasVentas = results[7] as List<Venta>;
-      _topProductos = results[8] as List<Producto>;
-      _isLoading = false;
-      notifyListeners();
-      unawaited(FcmService().checkAndNotify());
-    } catch (e) {
-      _isLoading = false;
-      notifyListeners();
+    _ventasHoy = completadas.where((v) => v.fecha.isAfter(hoy)).length;
+    _totalVentasHoy = completadas
+        .where((v) => v.fecha.isAfter(hoy))
+        .fold(0.0, (s, v) => s + v.total);
+    _totalVentasSemana = completadas
+        .where((v) => v.fecha.isAfter(inicioSemana))
+        .fold(0.0, (s, v) => s + v.total);
+
+    double ganancia = 0;
+    for (final v in completadas) {
+      double costoItems = 0;
+      for (final item in v.items) {
+        costoItems += item.producto.costo * item.cantidad;
+      }
+      ganancia += v.total - costoItems;
     }
+    _gananciaTotal = ganancia;
+
+    final sorted = List<Venta>.from(ventas)
+      ..sort((a, b) => b.fecha.compareTo(a.fecha));
+    _ultimasVentas = sorted.take(5).toList();
+
+    final conteo = <String, int>{};
+    final productoMap = <String, Producto>{};
+    for (final v in ventas) {
+      for (final item in v.items) {
+        conteo.update(
+          item.producto.id,
+          (c) => c + item.cantidad,
+          ifAbsent: () => item.cantidad,
+        );
+        productoMap[item.producto.id] = item.producto;
+      }
+    }
+    final sortedEntries = conteo.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    _topProductos = sortedEntries
+        .take(5)
+        .map((e) => productoMap[e.key]!)
+        .toList();
+  }
+
+  void _notifyIfNeeded() {
+    if (hasListeners) notifyListeners();
   }
 
   Future<void> refresh() async {
-    _isLoading = true;
-    notifyListeners();
-    await _cargar();
+    _init();
   }
 }

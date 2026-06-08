@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smart_ventas/models/producto.dart';
 import 'package:smart_ventas/services/firestore_service.dart';
@@ -13,19 +15,9 @@ class ReporteViewModel extends ChangeNotifier {
   double _cuentasPagar = 0;
   double _egresosMes = 0;
   Map<String, double> _ventasPorCategoria = {};
-  Map<DateTime, double> _ventasUltimos7Dias = _default7Dias();
+  Map<DateTime, double> _ventasUltimos7Dias = {};
   List<Producto> _topProductos = [];
   bool _isLoading = true;
-
-  static Map<DateTime, double> _default7Dias() {
-    final today = DateTime.now();
-    final start = DateTime(today.year, today.month, today.day).subtract(const Duration(days: 6));
-    final map = <DateTime, double>{};
-    for (int i = 0; i < 7; i++) {
-      map[start.add(Duration(days: i))] = 0;
-    }
-    return map;
-  }
 
   double get ventasMes => _ventasMes;
   double get ventasSemana => _ventasSemana;
@@ -40,47 +32,153 @@ class ReporteViewModel extends ChangeNotifier {
   List<Producto> get topProductos => _topProductos;
   bool get isLoading => _isLoading;
 
+  StreamSubscription? _ventasSub;
+  StreamSubscription? _comprasSub;
+  StreamSubscription? _clientesSub;
+  StreamSubscription? _proveedoresSub;
+  StreamSubscription? _authSub;
+
   ReporteViewModel() {
-    _cargar();
+    _init();
+    _authSub =
+        FirebaseAuth.instance.authStateChanges().listen((_) => _init());
   }
 
-  Future<void> _cargar() async {
-    try {
+  @override
+  void dispose() {
+    _ventasSub?.cancel();
+    _comprasSub?.cancel();
+    _clientesSub?.cancel();
+    _proveedoresSub?.cancel();
+    _authSub?.cancel();
+    super.dispose();
+  }
+
+  void _init() {
+    _isLoading = true;
+    _notifyIfNeeded();
+
+    _ventasSub?.cancel();
+    _comprasSub?.cancel();
+    _clientesSub?.cancel();
+    _proveedoresSub?.cancel();
+
+    _ventasSub = _firestore.getVentas().listen((ventas) {
+      _calcularMetricasVentas(ventas);
+      _isLoading = false;
+      _notifyIfNeeded();
+    }, onError: (_) {
+      _isLoading = false;
+      _notifyIfNeeded();
+    });
+
+    _comprasSub = _firestore.getCompras().listen((compras) {
       final now = DateTime.now();
       final inicioMes = DateTime(now.year, now.month, 1);
-      final inicioSemana = now.subtract(Duration(days: now.weekday - 1));
-      final inicioHoy = DateTime(now.year, now.month, now.day);
-      final manana = inicioHoy.add(const Duration(days: 1));
-      final finMes = DateTime(now.year, now.month + 1, 1);
-
-      final results = await Future.wait([
-        _firestore.totalVentasPeriodo(inicioHoy, manana),
-        _firestore.totalVentasPeriodo(inicioSemana, manana),
-        _firestore.totalVentasPeriodo(inicioMes, finMes),
-        _firestore.totalGanancia(),
-        _firestore.totalCuentasCobrar(),
-        _firestore.totalCuentasPagar(),
-        _firestore.ventasPorCategoria(),
-        _firestore.ventasUltimos7Dias(),
-        _firestore.topProductos(),
-        _firestore.totalComprasPeriodo(inicioMes, finMes),
-      ]);
-
-      _ventasHoy = results[0] as double;
-      _ventasSemana = results[1] as double;
-      _ventasMes = results[2] as double;
-      _gananciaTotal = results[3] as double;
-      _cuentasCobrar = results[4] as double;
-      _cuentasPagar = results[5] as double;
-      _ventasPorCategoria = results[6] as Map<String, double>;
-      _ventasUltimos7Dias = results[7] as Map<DateTime, double>;
-      _topProductos = results[8] as List<Producto>;
-      _egresosMes = results[9] as double;
+      _egresosMes = compras
+          .where((c) => c.fecha.isAfter(inicioMes))
+          .fold(0.0, (s, c) => s + c.total);
       _isLoading = false;
-      notifyListeners();
-    } catch (e) {
+      _notifyIfNeeded();
+    }, onError: (_) {
       _isLoading = false;
-      notifyListeners();
+      _notifyIfNeeded();
+    });
+
+    _clientesSub = _firestore.getClientes().listen((clientes) {
+      _cuentasCobrar =
+          clientes.fold(0.0, (s, c) => s + c.deuda);
+      _notifyIfNeeded();
+    });
+
+    _proveedoresSub = _firestore.getProveedores().listen((proveedores) {
+      _cuentasPagar =
+          proveedores.fold(0.0, (s, p) => s + p.saldoPendiente);
+      _notifyIfNeeded();
+    });
+  }
+
+  void _calcularMetricasVentas(List ventas) {
+    final now = DateTime.now();
+    final hoy = DateTime(now.year, now.month, now.day);
+    final inicioSemana = hoy.subtract(Duration(days: now.weekday - 1));
+    final inicioMes = DateTime(now.year, now.month, 1);
+
+    final completadas = ventas.where((v) => v.estado == 'completada').toList();
+
+    _ventasHoy = completadas
+        .where((v) => v.fecha.isAfter(hoy))
+        .fold(0.0, (s, v) => s + v.total);
+    _ventasSemana = completadas
+        .where((v) => v.fecha.isAfter(inicioSemana))
+        .fold(0.0, (s, v) => s + v.total);
+    _ventasMes = completadas
+        .where((v) => v.fecha.isAfter(inicioMes))
+        .fold(0.0, (s, v) => s + v.total);
+
+    double ganancia = 0;
+    for (final v in completadas) {
+      double costoItems = 0;
+      for (final item in v.items) {
+        costoItems += item.producto.costo * item.cantidad;
+      }
+      ganancia += v.total - costoItems;
     }
+    _gananciaTotal = ganancia;
+
+    final categorias = <String, double>{};
+    for (final v in ventas) {
+      for (final item in v.items) {
+        final cat = item.producto.categoria;
+        categorias.update(
+          cat.isNotEmpty ? cat : 'General',
+          (s) => s + item.subtotal,
+          ifAbsent: () => item.subtotal,
+        );
+      }
+    }
+    _ventasPorCategoria = Map.fromEntries(categorias.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value)));
+
+    final map7 = <DateTime, double>{};
+    final start7 =
+        DateTime(hoy.year, hoy.month, hoy.day).subtract(const Duration(days: 6));
+    for (int i = 0; i < 7; i++) {
+      map7[start7.add(Duration(days: i))] = 0;
+    }
+    for (final v in completadas) {
+      final day = DateTime(v.fecha.year, v.fecha.month, v.fecha.day);
+      if (map7.containsKey(day)) {
+        map7[day] = map7[day]! + v.total;
+      }
+    }
+    _ventasUltimos7Dias = map7;
+
+    final conteo = <String, int>{};
+    final productoMap = <String, Producto>{};
+    for (final v in ventas) {
+      for (final item in v.items) {
+        conteo.update(
+          item.producto.id,
+          (c) => c + item.cantidad,
+          ifAbsent: () => item.cantidad,
+        );
+        productoMap[item.producto.id] = item.producto;
+      }
+    }
+    final sortedEntries = conteo.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    _topProductos = sortedEntries
+        .take(5)
+        .map((e) => productoMap[e.key]!)
+        .toList();
+  }
+
+  void _notifyIfNeeded() {
+    if (hasListeners) notifyListeners();
+  }
+
+  void refresh() {
+    _init();
   }
 }

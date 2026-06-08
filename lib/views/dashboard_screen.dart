@@ -23,64 +23,92 @@ class DashboardScreen extends StatelessWidget {
       ),
       body: RefreshIndicator(
         onRefresh: () => viewModel.refresh(),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-            _buildResumenCards(theme),
-            const SizedBox(height: 24),
-            SectionHeader(
-              titulo: 'Últimas Ventas',
-              accionTexto: 'Ver todas',
-            ),
-            ...viewModel.ultimasVentas.map(
-              (venta) => VentaItem(
-                folio: venta.folio,
-                cliente: venta.clienteNombre ?? 'Cliente general',
-                total: Formatters.currency(venta.total),
-                estado: venta.estado,
-                fecha: Formatters.shortDate(venta.fecha),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SectionHeader(titulo: 'Productos Más Vendidos'),
-            const SizedBox(height: 8),
-            ...viewModel.topProductos.map(
-              (producto) => Card(
-                elevation: 0,
-                margin: const EdgeInsets.only(bottom: 8),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: theme.colorScheme.outlineVariant),
-                ),
-                child: ListTile(
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.inventory_2,
-                      color: theme.colorScheme.onPrimaryContainer,
-                      size: 20,
-                    ),
+        child: ListenableBuilder(
+          listenable: viewModel,
+          builder: (context, _) {
+            if (viewModel.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildResumenCards(theme),
+                  const SizedBox(height: 24),
+                  SectionHeader(
+                    titulo: 'Últimas Ventas',
+                    accionTexto: 'Ver todas',
                   ),
-                  title: Text(producto.nombre),
-                  subtitle: Text(producto.categoria),
-                  trailing: Text(
-                    Formatters.currency(producto.precio),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
+                  if (viewModel.ultimasVentas.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text(
+                        'No hay ventas registradas',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
+                  else
+                    ...viewModel.ultimasVentas.map(
+                      (venta) => VentaItem(
+                        folio: venta.folio,
+                        cliente: venta.clienteNombre ?? 'Cliente general',
+                        total: Formatters.currency(venta.total),
+                        estado: venta.estado,
+                        fecha: Formatters.shortDate(venta.fecha),
+                      ),
+                    ),
+                  const SizedBox(height: 24),
+                  SectionHeader(titulo: 'Productos Más Vendidos'),
+                  const SizedBox(height: 8),
+                  if (viewModel.topProductos.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text(
+                        'No hay productos vendidos aún',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    )
+                  else
+                    ...viewModel.topProductos.map(
+                      (producto) => Card(
+                        elevation: 0,
+                        margin: const EdgeInsets.only(bottom: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                              color: theme.colorScheme.outlineVariant),
+                        ),
+                        child: ListTile(
+                          leading: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.inventory_2,
+                              color: theme.colorScheme.onPrimaryContainer,
+                              size: 20,
+                            ),
+                          ),
+                          title: Text(producto.nombre),
+                          subtitle: Text(producto.categoria),
+                          trailing: Text(
+                            Formatters.currency(producto.precio),
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
-            ),
-          ],
+            );
+          },
         ),
-      ),
       ),
     );
   }
