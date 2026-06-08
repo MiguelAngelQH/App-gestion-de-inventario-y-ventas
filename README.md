@@ -257,12 +257,3 @@ flutter run
 ## 📄 Licencia
 
 Este proyecto es de uso privado. Todos los derechos reservados.
-
----
-
-<div align="center">
-  <p>Desarrollado con ❤️ usando Flutter y Firebase</p>
-  <p>
-    <a href="https://github.com/MiguelAngelQH">Miguel Angel Quiroz Hernandez</a>
-  </p>
-</div>
