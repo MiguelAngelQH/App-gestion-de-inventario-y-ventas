@@ -47,6 +47,9 @@ dependencies:
   # Local notifications
   flutter_local_notifications: ^18.0.1
 
+  # Permissions
+  permission_handler: ^11.3.1
+
   # UUID for document IDs
   uuid: ^4.5.1
 

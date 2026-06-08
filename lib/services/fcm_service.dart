@@ -1,9 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:smart_ventas/services/firestore_service.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class FcmService {
   static final FcmService _instance = FcmService._();
@@ -20,11 +18,11 @@ class FcmService {
 
   Future<void> init() async {
     await _initLocalNotifications();
-    await _requestPermission();
+    await _requestLocalNotificationPermission();
+    await _requestFcmPermission();
     await _getToken();
     _listenForeground();
     _listenBackground();
-    _listenTokenRefresh();
   }
 
   Future<void> _initLocalNotifications() async {
@@ -37,7 +35,13 @@ class FcmService {
     );
   }
 
-  Future<void> _requestPermission() async {
+  Future<void> _requestLocalNotificationPermission() async {
+    if (await Permission.notification.isDenied) {
+      await Permission.notification.request();
+    }
+  }
+
+  Future<void> _requestFcmPermission() async {
     final settings = await _fcm.requestPermission(
       alert: true,
       badge: true,
@@ -53,16 +57,9 @@ class FcmService {
     if (kDebugMode) {
       debugPrint('FCM Token: $_token');
     }
-    if (_token != null) {
-      await _guardarTokenEnFirestore();
-    }
-  }
-
-  void _listenTokenRefresh() {
     _fcm.onTokenRefresh.listen((newToken) {
       _token = newToken;
       onTokenChanged?.call(newToken);
-      _guardarTokenEnFirestore();
       if (kDebugMode) {
         debugPrint('FCM Token refreshed: $newToken');
       }
@@ -75,33 +72,6 @@ class FcmService {
 
   void _listenBackground() {
     FirebaseMessaging.onBackgroundMessage(_backgroundHandler);
-  }
-
-  Future<void> _guardarTokenEnFirestore() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null || _token == null) return;
-    try {
-      await FirebaseFirestore.instance
-          .collection('fcm_tokens')
-          .doc(user.uid)
-          .set({'token': _token, 'email': user.email});
-      if (kDebugMode) {
-        debugPrint('FCM token guardado en Firestore para ${user.uid}');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Error al guardar FCM token: $e');
-      }
-    }
-  }
-
-  /// Guarda (o actualiza) el token FCM del usuario actual en Firestore.
-  /// Debe llamarse cada vez que el usuario inicia sesión.
-  Future<void> guardarToken() async {
-    _token = await _fcm.getToken();
-    if (_token != null) {
-      await _guardarTokenEnFirestore();
-    }
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {
@@ -145,41 +115,6 @@ class FcmService {
         ),
       ),
     );
-  }
-
-  Future<void> checkAndNotify() async {
-    final fs = FirestoreService();
-
-    try {
-      final stockBajo = await fs.productosStockBajoCount();
-      if (stockBajo > 0) {
-        await showLocalNotification(
-          id: 1,
-          title: 'Stock Bajo',
-          body: '$stockBajo producto(s) necesitan reabastecerse',
-        );
-      }
-
-      final cobrarVencer = await fs.clientesProximosVencer();
-      if (cobrarVencer.isNotEmpty) {
-        await showLocalNotification(
-          id: 2,
-          title: 'Cuentas por Cobrar Próximas a Vencer',
-          body:
-              '${cobrarVencer.length} cliente(s) tienen pagos próximos a vencer',
-        );
-      }
-
-      final pagarVencer = await fs.proveedoresProximosVencer();
-      if (pagarVencer.isNotEmpty) {
-        await showLocalNotification(
-          id: 3,
-          title: 'Cuentas por Pagar Pendientes',
-          body:
-              '${pagarVencer.length} proveedor(es) tienen saldos pendientes',
-        );
-      }
-    } catch (_) {}
   }
 }
 

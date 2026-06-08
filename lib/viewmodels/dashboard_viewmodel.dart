@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smart_ventas/models/producto.dart';
 import 'package:smart_ventas/models/venta.dart';
+import 'package:smart_ventas/services/fcm_service.dart';
 import 'package:smart_ventas/services/firestore_service.dart';
 
 class DashboardViewModel extends ChangeNotifier {
@@ -18,6 +19,8 @@ class DashboardViewModel extends ChangeNotifier {
   List<Venta> _ultimasVentas = [];
   List<Producto> _topProductos = [];
   bool _isLoading = true;
+  bool _isFirstLoad = true;
+  Set<String> _prevStockBajoIds = {};
 
   int get productosStockBajo => _productosStockBajo;
   int get ventasHoy => _ventasHoy;
@@ -54,6 +57,7 @@ class DashboardViewModel extends ChangeNotifier {
 
   void _init() {
     _isLoading = true;
+    _isFirstLoad = true;
     _notifyIfNeeded();
 
     _productosSub?.cancel();
@@ -62,11 +66,10 @@ class DashboardViewModel extends ChangeNotifier {
     _proveedoresSub?.cancel();
 
     _productosSub = _firestore.getProductos().listen((productos) {
-      _productosStockBajo = productos.where((p) => p.stockBajo).length;
-      _isLoading = false;
-      _notifyIfNeeded();
+      _processProductos(productos);
     }, onError: (_) {
       _isLoading = false;
+      _isFirstLoad = false;
       _notifyIfNeeded();
     });
 
@@ -90,6 +93,36 @@ class DashboardViewModel extends ChangeNotifier {
           proveedores.fold(0.0, (s, p) => s + p.saldoPendiente);
       _notifyIfNeeded();
     });
+  }
+
+  void _processProductos(List<Producto> productos) {
+    final stockBajoIds = productos
+        .where((p) => p.stockBajo)
+        .map((p) => p.id)
+        .toSet();
+
+    _productosStockBajo = stockBajoIds.length;
+
+    if (!_isFirstLoad) {
+      final nuevosIds = stockBajoIds.difference(_prevStockBajoIds);
+      if (nuevosIds.isNotEmpty) {
+        final nuevosProductos = productos
+            .where((p) => nuevosIds.contains(p.id))
+            .toList();
+        for (final p in nuevosProductos) {
+          unawaited(FcmService().showLocalNotification(
+            id: p.id.hashCode,
+            title: 'Stock Bajo',
+            body: '${p.nombre} — stock actual: ${p.stock}',
+          ));
+        }
+      }
+    }
+
+    _prevStockBajoIds = stockBajoIds;
+    _isLoading = false;
+    _isFirstLoad = false;
+    _notifyIfNeeded();
   }
 
   void _calcularMetricasVentas(List<Venta> ventas) {

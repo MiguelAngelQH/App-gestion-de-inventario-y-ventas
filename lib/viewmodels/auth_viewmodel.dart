@@ -1,9 +1,7 @@
-import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smart_ventas/models/usuario.dart';
 import 'package:smart_ventas/services/auth_service.dart';
-import 'package:smart_ventas/services/fcm_service.dart';
 
 enum AuthStatus { uninitialized, authenticated, unauthenticated, loading }
 
@@ -48,7 +46,6 @@ class AuthViewModel extends ChangeNotifier {
       _error = null;
       _isLoading = false;
       notifyListeners();
-      unawaited(FcmService().guardarToken());
       return true;
     } on FirebaseAuthException catch (e) {
       _error = _mapFirebaseError(e);
@@ -82,7 +79,6 @@ class AuthViewModel extends ChangeNotifier {
       _error = null;
       _isLoading = false;
       notifyListeners();
-      unawaited(FcmService().guardarToken());
       return true;
     } on FirebaseAuthException catch (e) {
       _error = _mapFirebaseError(e);
