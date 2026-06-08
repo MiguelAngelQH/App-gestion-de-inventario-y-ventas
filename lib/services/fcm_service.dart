@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -22,6 +24,7 @@ class FcmService {
     await _getToken();
     _listenForeground();
     _listenBackground();
+    _listenTokenRefresh();
   }
 
   Future<void> _initLocalNotifications() async {
@@ -50,9 +53,16 @@ class FcmService {
     if (kDebugMode) {
       debugPrint('FCM Token: $_token');
     }
+    if (_token != null) {
+      await _guardarTokenEnFirestore();
+    }
+  }
+
+  void _listenTokenRefresh() {
     _fcm.onTokenRefresh.listen((newToken) {
       _token = newToken;
       onTokenChanged?.call(newToken);
+      _guardarTokenEnFirestore();
       if (kDebugMode) {
         debugPrint('FCM Token refreshed: $newToken');
       }
@@ -65,6 +75,33 @@ class FcmService {
 
   void _listenBackground() {
     FirebaseMessaging.onBackgroundMessage(_backgroundHandler);
+  }
+
+  Future<void> _guardarTokenEnFirestore() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || _token == null) return;
+    try {
+      await FirebaseFirestore.instance
+          .collection('fcm_tokens')
+          .doc(user.uid)
+          .set({'token': _token, 'email': user.email});
+      if (kDebugMode) {
+        debugPrint('FCM token guardado en Firestore para ${user.uid}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error al guardar FCM token: $e');
+      }
+    }
+  }
+
+  /// Guarda (o actualiza) el token FCM del usuario actual en Firestore.
+  /// Debe llamarse cada vez que el usuario inicia sesión.
+  Future<void> guardarToken() async {
+    _token = await _fcm.getToken();
+    if (_token != null) {
+      await _guardarTokenEnFirestore();
+    }
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {
@@ -128,7 +165,8 @@ class FcmService {
         await showLocalNotification(
           id: 2,
           title: 'Cuentas por Cobrar Próximas a Vencer',
-          body: '${cobrarVencer.length} cliente(s) tienen pagos próximos a vencer',
+          body:
+              '${cobrarVencer.length} cliente(s) tienen pagos próximos a vencer',
         );
       }
 
@@ -137,7 +175,8 @@ class FcmService {
         await showLocalNotification(
           id: 3,
           title: 'Cuentas por Pagar Pendientes',
-          body: '${pagarVencer.length} proveedor(es) tienen saldos pendientes',
+          body:
+              '${pagarVencer.length} proveedor(es) tienen saldos pendientes',
         );
       }
     } catch (_) {}

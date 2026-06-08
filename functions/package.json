@@ -1,0 +1,16 @@
+{
+  "name": "smart-ventas-functions",
+  "description": "Cloud Functions para SmartVentas - notificaciones push de stock bajo",
+  "scripts": {
+    "deploy": "firebase deploy --only functions"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^5.0.0"
+  },
+  "private": true
+}
