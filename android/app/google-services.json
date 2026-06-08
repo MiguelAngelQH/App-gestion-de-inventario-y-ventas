@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "672852303618",
+    "project_id": "smart-ventas-b7670",
+    "storage_bucket": "smart-ventas-b7670.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:672852303618:android:39e2690e590776c0a4ac1b",
+        "android_client_info": {
+          "package_name": "com.miguel.smartventas.smart_ventas"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "672852303618-1uvjfj4im0gnanrn0prb80a5h1jmr148.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.miguel.smartventas.smart_ventas",
+            "certificate_hash": "7f2f09511e144d563be4925d875eaec8959be30c"
+          }
+        },
+        {
+          "client_id": "672852303618-g357he2ec19c409pfai78m65hmp1glff.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCuPyDwJtELgZ25NydWGdndDpNVZCf2B6I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "672852303618-g357he2ec19c409pfai78m65hmp1glff.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

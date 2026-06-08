@@ -1,0 +1,64 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Los usuarios solo pueden acceder a sus propios datos
+    function isOwner() {
+      return request.auth != null && request.auth.uid == resource.data.uid;
+    }
+
+    function isOwnerOrCreate() {
+      return request.auth != null && (
+        resource == null || request.auth.uid == resource.data.uid
+      );
+    }
+
+    // Productos
+    match /productos/{docId} {
+      allow read, update, delete: if isOwner();
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+    }
+
+    // Ventas
+    match /ventas/{docId} {
+      allow read, update, delete: if isOwner();
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+    }
+
+    // Compras
+    match /compras/{docId} {
+      allow read, update, delete: if isOwner();
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+    }
+
+    // Clientes (Cuentas por Cobrar)
+    match /clientes/{docId} {
+      allow read, update, delete: if isOwner();
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+    }
+
+    // Proveedores (Cuentas por Pagar)
+    match /proveedores/{docId} {
+      allow read, update, delete: if isOwner();
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+    }
+
+    // Pagos de Cuentas por Cobrar
+    match /pagos_cobrar/{docId} {
+      allow read, update, delete: if isOwner();
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+    }
+
+    // Pagos de Cuentas por Pagar
+    match /pagos_pagar/{docId} {
+      allow read, update, delete: if isOwner();
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+    }
+
+    // Regla por defecto: denegar todo lo demás
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
