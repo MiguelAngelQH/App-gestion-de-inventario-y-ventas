@@ -3,6 +3,7 @@ import 'package:smart_ventas/models/proveedor.dart';
 import 'package:smart_ventas/utils/formatters.dart';
 import 'package:smart_ventas/viewmodels/pagar_viewmodel.dart';
 import 'package:smart_ventas/widgets/reusable_widgets.dart';
+import 'package:uuid/uuid.dart';
 
 class PagarScreen extends StatelessWidget {
   final PagarViewModel viewModel;
@@ -18,6 +19,12 @@ class PagarScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Cuentas por Pagar'),
         centerTitle: true,
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () =>
+            _mostrarAgregarProveedor(context),
+        icon: const Icon(Icons.business),
+        label: const Text('Agregar Proveedor'),
       ),
       body: ListenableBuilder(
         listenable: viewModel,
@@ -250,6 +257,100 @@ class PagarScreen extends StatelessWidget {
             child: const Text('Registrar'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _mostrarAgregarProveedor(BuildContext context) {
+    final nombreCtrl = TextEditingController();
+    final saldoCtrl = TextEditingController();
+    final telCtrl = TextEditingController();
+    DateTime? fechaVenc;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Nuevo Proveedor'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nombreCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre *',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: saldoCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Saldo Pendiente (S/) *',
+                  prefixText: 'S/ ',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: telCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Teléfono',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: ctx,
+                    initialDate: DateTime.now().add(const Duration(days: 7)),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null) {
+                    setDialogState(() => fechaVenc = picked);
+                  }
+                },
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Fecha de Vencimiento',
+                    border: OutlineInputBorder(),
+                    suffixIcon: Icon(Icons.calendar_today),
+                  ),
+                  child: Text(
+                    fechaVenc != null
+                        ? Formatters.shortDate(fechaVenc!)
+                        : 'Seleccionar fecha',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (nombreCtrl.text.trim().isEmpty) return;
+                final saldo = double.tryParse(saldoCtrl.text) ?? 0;
+                viewModel.addProveedor(Proveedor(
+                  id: const Uuid().v4(),
+                  nombre: nombreCtrl.text.trim(),
+                  saldoPendiente: saldo,
+                  telefono: telCtrl.text.trim(),
+                  fechaVencimiento: fechaVenc,
+                ));
+                Navigator.pop(ctx);
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
       ),
     );
   }

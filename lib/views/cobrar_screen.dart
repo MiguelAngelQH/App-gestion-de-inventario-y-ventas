@@ -3,6 +3,7 @@ import 'package:smart_ventas/models/cliente.dart';
 import 'package:smart_ventas/utils/formatters.dart';
 import 'package:smart_ventas/viewmodels/cobrar_viewmodel.dart';
 import 'package:smart_ventas/widgets/reusable_widgets.dart';
+import 'package:uuid/uuid.dart';
 
 class CobrarScreen extends StatelessWidget {
   final CobrarViewModel viewModel;
@@ -18,6 +19,12 @@ class CobrarScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Cuentas por Cobrar'),
         centerTitle: true,
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () =>
+            _mostrarAgregarCliente(context),
+        icon: const Icon(Icons.person_add),
+        label: const Text('Agregar Cliente'),
       ),
       body: ListenableBuilder(
         listenable: viewModel,
@@ -258,6 +265,100 @@ class CobrarScreen extends StatelessWidget {
             child: const Text('Registrar'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _mostrarAgregarCliente(BuildContext context) {
+    final nombreCtrl = TextEditingController();
+    final deudaCtrl = TextEditingController();
+    final telCtrl = TextEditingController();
+    DateTime? fechaVenc;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Nuevo Cliente'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nombreCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre *',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: deudaCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Deuda (S/) *',
+                  prefixText: 'S/ ',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: telCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Teléfono',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              InkWell(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: ctx,
+                    initialDate: DateTime.now().add(const Duration(days: 7)),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null) {
+                    setDialogState(() => fechaVenc = picked);
+                  }
+                },
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Fecha de Vencimiento',
+                    border: OutlineInputBorder(),
+                    suffixIcon: Icon(Icons.calendar_today),
+                  ),
+                  child: Text(
+                    fechaVenc != null
+                        ? Formatters.shortDate(fechaVenc!)
+                        : 'Seleccionar fecha',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (nombreCtrl.text.trim().isEmpty) return;
+                final deuda = double.tryParse(deudaCtrl.text) ?? 0;
+                viewModel.addCliente(Cliente(
+                  id: const Uuid().v4(),
+                  nombre: nombreCtrl.text.trim(),
+                  deuda: deuda,
+                  telefono: telCtrl.text.trim(),
+                  fechaVencimiento: fechaVenc,
+                ));
+                Navigator.pop(ctx);
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
       ),
     );
   }
