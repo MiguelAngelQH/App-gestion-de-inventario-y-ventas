@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smart_ventas/models/producto.dart';
+import 'package:smart_ventas/models/venta.dart';
 import 'package:smart_ventas/services/firestore_service.dart';
 
 class ReporteViewModel extends ChangeNotifier {
@@ -98,7 +99,7 @@ class ReporteViewModel extends ChangeNotifier {
     });
   }
 
-  void _calcularMetricasVentas(List ventas) {
+  void _calcularMetricasVentas(List<Venta> ventas) {
     final now = DateTime.now();
     final hoy = DateTime(now.year, now.month, now.day);
     final inicioSemana = hoy.subtract(Duration(days: now.weekday - 1));
