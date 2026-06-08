@@ -5,9 +5,11 @@ import 'package:smart_ventas/models/producto.dart';
 import 'package:smart_ventas/models/venta.dart';
 import 'package:smart_ventas/services/fcm_service.dart';
 import 'package:smart_ventas/services/firestore_service.dart';
+import 'package:smart_ventas/viewmodels/config_viewmodel.dart';
 
 class DashboardViewModel extends ChangeNotifier {
   final FirestoreService _firestore = FirestoreService();
+  final ConfigViewModel _configVM;
 
   int _productosStockBajo = 0;
   int _ventasHoy = 0;
@@ -39,7 +41,8 @@ class DashboardViewModel extends ChangeNotifier {
   StreamSubscription? _proveedoresSub;
   StreamSubscription? _authSub;
 
-  DashboardViewModel() {
+  DashboardViewModel({required ConfigViewModel configVM})
+      : _configVM = configVM {
     _init();
     _authSub =
         FirebaseAuth.instance.authStateChanges().listen((_) => _init());
@@ -103,7 +106,7 @@ class DashboardViewModel extends ChangeNotifier {
 
     _productosStockBajo = stockBajoIds.length;
 
-    if (!_isFirstLoad) {
+    if (!_isFirstLoad && _configVM.notificationsEnabled) {
       final nuevosIds = stockBajoIds.difference(_prevStockBajoIds);
       if (nuevosIds.isNotEmpty) {
         final nuevosProductos = productos

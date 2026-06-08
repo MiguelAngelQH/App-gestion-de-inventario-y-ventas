@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smart_ventas/viewmodels/auth_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/cobrar_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/compra_viewmodel.dart';
+import 'package:smart_ventas/viewmodels/config_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/dashboard_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/pagar_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/producto_viewmodel.dart';
@@ -26,6 +27,7 @@ class HomeScreen extends StatefulWidget {
   final CobrarViewModel cobrarViewModel;
   final PagarViewModel pagarViewModel;
   final ReporteViewModel reporteViewModel;
+  final ConfigViewModel configViewModel;
 
   const HomeScreen({
     super.key,
@@ -37,6 +39,7 @@ class HomeScreen extends StatefulWidget {
     required this.cobrarViewModel,
     required this.pagarViewModel,
     required this.reporteViewModel,
+    required this.configViewModel,
   });
 
   @override
@@ -223,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.pop(context);
               widget.authViewModel.logout();
-              Navigator.of(context).pushAndRemoveUntil(
+                Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
                   builder: (_) => LoginScreen(
                     authViewModel: widget.authViewModel,
@@ -234,6 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     cobrarViewModel: widget.cobrarViewModel,
                     pagarViewModel: widget.pagarViewModel,
                     reporteViewModel: widget.reporteViewModel,
+                    configViewModel: widget.configViewModel,
                   ),
                 ),
                 (route) => false,
@@ -285,7 +289,8 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => const ConfiguracionScreen(),
+            builder: (_) =>
+                ConfiguracionScreen(viewModel: widget.configViewModel),
           ),
         );
     }

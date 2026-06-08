@@ -5,6 +5,7 @@ import 'package:smart_ventas/utils/constants.dart';
 import 'package:smart_ventas/viewmodels/auth_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/cobrar_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/compra_viewmodel.dart';
+import 'package:smart_ventas/viewmodels/config_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/dashboard_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/pagar_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/producto_viewmodel.dart';
@@ -26,36 +27,58 @@ class SmartVentasApp extends StatelessWidget {
   final _productoViewModel = ProductoViewModel();
   final _ventaViewModel = VentaViewModel();
   final _compraViewModel = CompraViewModel();
-  final _dashboardViewModel = DashboardViewModel();
+  final _configViewModel = ConfigViewModel();
+  late final _dashboardViewModel = DashboardViewModel(configVM: _configViewModel);
   final _cobrarViewModel = CobrarViewModel();
   final _pagarViewModel = PagarViewModel();
   final _reporteViewModel = ReporteViewModel();
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: AppConstants.appName,
-      debugShowCheckedModeBanner: false,
-      theme: _buildTheme(),
-      home: SplashScreen(
-        authViewModel: _authViewModel,
-        productoViewModel: _productoViewModel,
-        ventaViewModel: _ventaViewModel,
-        compraViewModel: _compraViewModel,
-        dashboardViewModel: _dashboardViewModel,
-        cobrarViewModel: _cobrarViewModel,
-        pagarViewModel: _pagarViewModel,
-        reporteViewModel: _reporteViewModel,
-      ),
+    return ListenableBuilder(
+      listenable: _configViewModel,
+      builder: (context, _) {
+        return MaterialApp(
+          title: AppConstants.appName,
+          debugShowCheckedModeBanner: false,
+          themeMode: _configViewModel.themeMode,
+          theme: _buildLightTheme(),
+          darkTheme: _buildDarkTheme(),
+          home: SplashScreen(
+            authViewModel: _authViewModel,
+            productoViewModel: _productoViewModel,
+            ventaViewModel: _ventaViewModel,
+            compraViewModel: _compraViewModel,
+            dashboardViewModel: _dashboardViewModel,
+            cobrarViewModel: _cobrarViewModel,
+            pagarViewModel: _pagarViewModel,
+            reporteViewModel: _reporteViewModel,
+            configViewModel: _configViewModel,
+          ),
+        );
+      },
     );
   }
 
-  ThemeData _buildTheme() {
+  ThemeData _buildLightTheme() {
     final colorScheme = ColorScheme.fromSeed(
       seedColor: const Color(0xFF1565C0),
       brightness: Brightness.light,
     );
 
+    return _buildThemeData(colorScheme);
+  }
+
+  ThemeData _buildDarkTheme() {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: const Color(0xFF1565C0),
+      brightness: Brightness.dark,
+    );
+
+    return _buildThemeData(colorScheme);
+  }
+
+  ThemeData _buildThemeData(ColorScheme colorScheme) {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,

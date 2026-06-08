@@ -23,6 +23,7 @@ class FirestoreService {
   CollectionReference<Map<String, dynamic>> get _proveedores => _coll('proveedores');
   CollectionReference<Map<String, dynamic>> get _pagosCobrar => _coll('pagos_cobrar');
   CollectionReference<Map<String, dynamic>> get _pagosPagar => _coll('pagos_pagar');
+  CollectionReference<Map<String, dynamic>> get _config => _coll('config');
 
   Query<Map<String, dynamic>> _userQuery(
           CollectionReference<Map<String, dynamic>> ref) =>
@@ -466,4 +467,15 @@ class FirestoreService {
 
   Stream<QuerySnapshot<Object?>> streamVentas() =>
       _ventas.where('uid', isEqualTo: _uid).snapshots();
+
+  // ============ CONFIG ============
+
+  Future<Map<String, dynamic>> getConfig() async {
+    final doc = await _config.doc(_uid).get();
+    return doc.data() ?? {};
+  }
+
+  Future<void> updateConfig(Map<String, dynamic> data) async {
+    await _config.doc(_uid).set(_withUid(data), SetOptions(merge: true));
+  }
 }

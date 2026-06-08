@@ -3,6 +3,7 @@ import 'package:smart_ventas/utils/constants.dart';
 import 'package:smart_ventas/viewmodels/auth_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/cobrar_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/compra_viewmodel.dart';
+import 'package:smart_ventas/viewmodels/config_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/dashboard_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/pagar_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/producto_viewmodel.dart';
@@ -20,6 +21,7 @@ class SplashScreen extends StatefulWidget {
   final CobrarViewModel cobrarViewModel;
   final PagarViewModel pagarViewModel;
   final ReporteViewModel reporteViewModel;
+  final ConfigViewModel configViewModel;
 
   const SplashScreen({
     super.key,
@@ -31,6 +33,7 @@ class SplashScreen extends StatefulWidget {
     required this.cobrarViewModel,
     required this.pagarViewModel,
     required this.reporteViewModel,
+    required this.configViewModel,
   });
 
   @override
@@ -60,6 +63,7 @@ class _SplashScreenState extends State<SplashScreen> {
             cobrarViewModel: widget.cobrarViewModel,
             pagarViewModel: widget.pagarViewModel,
             reporteViewModel: widget.reporteViewModel,
+            configViewModel: widget.configViewModel,
           ),
         ),
       );
@@ -75,6 +79,7 @@ class _SplashScreenState extends State<SplashScreen> {
             cobrarViewModel: widget.cobrarViewModel,
             pagarViewModel: widget.pagarViewModel,
             reporteViewModel: widget.reporteViewModel,
+            configViewModel: widget.configViewModel,
           ),
         ),
       );

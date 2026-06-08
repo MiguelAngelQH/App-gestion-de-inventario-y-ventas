@@ -3,6 +3,7 @@ import 'package:smart_ventas/utils/constants.dart';
 import 'package:smart_ventas/viewmodels/auth_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/cobrar_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/compra_viewmodel.dart';
+import 'package:smart_ventas/viewmodels/config_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/dashboard_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/pagar_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/producto_viewmodel.dart';
@@ -21,6 +22,7 @@ class LoginScreen extends StatefulWidget {
   final CobrarViewModel cobrarViewModel;
   final PagarViewModel pagarViewModel;
   final ReporteViewModel reporteViewModel;
+  final ConfigViewModel configViewModel;
 
   const LoginScreen({
     super.key,
@@ -32,6 +34,7 @@ class LoginScreen extends StatefulWidget {
     required this.cobrarViewModel,
     required this.pagarViewModel,
     required this.reporteViewModel,
+    required this.configViewModel,
   });
 
   @override
@@ -49,27 +52,6 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  String? _validateEmail(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Ingresa tu correo electrónico';
-    }
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(value.trim())) {
-      return 'El formato del correo no es válido';
-    }
-    return null;
-  }
-
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Ingresa tu contraseña';
-    }
-    if (value.length < 6) {
-      return 'La contraseña debe tener al menos 6 caracteres';
-    }
-    return null;
   }
 
   Future<void> _login() async {
@@ -92,6 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
             cobrarViewModel: widget.cobrarViewModel,
             pagarViewModel: widget.pagarViewModel,
             reporteViewModel: widget.reporteViewModel,
+            configViewModel: widget.configViewModel,
           ),
         ),
       );
@@ -101,8 +84,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
-
     return Scaffold(
       body: ListenableBuilder(
         listenable: widget.authViewModel,
@@ -134,95 +115,82 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: theme.colorScheme.onPrimary,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 24),
                         Text(
                           AppConstants.appName,
                           style: theme.textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
                         Text(
                           AppConstants.appTagline,
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 48),
                         if (error != null)
                           Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.all(12),
                             margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: theme.colorScheme.errorContainer,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.error_outline,
-                                    size: 20,
-                                    color: theme.colorScheme.onErrorContainer),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    error,
-                                    style: TextStyle(
-                                      color: theme.colorScheme.onErrorContainer,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.close, size: 18,
-                                      color: theme.colorScheme.onErrorContainer),
-                                  onPressed: widget.authViewModel.clearError,
-                                  visualDensity: VisualDensity.compact,
-                                ),
-                              ],
+                            child: Text(
+                              error,
+                              style: TextStyle(
+                                color: theme.colorScheme.onErrorContainer,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
-                          validator: _validateEmail,
-                          decoration: InputDecoration(
-                            labelText: 'Correo electrónico',
-                            prefixIcon: const Icon(Icons.email_outlined),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                          decoration: const InputDecoration(
+                            labelText: 'Correo Electrónico',
+                            prefixIcon: Icon(Icons.email_outlined),
                           ),
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
+                              return 'Ingresa tu correo';
+                            }
+                            if (!v.contains('@')) {
+                              return 'Correo inválido';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _passwordController,
                           obscureText: _obscurePassword,
-                          validator: _validatePassword,
                           decoration: InputDecoration(
                             labelText: 'Contraseña',
                             prefixIcon: const Icon(Icons.lock_outlined),
                             suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off_outlined
-                                    : Icons.visibility_outlined,
-                              ),
+                              icon: Icon(_obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined),
                               onPressed: () => setState(
                                   () => _obscurePassword = !_obscurePassword),
                             ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
                           ),
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
+                              return 'Ingresa tu contraseña';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 8),
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () {
-                              widget.authViewModel.clearError();
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -235,42 +203,30 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: const Text('¿Olvidaste tu contraseña?'),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 24),
                         SizedBox(
-                          width: size.width > 400 ? 400 : size.width - 48,
-                          height: 52,
-                          child: FilledButton.icon(
+                          width: double.infinity,
+                          height: 48,
+                          child: FilledButton(
                             onPressed: isLoading ? null : _login,
-                            icon: isLoading
+                            child: isLoading
                                 ? const SizedBox(
                                     width: 20,
                                     height: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: Colors.white,
                                     ),
                                   )
-                                : const Icon(Icons.login_rounded),
-                            label:
-                                Text(isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'),
-                            style: FilledButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
+                                : const Text('Iniciar Sesión'),
                           ),
                         ),
                         const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(
-                              '¿No tienes cuenta? ',
-                              style: theme.textTheme.bodyMedium,
-                            ),
+                            const Text('¿No tienes cuenta?'),
                             TextButton(
                               onPressed: () {
-                                widget.authViewModel.clearError();
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
