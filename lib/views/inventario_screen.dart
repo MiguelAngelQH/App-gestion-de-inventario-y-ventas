@@ -56,6 +56,7 @@ class InventarioScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: null,
         onPressed: () => Navigator.push(
           context,
           PageRouteBuilder(

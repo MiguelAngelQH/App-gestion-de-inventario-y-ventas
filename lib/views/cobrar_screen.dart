@@ -21,6 +21,7 @@ class CobrarScreen extends StatelessWidget {
         centerTitle: true,
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () =>
             _mostrarAgregarCliente(context),
         icon: const Icon(Icons.person_add),

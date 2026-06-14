@@ -21,6 +21,7 @@ class PagarScreen extends StatelessWidget {
         centerTitle: true,
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: null,
         onPressed: () =>
             _mostrarAgregarProveedor(context),
         icon: const Icon(Icons.business),

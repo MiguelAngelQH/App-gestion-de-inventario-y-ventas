@@ -38,6 +38,7 @@ class ReporteViewModel extends ChangeNotifier {
   StreamSubscription? _clientesSub;
   StreamSubscription? _proveedoresSub;
   StreamSubscription? _authSub;
+  Timer? _debounceTimer;
 
   ReporteViewModel() {
     _init();
@@ -52,12 +53,20 @@ class ReporteViewModel extends ChangeNotifier {
     _clientesSub?.cancel();
     _proveedoresSub?.cancel();
     _authSub?.cancel();
+    _debounceTimer?.cancel();
     super.dispose();
+  }
+
+  void _scheduleRecalculation() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 200), () {
+      notifyListeners();
+    });
   }
 
   void _init() {
     _isLoading = true;
-    _notifyIfNeeded();
+    notifyListeners();
 
     _ventasSub?.cancel();
     _comprasSub?.cancel();
@@ -67,35 +76,41 @@ class ReporteViewModel extends ChangeNotifier {
     _ventasSub = _firestore.getVentas().listen((ventas) {
       _calcularMetricasVentas(ventas);
       _isLoading = false;
-      _notifyIfNeeded();
+      _scheduleRecalculation();
     }, onError: (_) {
       _isLoading = false;
-      _notifyIfNeeded();
+      notifyListeners();
     });
 
     _comprasSub = _firestore.getCompras().listen((compras) {
       final now = DateTime.now();
       final inicioMes = DateTime(now.year, now.month, 1);
-      _egresosMes = compras
-          .where((c) => c.fecha.isAfter(inicioMes))
-          .fold(0.0, (s, c) => s + c.total);
-      _isLoading = false;
-      _notifyIfNeeded();
+      _egresosMes = 0;
+      for (final c in compras) {
+        if (c.fecha.isAfter(inicioMes)) {
+          _egresosMes += c.total;
+        }
+      }
+      _scheduleRecalculation();
     }, onError: (_) {
       _isLoading = false;
-      _notifyIfNeeded();
+      notifyListeners();
     });
 
     _clientesSub = _firestore.getClientes().listen((clientes) {
-      _cuentasCobrar =
-          clientes.fold(0.0, (s, c) => s + c.deuda);
-      _notifyIfNeeded();
+      _cuentasCobrar = 0;
+      for (final c in clientes) {
+        _cuentasCobrar += c.deuda;
+      }
+      _scheduleRecalculation();
     });
 
     _proveedoresSub = _firestore.getProveedores().listen((proveedores) {
-      _cuentasPagar =
-          proveedores.fold(0.0, (s, p) => s + p.saldoPendiente);
-      _notifyIfNeeded();
+      _cuentasPagar = 0;
+      for (final p in proveedores) {
+        _cuentasPagar += p.saldoPendiente;
+      }
+      _scheduleRecalculation();
     });
   }
 
@@ -105,78 +120,86 @@ class ReporteViewModel extends ChangeNotifier {
     final inicioSemana = hoy.subtract(Duration(days: now.weekday - 1));
     final inicioMes = DateTime(now.year, now.month, 1);
 
-    final completadas = ventas.where((v) => v.estado == 'completada').toList();
-
-    _ventasHoy = completadas
-        .where((v) => v.fecha.isAfter(hoy))
-        .fold(0.0, (s, v) => s + v.total);
-    _ventasSemana = completadas
-        .where((v) => v.fecha.isAfter(inicioSemana))
-        .fold(0.0, (s, v) => s + v.total);
-    _ventasMes = completadas
-        .where((v) => v.fecha.isAfter(inicioMes))
-        .fold(0.0, (s, v) => s + v.total);
-
+    double ventasHoy = 0;
+    double ventasSemana = 0;
+    double ventasMes = 0;
     double ganancia = 0;
-    for (final v in completadas) {
-      double costoItems = 0;
-      for (final item in v.items) {
-        costoItems += item.producto.costo * item.cantidad;
-      }
-      ganancia += v.total - costoItems;
-    }
-    _gananciaTotal = ganancia;
-
     final categorias = <String, double>{};
-    for (final v in ventas) {
-      for (final item in v.items) {
-        final cat = item.producto.categoria;
-        categorias.update(
-          cat.isNotEmpty ? cat : 'General',
-          (s) => s + item.subtotal,
-          ifAbsent: () => item.subtotal,
-        );
-      }
-    }
-    _ventasPorCategoria = Map.fromEntries(categorias.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value)));
-
-    final map7 = <DateTime, double>{};
-    final start7 =
-        DateTime(hoy.year, hoy.month, hoy.day).subtract(const Duration(days: 6));
+    final map7 = <int, double>{};
+    final start7 = hoy.subtract(const Duration(days: 6)).millisecondsSinceEpoch;
     for (int i = 0; i < 7; i++) {
-      map7[start7.add(Duration(days: i))] = 0;
+      map7[start7 + i * 86400000] = 0;
     }
-    for (final v in completadas) {
-      final day = DateTime(v.fecha.year, v.fecha.month, v.fecha.day);
-      if (map7.containsKey(day)) {
-        map7[day] = map7[day]! + v.total;
-      }
-    }
-    _ventasUltimos7Dias = map7;
-
     final conteo = <String, int>{};
     final productoMap = <String, Producto>{};
+
     for (final v in ventas) {
+      final esCompletada = v.estado == 'completada';
+      final fechaMs = v.fecha.millisecondsSinceEpoch;
+      final dayMs = _dayStartMs(fechaMs);
+
+      if (esCompletada) {
+        if (fechaMs >= hoy.millisecondsSinceEpoch) {
+          ventasHoy += v.total;
+        }
+        if (fechaMs >= inicioSemana.millisecondsSinceEpoch) {
+          ventasSemana += v.total;
+        }
+        if (fechaMs >= inicioMes.millisecondsSinceEpoch) {
+          ventasMes += v.total;
+        }
+
+        double costoItems = 0;
+        for (final item in v.items) {
+          costoItems += item.producto.costo * item.cantidad;
+        }
+        ganancia += v.total - costoItems;
+
+        if (map7.containsKey(dayMs)) {
+          map7[dayMs] = map7[dayMs]! + v.total;
+        }
+      }
+
       for (final item in v.items) {
-        conteo.update(
-          item.producto.id,
-          (c) => c + item.cantidad,
-          ifAbsent: () => item.cantidad,
-        );
+        final cat = item.producto.categoria;
+        final catKey = cat.isNotEmpty ? cat : 'General';
+        categorias.update(catKey, (s) => s + item.subtotal,
+            ifAbsent: () => item.subtotal);
+
+        conteo.update(item.producto.id, (c) => c + item.cantidad,
+            ifAbsent: () => item.cantidad);
         productoMap[item.producto.id] = item.producto;
       }
     }
+
+    _ventasHoy = ventasHoy;
+    _ventasSemana = ventasSemana;
+    _ventasMes = ventasMes;
+    _gananciaTotal = ganancia;
+    _ventasPorCategoria = Map.fromEntries(categorias.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value)));
+
+    final ventas7 = <DateTime, double>{};
+    final startDay = DateTime.fromMillisecondsSinceEpoch(start7);
+    for (int i = 0; i < 7; i++) {
+      final day = startDay.add(Duration(days: i));
+      ventas7[day] = map7[day.millisecondsSinceEpoch] ?? 0;
+    }
+    _ventasUltimos7Dias = ventas7;
+
     final sortedEntries = conteo.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    _topProductos = sortedEntries
-        .take(5)
-        .map((e) => productoMap[e.key]!)
-        .toList();
+    _topProductos = [];
+    final limit = sortedEntries.length > 5 ? 5 : sortedEntries.length;
+    for (int i = 0; i < limit; i++) {
+      final p = productoMap[sortedEntries[i].key];
+      if (p != null) _topProductos.add(p);
+    }
   }
 
-  void _notifyIfNeeded() {
-    if (hasListeners) notifyListeners();
+  int _dayStartMs(int ms) {
+    final dt = DateTime.fromMillisecondsSinceEpoch(ms);
+    return DateTime(dt.year, dt.month, dt.day).millisecondsSinceEpoch;
   }
 
   void refresh() {
