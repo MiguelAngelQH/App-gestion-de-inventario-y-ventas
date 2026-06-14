@@ -199,12 +199,12 @@ kubectl set image deployment/smart-ventas-web web=zaynok/smart-ventas-web:vX -n 
 - [x] Reportes con gráficas
 - [x] Notificaciones push
 - [x] API REST para dashboard (fallback desde servidor)
+- [x] Modo oscuro completo (selector Claro/Oscuro en Configuración)
 - [ ] Exportar reportes a PDF/Excel
-- [ ] Modo oscuro completo
 - [ ] Escáner de código de barras
 - [ ] Múltiples sucursales
 - [ ] Respaldo en la nube
-- [ ] Versión iOS
+- [ ] Versión iOS (App Store)
 
 ### Web Dashboard
 - [x] Autenticación con Firebase
@@ -216,9 +216,11 @@ kubectl set image deployment/smart-ventas-web web=zaynok/smart-ventas-web:vX -n 
 - [x] Filtro de ventas completadas en dashboard
 - [x] Auto-refresh del dashboard (30s)
 - [x] Soporte de zona horaria Ecuador (TZ)
-- [ ] Exportar reportes a PDF
-- [ ] Modo oscuro
-- [ ] Panel de administración de usuarios
+- [x] Exportar reportes a PDF
+- [x] Modo oscuro (soporte CSS con variantes `dark:`)
+- [ ] Selector de tema oscuro/claro en la UI
+- [ ] Panel de administración de usuarios (roles, permisos)
+- [ ] Exportar reportes a Excel
 
 ---
 
