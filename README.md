@@ -1,8 +1,9 @@
 <div align="center">
   <img src="https://img.shields.io/badge/Flutter-3.11+-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter">
+  <img src="https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js">
   <img src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase">
   <img src="https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart">
-  <img src="https://img.shields.io/badge/v1.0.0-4CAF50?style=for-the-badge&logo=&logoColor=white" alt="Version">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
 </div>
 
 <br>
@@ -10,28 +11,34 @@
 <div align="center">
   <h1>SmartVentas</h1>
   <p><strong>Gestión inteligente para tu negocio</strong></p>
-  <p>Aplicación móvil todo-en-uno para administrar inventarios, ventas, compras, cuentas por cobrar/pagar y generar reportes desde tu dispositivo Android.</p>
+  <p>Ecosistema completo de gestión empresarial: aplicación móvil Android + dashboard web.</p>
 </div>
 
 ---
 
 ## 📋 Tabla de Contenidos
 
-- [Características](#-características)
-- [Capturas de Pantalla](#-capturas-de-pantalla)
-- [Tecnologías](#-tecnologías)
-- [Arquitectura](#-arquitectura)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
-- [Modelos de Datos](#-modelos-de-datos)
-- [Instalación](#-instalación)
+- [SmartVentas App (Flutter)](#smartventas-app-flutter)
+  - [Características](#-características)
+  - [Tecnologías](#-tecnologías)
+  - [Estructura del Proyecto](#-estructura-del-proyecto)
+  - [Instalación](#-instalación)
+- [SmartVentas Web (Next.js)](#smartventas-web-nextjs)
+  - [Características Web](#-características-web)
+  - [Tecnologías Web](#-tecnologías-web)
+  - [Estructura Web](#-estructura-web)
+  - [Instalación Web](#-instalación-web)
 - [Configuración de Firebase](#-configuración-de-firebase)
-- [Uso](#-uso)
 - [Roadmap](#-roadmap)
 - [Licencia](#-licencia)
 
 ---
 
-## ✨ Características
+## SmartVentas App (Flutter)
+
+Aplicación móvil Android para administrar inventarios, ventas, compras, cuentas por cobrar/pagar y generar reportes.
+
+### ✨ Características
 
 | Módulo | Funcionalidades |
 |--------|----------------|
@@ -39,174 +46,121 @@
 | **Inventario** | CRUD de productos, búsqueda, filtro por categoría, filtro de stock bajo |
 | **Ventas** | Registro de ventas con selección de productos, cálculo automático de total, métodos de pago |
 | **Compras** | Registro de compras, actualización automática de stock y costos |
-| **Cuentas por Cobrar** | Gestión de deudas de clientes, registro de pagos, estados (pendiente/pagado/vencido) |
+| **Cuentas por Cobrar** | Gestión de deudas de clientes, registro de pagos, estados |
 | **Cuentas por Pagar** | Gestión de saldos con proveedores, registro de pagos |
-| **Reportes** | Gráfica de ventas (7 días), ventas por categoría, top productos, métricas completas |
+| **Reportes** | Gráfica de ventas (7 días), ventas por categoría, top productos |
 | **Autenticación** | Login, registro, recuperación de contraseña con Firebase Auth |
 | **Notificaciones** | Alertas de stock bajo y vencimientos próximos vía FCM |
-| **Configuración** | Datos del negocio, preferencias, tema, versión |
 
----
+### 🛠 Tecnologías
 
-## 📸 Capturas de Pantalla
+| Tecnología | Propósito |
+|------------|-----------|
+| [Flutter](https://flutter.dev/) 3.11+ | Framework de UI multiplataforma |
+| [Dart](https://dart.dev/) | Lenguaje de programación |
+| [Firebase Auth](https://firebase.google.com/docs/auth) | Autenticación de usuarios |
+| [Cloud Firestore](https://firebase.google.com/docs/firestore) | Base de datos NoSQL |
+| [Firebase Messaging](https://firebase.google.com/docs/cloud-messaging) | Notificaciones push |
+| [fl_chart](https://pub.dev/packages/fl_chart) | Gráficas interactivas |
 
-> _Próximamente_
+### 🏗 Arquitectura
 
----
-
-## 🛠 Tecnologías
-
-| Tecnología | Versión | Propósito |
-|------------|---------|-----------|
-| [Flutter](https://flutter.dev/) | 3.11+ | Framework de UI multiplataforma |
-| [Dart](https://dart.dev/) | 3.11+ | Lenguaje de programación |
-| [Firebase Auth](https://firebase.google.com/docs/auth) | ^5.5.1 | Autenticación de usuarios |
-| [Cloud Firestore](https://firebase.google.com/docs/firestore) | ^5.6.5 | Base de datos NoSQL en tiempo real |
-| [Firebase Messaging](https://firebase.google.com/docs/cloud-messaging) | ^15.2.4 | Notificaciones push |
-| [fl_chart](https://pub.dev/packages/fl_chart) | ^0.70.2 | Gráficas interactivas |
-| [flutter_local_notifications](https://pub.dev/packages/flutter_local_notifications) | ^18.0.1 | Notificaciones locales |
-| [uuid](https://pub.dev/packages/uuid) | ^4.5.1 | Generación de IDs únicos |
-
----
-
-## 🏗 Arquitectura
-
-El proyecto sigue el patrón **MVVM (Model-View-ViewModel)** con una capa de servicios para el acceso a datos:
+Patrón **MVVM** con `ChangeNotifier` + `ListenableBuilder`:
 
 ```
-UI (Screens)
-    ↓  escucha cambios mediante ListenableBuilder
-ViewModels (ChangeNotifier)
-    ↓  llama métodos de servicio
-Services (Firebase)
-    ↓  opera sobre
-Models (Dart Classes)
+UI (Screens) → ViewModels (ChangeNotifier) → Services (Firebase) → Models
 ```
 
-- **State Management**: `ChangeNotifier` + `ListenableBuilder` (nativo, sin dependencias externas)
-- **Base de datos**: Firestore con consultas en tiempo real (`snapshots()`)
-- **Aislamiento de datos**: Cada documento contiene un campo `uid` para multi-tenencia por usuario
-- **Reglas de seguridad**: Validación de propiedad de datos en Firestore Security Rules
-
----
-
-## 📁 Estructura del Proyecto
+### 📁 Estructura
 
 ```
 lib/
-├── main.dart                    # Punto de entrada
-├── models/                      # Modelos de datos
-│   ├── cliente.dart
-│   ├── compra.dart
-│   ├── producto.dart
-│   ├── proveedor.dart
-│   ├── usuario.dart
-│   └── venta.dart
-├── services/                    # Capa de servicios
-│   ├── auth_service.dart        # Firebase Authentication
-│   ├── fcm_service.dart         # Notificaciones push
-│   ├── firestore_service.dart   # CRUD + consultas Firestore
-│   └── mock_data_service.dart   # Datos de prueba
-├── utils/                       # Utilidades
-│   ├── constants.dart           # Constantes de la app
-│   └── formatters.dart          # Formateo de moneda/fechas
-├── viewmodels/                  # Lógica de negocio
-│   ├── auth_viewmodel.dart
-│   ├── cobrar_viewmodel.dart
-│   ├── compra_viewmodel.dart
-│   ├── dashboard_viewmodel.dart
-│   ├── pagar_viewmodel.dart
-│   ├── producto_viewmodel.dart
-│   ├── reporte_viewmodel.dart
-│   └── venta_viewmodel.dart
-├── views/                       # Pantallas
-│   ├── splash_screen.dart
-│   ├── login_screen.dart
-│   ├── register_screen.dart
-│   ├── forgot_password_screen.dart
-│   ├── home_screen.dart
-│   ├── dashboard_screen.dart
-│   ├── inventario_screen.dart
-│   ├── producto_form_screen.dart
-│   ├── ventas_screen.dart
-│   ├── venta_form_screen.dart
-│   ├── compras_screen.dart
-│   ├── compra_form_screen.dart
-│   ├── cobrar_screen.dart
-│   ├── pagar_screen.dart
-│   ├── reportes_screen.dart
-│   └── configuracion_screen.dart
-└── widgets/                     # Widgets reutilizables
-    └── reusable_widgets.dart
+├── main.dart
+├── models/       # cliente, compra, producto, proveedor, venta
+├── services/     # auth, fcm, firestore
+├── viewmodels/   # lógica de negocio
+├── views/        # pantallas
+└── widgets/      # widgets reutilizables
+```
+
+### 🚀 Instalación
+
+```bash
+git clone https://github.com/MiguelAngelQH/App-gestion-de-inventario-y-ventas.git
+cd App-gestion-de-inventario-y-ventas
+flutter pub get
+flutter run
 ```
 
 ---
 
-## 📦 Modelos de Datos
+## SmartVentas Web (Next.js)
 
-### Producto
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | `String` | Identificador único |
-| `nombre` | `String` | Nombre del producto |
-| `descripcion` | `String` | Descripción opcional |
-| `precio` | `double` | Precio de venta |
-| `costo` | `double` | Costo unitario |
-| `stock` | `int` | Cantidad en inventario |
-| `categoria` | `String` | Categoría (General, Alimentos, etc.) |
-| `codigoBarras` | `String` | Código de barras opcional |
+Dashboard web para administración del negocio desde un navegador. Comparte la misma base de datos Firestore que la app móvil.
 
-### Venta + ItemVenta
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | `String` | Folio único (V-XXXX) |
-| `fecha` | `DateTime` | Fecha de venta |
-| `items` | `List<ItemVenta>` | Productos vendidos |
-| `total` | `double` | Monto total |
-| `metodoPago` | `String` | Efectivo, Tarjeta, Transferencia, etc. |
-| `estado` | `String` | Completada / Pendiente / Cancelada |
+### ✨ Características Web
 
-### Compra + ItemCompra
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | `String` | Folio único (C-XXXX) |
-| `fecha` | `DateTime` | Fecha de compra |
-| `items` | `List<ItemCompra>` | Productos comprados |
-| `total` | `double` | Monto total |
-| `estado` | `String` | Pendiente / Recibida / Cancelada |
+| Módulo | Funcionalidades |
+|--------|----------------|
+| **Dashboard** | Métricas clave: ventas del día, ganancias, productos con stock bajo |
+| **Productos** | CRUD completo, búsqueda, filtro por categoría |
+| **Ventas** | Registro con selección de productos y cálculo automático de total |
+| **Compras** | Registro de compras con actualización de stock |
+| **Clientes** | Gestión de deudas y pagos |
+| **Proveedores** | Gestión de saldos y pagos |
+| **Reportes** | Gráfica de ventas (7 días) y ventas por categoría |
+| **Autenticación** | Login con Firebase Auth, sesión con JWT local |
 
-### Cliente / Proveedor
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | `String` | Identificador único |
-| `nombre` | `String` | Nombre o razón social |
-| `telefono` | `String` | Teléfono de contacto |
-| `deuda` / `saldoPendiente` | `double` | Saldo actual |
-| `estado` | `String` | Pendiente / Pagado / Vencido |
+### 🛠 Tecnologías Web
 
----
+| Tecnología | Propósito |
+|------------|-----------|
+| [Next.js](https://nextjs.org/) 16 | Framework web full-stack |
+| [TypeScript](https://www.typescriptlang.org/) | Lenguaje de programación |
+| [Firebase Auth](https://firebase.google.com/docs/auth) | Autenticación de usuarios |
+| [Firebase Admin SDK](https://firebase.google.com/docs/admin/setup) | Acceso a Firestore desde el servidor |
+| [jose](https://github.com/panva/jose) | JWT para sesiones locales |
+| [Recharts](https://recharts.org/) | Gráficas interactivas |
+| [Docker](https://www.docker.com/) | Contenerización para despliegue |
 
-## 🚀 Instalación
+### 📁 Estructura Web
 
-### Requisitos
+```
+smart-ventas-web/
+├── src/
+│   ├── app/
+│   │   ├── api/         # API routes (auth, dashboard, productos, ventas, compras, etc.)
+│   │   ├── clientes/    # Página de clientes
+│   │   ├── compras/     # Página de compras
+│   │   ├── login/       # Página de inicio de sesión
+│   │   ├── productos/   # Página de productos
+│   │   ├── proveedores/ # Página de proveedores
+│   │   ├── reportes/    # Página de reportes
+│   │   └── ventas/      # Página de ventas
+│   ├── components/      # Componentes reutilizables
+│   ├── lib/             # Utilidades (auth, session, firebase-admin)
+│   └── proxy.ts         # Middleware de autenticación
+├── k8s/                 # Manifiestos Kubernetes
+├── Dockerfile
+└── package.json
+```
 
-- Flutter SDK 3.11 o superior
-- Dart SDK 3.11 o superior
-- Cuenta de Firebase con proyecto activo
-- Android Studio / VS Code
-
-### Pasos
+### 🚀 Instalación Web
 
 ```bash
-# Clonar el repositorio
-git clone https://github.com/MiguelAngelQH/App-gestion-de-inventario-y-ventas.git
-cd App-gestion-de-inventario-y-ventas
+cd smart-ventas-web
+npm install
+npm run dev
+```
 
-# Instalar dependencias
-flutter pub get
+#### Despliegue con Docker
 
-# Ejecutar en modo desarrollo
-flutter run
+```bash
+docker build -t smart-ventas-web .
+docker run -p 3000:3000 \
+  -e FIREBASE_SERVICE_ACCOUNT_KEY='<JSON>' \
+  -e NEXT_PUBLIC_FIREBASE_API_KEY='<KEY>' \
+  smart-ventas-web
 ```
 
 ---
@@ -217,27 +171,15 @@ flutter run
 2. Habilita **Authentication** con el método **Correo electrónico/contraseña**
 3. Habilita **Cloud Firestore** en modo de prueba
 4. Habilita **Cloud Messaging** (FCM) para notificaciones
-5. Descarga el archivo `google-services.json` y colócalo en:
-   ```
-   android/app/google-services.json
-   ```
-6. Despliega las reglas de seguridad de `firestore.rules` y los índices de `firestore.indexes.json`
-
----
-
-## 📱 Uso
-
-1. **Regístrate** con tu correo electrónico y contraseña
-2. **Agrega productos** desde la sección de Inventario
-3. **Registra ventas** seleccionando productos y método de pago
-4. **Administra compras** para reponer inventario
-5. **Gestiona cuentas** por cobrar y pagar
-6. **Consulta reportes** con métricas y gráficas
+5. Para la app móvil: descarga `google-services.json` → `android/app/google-services.json`
+6. Para la web: configura las variables de entorno con la API Key y Service Account
+7. Despliega las reglas de seguridad de `firestore.rules` y los índices de `firestore.indexes.json`
 
 ---
 
 ## 🗺 Roadmap
 
+### App Móvil
 - [x] Autenticación de usuarios
 - [x] CRUD de productos
 - [x] Registro de ventas y compras
@@ -252,8 +194,19 @@ flutter run
 - [ ] Respaldo en la nube
 - [ ] Versión iOS
 
+### Web Dashboard
+- [x] Autenticación con Firebase
+- [x] Dashboard con métricas
+- [x] CRUD de productos
+- [x] Registro de ventas y compras
+- [x] Gestión de clientes y proveedores
+- [x] Reportes con gráficas
+- [ ] Exportar reportes a PDF
+- [ ] Modo oscuro
+- [ ] Panel de administración de usuarios
+
 ---
 
 ## 📄 Licencia
 
-Este proyecto es de uso privado. Todos los derechos reservados.
+Proyecto de uso privado. Todos los derechos reservados.

@@ -33,6 +33,10 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Sensitive data
+files backend docker and wireguard/
+Documentacion_SmartVentas.txt
+
 # Symbolication related
 app.*.symbols
 
@@ -43,3 +47,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Web (Next.js) project artifacts
+node_modules/
+.next/
+out/
+.env*
+*.tsbuildinfo
+next-env.d.ts

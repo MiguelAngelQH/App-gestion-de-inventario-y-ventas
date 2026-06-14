@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: smart-ventas-web
+    ports:
+      - "3000:3000"
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/service-account.json
+    volumes:
+      - ./service-account.json:/app/service-account.json:ro
+    restart: unless-stopped
