@@ -73,11 +73,23 @@ class VentasScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => VentaFormScreen(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondary) => VentaFormScreen(
               ventaViewModel: viewModel,
               productoViewModel: productoViewModel,
             ),
+            transitionsBuilder: (context, animation, secondary, child) =>
+                SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(1, 0),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+              )),
+              child: child,
+            ),
+            transitionDuration: const Duration(milliseconds: 350),
           ),
         ),
         child: const Icon(Icons.add),

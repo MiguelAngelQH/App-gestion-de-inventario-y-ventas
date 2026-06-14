@@ -56,20 +56,30 @@ class _HomeScreenState extends State<HomeScreen> {
     final inicial = usuario?.inicial ?? 'U';
 
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: [
-          DashboardScreen(viewModel: widget.dashboardViewModel),
-          InventarioScreen(viewModel: widget.productoViewModel),
-          VentasScreen(
-            viewModel: widget.ventaViewModel,
-            productoViewModel: widget.productoViewModel,
-          ),
-          ComprasScreen(
-            viewModel: widget.compraViewModel,
-            productoViewModel: widget.productoViewModel,
-          ),
-        ],
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: child,
+        ),
+        child: IndexedStack(
+          key: ValueKey<int>(_selectedIndex),
+          index: _selectedIndex,
+          children: [
+            DashboardScreen(viewModel: widget.dashboardViewModel),
+            InventarioScreen(viewModel: widget.productoViewModel),
+            VentasScreen(
+              viewModel: widget.ventaViewModel,
+              productoViewModel: widget.productoViewModel,
+            ),
+            ComprasScreen(
+              viewModel: widget.compraViewModel,
+              productoViewModel: widget.productoViewModel,
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
@@ -100,121 +110,189 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      drawer: NavigationDrawer(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _selectedIndex = index < 4 ? index : _selectedIndex;
-            _openDrawerScreen(context, index);
-          });
-        },
-        children: [
-          UserAccountsDrawerHeader(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
+      drawer: Drawer(
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.only(
+                top: MediaQuery.of(context).padding.top + 20,
+                bottom: 24,
+                left: 20,
+                right: 20,
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    const Color(0xFF1E88E5),
+                    const Color(0xFF1565C0),
+                    const Color(0xFF0D47A1),
+                  ],
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.15),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            inicial,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E88E5),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    usuario?.email ?? 'Usuario',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    usuario?.email ?? '',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            accountName: Text(
-              usuario?.email ?? 'Usuario',
-              style: const TextStyle(fontWeight: FontWeight.w600),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _DrawerItem(
+                    icon: Icons.dashboard_outlined,
+                    selectedIcon: Icons.dashboard,
+                    label: 'Inicio',
+                    isSelected: _selectedIndex == 0,
+                    onTap: () => _onDrawerTap(0),
+                  ),
+                  _DrawerItem(
+                    icon: Icons.inventory_2_outlined,
+                    selectedIcon: Icons.inventory_2,
+                    label: 'Inventario',
+                    isSelected: _selectedIndex == 1,
+                    onTap: () => _onDrawerTap(1),
+                  ),
+                  _DrawerItem(
+                    icon: Icons.point_of_sale_outlined,
+                    selectedIcon: Icons.point_of_sale,
+                    label: 'Ventas',
+                    isSelected: _selectedIndex == 2,
+                    onTap: () => _onDrawerTap(2),
+                  ),
+                  _DrawerItem(
+                    icon: Icons.shopping_cart_outlined,
+                    selectedIcon: Icons.shopping_cart,
+                    label: 'Compras',
+                    isSelected: _selectedIndex == 3,
+                    onTap: () => _onDrawerTap(3),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Divider(
+                      color: theme.colorScheme.outlineVariant,
+                    ),
+                  ),
+                  _DrawerItem(
+                    icon: Icons.account_balance_wallet_outlined,
+                    selectedIcon: Icons.account_balance_wallet,
+                    label: 'Cuentas por Cobrar',
+                    onTap: () => _openDrawerScreen(4),
+                  ),
+                  _DrawerItem(
+                    icon: Icons.receipt_long_outlined,
+                    selectedIcon: Icons.receipt_long,
+                    label: 'Cuentas por Pagar',
+                    onTap: () => _openDrawerScreen(5),
+                  ),
+                  _DrawerItem(
+                    icon: Icons.bar_chart_outlined,
+                    selectedIcon: Icons.bar_chart,
+                    label: 'Reportes',
+                    onTap: () => _openDrawerScreen(6),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Divider(
+                      color: theme.colorScheme.outlineVariant,
+                    ),
+                  ),
+                  _DrawerItem(
+                    icon: Icons.settings_outlined,
+                    selectedIcon: Icons.settings,
+                    label: 'Configuración',
+                    onTap: () => _openDrawerScreen(7),
+                  ),
+                ],
+              ),
             ),
-            accountEmail: Text(usuario?.email ?? ''),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: theme.colorScheme.onPrimary,
-              child: Text(
-                inicial,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _confirmLogout(context),
+                  icon: const Icon(Icons.logout_rounded, size: 18),
+                  label: const Text('Cerrar Sesión'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                    side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.3)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard),
-            label: const Text('Inicio'),
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.inventory_2_outlined),
-            selectedIcon: Icon(Icons.inventory_2),
-            label: const Text('Inventario'),
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.point_of_sale_outlined),
-            selectedIcon: Icon(Icons.point_of_sale),
-            label: const Text('Ventas'),
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.shopping_cart_outlined),
-            selectedIcon: Icon(Icons.shopping_cart),
-            label: const Text('Compras'),
-          ),
-          const Divider(),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            selectedIcon: Icon(Icons.account_balance_wallet),
-            label: const Text('Cuentas por Cobrar'),
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long),
-            label: const Text('Cuentas por Pagar'),
-          ),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.bar_chart_outlined),
-            selectedIcon: Icon(Icons.bar_chart),
-            label: const Text('Reportes'),
-          ),
-          const Divider(),
-          NavigationDrawerDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: const Text('Configuración'),
-          ),
-          const Divider(),
-          _buildLogoutTile(theme),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildLogoutTile(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: InkWell(
-        onTap: () => _confirmLogout(context),
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.errorContainer
-                .withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.logout_rounded,
-                  color: theme.colorScheme.onErrorContainer),
-              const SizedBox(width: 12),
-              Text(
-                'Cerrar Sesión',
-                style: TextStyle(
-                  color: theme.colorScheme.onErrorContainer,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+  void _onDrawerTap(int index) {
+    setState(() => _selectedIndex = index);
+    Navigator.pop(context);
+    if (index == 0) widget.dashboardViewModel.refresh();
   }
 
   void _confirmLogout(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
         title: const Text('Cerrar Sesión'),
         content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
         actions: [
@@ -226,9 +304,9 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.pop(context);
               widget.authViewModel.logout();
-                Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(
-                  builder: (_) => LoginScreen(
+              Navigator.of(context).pushAndRemoveUntil(
+                PageRouteBuilder(
+                  pageBuilder: (context, animation, secondary) => LoginScreen(
                     authViewModel: widget.authViewModel,
                     productoViewModel: widget.productoViewModel,
                     ventaViewModel: widget.ventaViewModel,
@@ -239,6 +317,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     reporteViewModel: widget.reporteViewModel,
                     configViewModel: widget.configViewModel,
                   ),
+                  transitionsBuilder: (context, animation, secondary, child) =>
+                      FadeTransition(opacity: animation, child: child),
+                  transitionDuration: const Duration(milliseconds: 400),
                 ),
                 (route) => false,
               );
@@ -253,46 +334,99 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openDrawerScreen(BuildContext context, int index) {
-    if (index < 4) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      if (index == 0) widget.dashboardViewModel.refresh();
-      return;
-    }
+  void _openDrawerScreen(int index) {
     Navigator.pop(context);
+    Widget screen;
+
     switch (index) {
       case 4:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                CobrarScreen(viewModel: widget.cobrarViewModel),
-          ),
-        );
+        screen = CobrarScreen(viewModel: widget.cobrarViewModel);
       case 5:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                PagarScreen(viewModel: widget.pagarViewModel),
-          ),
-        );
+        screen = PagarScreen(viewModel: widget.pagarViewModel);
       case 6:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                ReportesScreen(viewModel: widget.reporteViewModel),
-          ),
-        );
+        screen = ReportesScreen(viewModel: widget.reporteViewModel);
       case 7:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                ConfiguracionScreen(viewModel: widget.configViewModel),
-          ),
-        );
+        screen = ConfiguracionScreen(viewModel: widget.configViewModel);
+      default:
+        return;
     }
+
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondary) => screen,
+        transitionsBuilder: (context, animation, secondary, child) =>
+            SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          )),
+          child: child,
+        ),
+        transitionDuration: const Duration(milliseconds: 350),
+      ),
+    );
+  }
+}
+
+class _DrawerItem extends StatelessWidget {
+  final IconData icon;
+  final IconData? selectedIcon;
+  final String label;
+  final VoidCallback onTap;
+  final bool isSelected;
+
+  const _DrawerItem({
+    required this.icon,
+    this.selectedIcon,
+    required this.label,
+    required this.onTap,
+    this.isSelected = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      child: Material(
+        color: isSelected
+            ? theme.colorScheme.secondaryContainer.withValues(alpha: 0.5)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            child: Row(
+              children: [
+                Icon(
+                  isSelected ? (selectedIcon ?? icon) : icon,
+                  size: 22,
+                  color: isSelected
+                      ? theme.colorScheme.onSecondaryContainer
+                      : theme.colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected
+                        ? theme.colorScheme.onSecondaryContainer
+                        : theme.colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

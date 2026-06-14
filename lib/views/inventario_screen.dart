@@ -58,10 +58,22 @@ class InventarioScreen extends StatelessWidget {
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => ProductoFormScreen(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondary) => ProductoFormScreen(
               viewModel: viewModel,
             ),
+            transitionsBuilder: (context, animation, secondary, child) =>
+                SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(1, 0),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+              )),
+              child: child,
+            ),
+            transitionDuration: const Duration(milliseconds: 350),
           ),
         ),
         child: const Icon(Icons.add),
@@ -148,11 +160,23 @@ class InventarioScreen extends StatelessWidget {
       child: InkWell(
         onTap: () => Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => ProductoFormScreen(
+          PageRouteBuilder(
+            pageBuilder: (context, animation, secondary) => ProductoFormScreen(
               viewModel: viewModel,
               producto: producto,
             ),
+            transitionsBuilder: (context, animation, secondary, child) =>
+                SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(1, 0),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+              )),
+              child: child,
+            ),
+            transitionDuration: const Duration(milliseconds: 350),
           ),
         ),
         onLongPress: () => _confirmarEliminar(context, producto),

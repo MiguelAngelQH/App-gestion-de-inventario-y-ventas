@@ -14,7 +14,13 @@ class DashboardScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('SmartVentas'),
+        title: Text(
+          'SmartVentas',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.menu),
@@ -42,17 +48,18 @@ class DashboardScreen extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
             return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildResumenCards(theme),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
                   SectionHeader(
                     titulo: 'Últimas Ventas',
                     accionTexto: 'Ver todas',
                   ),
+                  const SizedBox(height: 8),
                   if (viewModel.ultimasVentas.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(16),
@@ -62,18 +69,22 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     )
                   else
-                    ...viewModel.ultimasVentas.map(
-                      (venta) => VentaItem(
-                        folio: venta.folio,
-                        cliente: venta.clienteNombre ?? 'Cliente general',
-                        total: Formatters.currency(venta.total),
-                        estado: venta.estado,
-                        fecha: Formatters.shortDate(venta.fecha),
+                    ...viewModel.ultimasVentas.asMap().entries.map(
+                      (entry) => AnimatedListItem(
+                        index: entry.key,
+                        child: VentaItem(
+                          folio: entry.value.folio,
+                          cliente: entry.value.clienteNombre ??
+                              'Cliente general',
+                          total: Formatters.currency(entry.value.total),
+                          estado: entry.value.estado,
+                          fecha: Formatters.shortDate(entry.value.fecha),
+                        ),
                       ),
                     ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
                   SectionHeader(titulo: 'Productos Más Vendidos'),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   if (viewModel.topProductos.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(16),
@@ -83,35 +94,83 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     )
                   else
-                    ...viewModel.topProductos.map(
-                      (producto) => Card(
-                        elevation: 0,
-                        margin: const EdgeInsets.only(bottom: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(
-                              color: theme.colorScheme.outlineVariant),
-                        ),
-                        child: ListTile(
-                          leading: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.primaryContainer,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.inventory_2,
-                              color: theme.colorScheme.onPrimaryContainer,
-                              size: 20,
+                    ...viewModel.topProductos.asMap().entries.map(
+                      (entry) => AnimatedListItem(
+                        index: entry.key,
+                        child: Card(
+                          elevation: 0,
+                          margin: const EdgeInsets.only(bottom: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            side: BorderSide(
+                              color: theme.colorScheme.outlineVariant,
                             ),
                           ),
-                          title: Text(producto.nombre),
-                          subtitle: Text(producto.categoria),
-                          trailing: Text(
-                            Formatters.currency(producto.precio),
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(14),
+                            child: Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          theme.colorScheme.primaryContainer,
+                                          theme.colorScheme.primaryContainer
+                                              .withValues(alpha: 0.7),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      Icons.inventory_2,
+                                      color: theme
+                                          .colorScheme.onPrimaryContainer,
+                                      size: 22,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          entry.value.nombre,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          entry.value.categoria,
+                                          style: theme
+                                              .textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: theme
+                                                .colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    Formatters.currency(entry.value.precio),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Color(0xFF1E88E5),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -135,7 +194,7 @@ class DashboardScreen extends StatelessWidget {
                 titulo: 'Ventas Hoy',
                 valor: Formatters.currency(viewModel.totalVentasHoy),
                 icono: Icons.today,
-                color: Colors.blue,
+                color: const Color(0xFF1E88E5),
                 subtitulo: '${viewModel.ventasHoy} transacciones',
               ),
             ),
@@ -145,7 +204,7 @@ class DashboardScreen extends StatelessWidget {
                 titulo: 'Esta Semana',
                 valor: Formatters.currency(viewModel.totalVentasSemana),
                 icono: Icons.date_range,
-                color: Colors.teal,
+                color: const Color(0xFF00897B),
               ),
             ),
           ],
@@ -158,7 +217,7 @@ class DashboardScreen extends StatelessWidget {
                 titulo: 'Stock Bajo',
                 valor: '${viewModel.productosStockBajo}',
                 icono: Icons.inventory,
-                color: Colors.red,
+                color: const Color(0xFFE53935),
                 subtitulo: 'productos por reabastecer',
               ),
             ),
@@ -168,7 +227,7 @@ class DashboardScreen extends StatelessWidget {
                 titulo: 'Por Cobrar',
                 valor: Formatters.currency(viewModel.totalCuentasCobrar),
                 icono: Icons.account_balance_wallet,
-                color: Colors.orange,
+                color: const Color(0xFFFB8C00),
               ),
             ),
           ],
@@ -181,7 +240,7 @@ class DashboardScreen extends StatelessWidget {
                 titulo: 'Por Pagar',
                 valor: Formatters.currency(viewModel.totalCuentasPagar),
                 icono: Icons.receipt_long,
-                color: Colors.red,
+                color: const Color(0xFFE53935),
               ),
             ),
             const SizedBox(width: 12),
@@ -190,7 +249,7 @@ class DashboardScreen extends StatelessWidget {
                 titulo: 'Ganancia',
                 valor: Formatters.currency(viewModel.gananciaTotal),
                 icono: Icons.trending_up,
-                color: Colors.green,
+                color: const Color(0xFF43A047),
               ),
             ),
           ],
