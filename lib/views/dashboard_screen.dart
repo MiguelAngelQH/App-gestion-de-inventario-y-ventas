@@ -20,6 +20,18 @@ class DashboardScreen extends StatelessWidget {
           icon: const Icon(Icons.menu),
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
+        actions: [
+          if (viewModel.usingServerData)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Chip(
+                label: const Text('Servidor', style: TextStyle(fontSize: 11)),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () => viewModel.refresh(),

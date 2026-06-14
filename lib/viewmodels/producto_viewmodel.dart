@@ -38,7 +38,12 @@ class ProductoViewModel extends ChangeNotifier {
     _subscription = _firestore.getProductos().listen((productos) {
       _productos = productos;
       _isLoading = false;
+      _error = null;
       _filtrar();
+    }, onError: (e) {
+      _error = 'Error al cargar productos: $e';
+      _isLoading = false;
+      notifyListeners();
     });
   }
 

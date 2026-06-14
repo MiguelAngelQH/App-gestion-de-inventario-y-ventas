@@ -1,14 +1,25 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { db } from '@/lib/firebase-admin';
 import { requireAuth } from '@/lib/auth-utils';
 
-export async function GET() {
+function esMismoDia(fechaStr: string, fechaRef: Date): boolean {
+  const d = new Date(fechaStr);
+  if (isNaN(d.getTime())) return false;
+  return (
+    d.getFullYear() === fechaRef.getFullYear() &&
+    d.getMonth() === fechaRef.getMonth() &&
+    d.getDate() === fechaRef.getDate()
+  );
+}
+
+export async function GET(request: NextRequest) {
   try {
-    const uid = await requireAuth();
+    const uid = await requireAuth(request);
     const ahora = new Date();
-    const inicioHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
-    const finHoy = new Date(inicioHoy.getTime() + 86400000);
-    const inicioSemana = new Date(inicioHoy.getTime() - 6 * 86400000);
+    const inicioSemana = new Date(
+      ahora.getFullYear(), ahora.getMonth(), ahora.getDate() - 6
+    );
 
     const ventasSnap = await db.collection('ventas').where('uid', '==', uid).get();
     const productosSnap = await db.collection('productos').where('uid', '==', uid).get();
@@ -22,23 +33,25 @@ export async function GET() {
 
     for (const doc of ventasSnap.docs) {
       const data: any = doc.data();
-      const fecha = new Date(data.fecha);
       const total = data.total ?? 0;
       const items = data.items ?? [];
+      const fechaStr = data.fecha;
 
-      if (fecha >= inicioHoy && fecha < finHoy) {
+      if (data.estado === 'completada' && esMismoDia(fechaStr, ahora)) {
         ventasHoy += total;
         ventasCountHoy++;
       }
-      if (fecha >= inicioSemana) {
+      if (data.estado === 'completada' && new Date(fechaStr) >= inicioSemana) {
         ventasSemana += total;
       }
 
-      let costoTotal = 0;
-      for (const item of items) {
-        costoTotal += (item.costoUnitario ?? 0) * (item.cantidad ?? 0);
+      if (data.estado === 'completada') {
+        let costoTotal = 0;
+        for (const item of items) {
+          costoTotal += (item.costoUnitario ?? 0) * (item.cantidad ?? 0);
+        }
+        gananciaTotal += total - costoTotal;
       }
-      gananciaTotal += total - costoTotal;
     }
 
     let stockBajo = 0;

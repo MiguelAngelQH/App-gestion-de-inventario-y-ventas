@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smart_ventas/models/producto.dart';
 import 'package:smart_ventas/models/venta.dart';
+import 'package:smart_ventas/services/api_service.dart';
 import 'package:smart_ventas/services/fcm_service.dart';
 import 'package:smart_ventas/services/firestore_service.dart';
 import 'package:smart_ventas/viewmodels/config_viewmodel.dart';
@@ -10,6 +11,7 @@ import 'package:smart_ventas/viewmodels/config_viewmodel.dart';
 class DashboardViewModel extends ChangeNotifier {
   final FirestoreService _firestore = FirestoreService();
   final ConfigViewModel _configVM;
+  final ApiService _api = ApiService();
 
   int _productosStockBajo = 0;
   int _ventasHoy = 0;
@@ -22,6 +24,7 @@ class DashboardViewModel extends ChangeNotifier {
   List<Producto> _topProductos = [];
   bool _isLoading = true;
   bool _isFirstLoad = true;
+  bool _usingServerData = false;
   Set<String> _prevStockBajoIds = {};
 
   int get productosStockBajo => _productosStockBajo;
@@ -34,6 +37,7 @@ class DashboardViewModel extends ChangeNotifier {
   List<Venta> get ultimasVentas => _ultimasVentas;
   List<Producto> get topProductos => _topProductos;
   bool get isLoading => _isLoading;
+  bool get usingServerData => _usingServerData;
 
   StreamSubscription? _productosSub;
   StreamSubscription? _ventasSub;
@@ -55,12 +59,14 @@ class DashboardViewModel extends ChangeNotifier {
     _clientesSub?.cancel();
     _proveedoresSub?.cancel();
     _authSub?.cancel();
+    _api.dispose();
     super.dispose();
   }
 
   void _init() {
     _isLoading = true;
     _isFirstLoad = true;
+    _usingServerData = false;
     _notifyIfNeeded();
 
     _productosSub?.cancel();
@@ -86,16 +92,22 @@ class DashboardViewModel extends ChangeNotifier {
     });
 
     _clientesSub = _firestore.getClientes().listen((clientes) {
-      _totalCuentasCobrar =
-          clientes.fold(0.0, (s, c) => s + c.deuda);
+      if (!_usingServerData) {
+        _totalCuentasCobrar =
+            clientes.fold(0.0, (s, c) => s + c.deuda);
+      }
       _notifyIfNeeded();
     });
 
     _proveedoresSub = _firestore.getProveedores().listen((proveedores) {
-      _totalCuentasPagar =
-          proveedores.fold(0.0, (s, p) => s + p.saldoPendiente);
+      if (!_usingServerData) {
+        _totalCuentasPagar =
+            proveedores.fold(0.0, (s, p) => s + p.saldoPendiente);
+      }
       _notifyIfNeeded();
     });
+
+    _fetchFromServer();
   }
 
   void _processProductos(List<Producto> productos) {
@@ -104,7 +116,9 @@ class DashboardViewModel extends ChangeNotifier {
         .map((p) => p.id)
         .toSet();
 
-    _productosStockBajo = stockBajoIds.length;
+    if (!_usingServerData) {
+      _productosStockBajo = stockBajoIds.length;
+    }
 
     if (!_isFirstLoad && _configVM.notificationsEnabled) {
       final nuevosIds = stockBajoIds.difference(_prevStockBajoIds);
@@ -129,29 +143,30 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   void _calcularMetricasVentas(List<Venta> ventas) {
-    final now = DateTime.now();
-    final hoy = DateTime(now.year, now.month, now.day);
-    final inicioSemana = hoy.subtract(Duration(days: now.weekday - 1));
+    if (!_usingServerData) {
+      final now = DateTime.now();
+      final hoy = DateTime(now.year, now.month, now.day);
+      final inicioSemana = hoy.subtract(Duration(days: now.weekday - 1));
+      final completadas = ventas.where((v) => v.estado == 'completada').toList();
 
-    final completadas = ventas.where((v) => v.estado == 'completada').toList();
+      _ventasHoy = completadas.where((v) => v.fecha.isAfter(hoy)).length;
+      _totalVentasHoy = completadas
+          .where((v) => v.fecha.isAfter(hoy))
+          .fold(0.0, (s, v) => s + v.total);
+      _totalVentasSemana = completadas
+          .where((v) => v.fecha.isAfter(inicioSemana))
+          .fold(0.0, (s, v) => s + v.total);
 
-    _ventasHoy = completadas.where((v) => v.fecha.isAfter(hoy)).length;
-    _totalVentasHoy = completadas
-        .where((v) => v.fecha.isAfter(hoy))
-        .fold(0.0, (s, v) => s + v.total);
-    _totalVentasSemana = completadas
-        .where((v) => v.fecha.isAfter(inicioSemana))
-        .fold(0.0, (s, v) => s + v.total);
-
-    double ganancia = 0;
-    for (final v in completadas) {
-      double costoItems = 0;
-      for (final item in v.items) {
-        costoItems += item.producto.costo * item.cantidad;
+      double ganancia = 0;
+      for (final v in completadas) {
+        double costoItems = 0;
+        for (final item in v.items) {
+          costoItems += item.producto.costo * item.cantidad;
+        }
+        ganancia += v.total - costoItems;
       }
-      ganancia += v.total - costoItems;
+      _gananciaTotal = ganancia;
     }
-    _gananciaTotal = ganancia;
 
     final sorted = List<Venta>.from(ventas)
       ..sort((a, b) => b.fecha.compareTo(a.fecha));
@@ -175,6 +190,30 @@ class DashboardViewModel extends ChangeNotifier {
         .take(5)
         .map((e) => productoMap[e.key]!)
         .toList();
+  }
+
+  Future<void> _fetchFromServer() async {
+    _usingServerData = false;
+    try {
+      final ok = await _api.authenticate();
+      if (!ok) return;
+
+      final metrics = await _api.getDashboardMetrics();
+      if (metrics != null) {
+        _totalVentasHoy = metrics.ventasHoy;
+        _totalVentasSemana = metrics.ventasSemana;
+        _gananciaTotal = metrics.gananciaTotal;
+        _productosStockBajo = metrics.stockBajo;
+        _totalCuentasCobrar = metrics.cuentasCobrar;
+        _totalCuentasPagar = metrics.cuentasPagar;
+        _ventasHoy = metrics.ventasCountHoy;
+        _usingServerData = true;
+      }
+    } catch (_) {
+    } finally {
+      _isLoading = false;
+      _notifyIfNeeded();
+    }
   }
 
   void _notifyIfNeeded() {

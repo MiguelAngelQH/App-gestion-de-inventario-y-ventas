@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { db } from '@/lib/firebase-admin';
 import { requireAuth } from '@/lib/auth-utils';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const uid = await requireAuth();
+    const uid = await requireAuth(request);
     const ahora = new Date();
     const inicio7 = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() - 6);
     const finHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + 1);
@@ -15,7 +16,7 @@ export async function GET() {
     const ventasPorDia: Record<string, number> = {};
     for (let i = 0; i < 7; i++) {
       const d = new Date(inicio7.getTime() + i * 86400000);
-      ventasPorDia[d.toISOString().split('T')[0]] = 0;
+      ventasPorDia[`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`] = 0;
     }
 
     const ventasPorCategoria: Record<string, number> = {};
@@ -23,10 +24,11 @@ export async function GET() {
 
     for (const doc of ventasSnap.docs) {
       const data: any = doc.data();
+      if (data.estado !== 'completada') continue;
       const fecha = new Date(data.fecha);
       if (fecha < inicio7 || fecha >= finHoy) continue;
 
-      const dia = fecha.toISOString().split('T')[0];
+      const dia = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`;
       if (ventasPorDia[dia] !== undefined) {
         ventasPorDia[dia] += data.total ?? 0;
       }

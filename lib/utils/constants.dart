@@ -37,4 +37,6 @@ class AppConstants {
   ];
 
   static const int splashDuration = 2;
+
+  static const String apiBaseUrl = 'http://172.16.10.31:30349';
 }

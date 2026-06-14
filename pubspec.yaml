@@ -53,6 +53,9 @@ dependencies:
   # UUID for document IDs
   uuid: ^4.5.1
 
+  # HTTP client for API calls
+  http: ^1.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
