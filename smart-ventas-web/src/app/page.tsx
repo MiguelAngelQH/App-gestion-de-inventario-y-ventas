@@ -7,6 +7,7 @@ import MetricCard from '@/components/MetricCard';
 import SalesChart from '@/components/SalesChart';
 import CategoryChart from '@/components/CategoryChart';
 import { formatearMoneda } from '@/lib/types';
+import ExportPDFButton from '@/components/ExportPDFButton';
 
 interface DashboardData {
   ventasHoy: number;
@@ -86,9 +87,12 @@ export default function Dashboard() {
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
-      <motion.div variants={itemVariants}>
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">Dashboard</h1>
-        <p className="text-sm text-[var(--text-secondary)] mt-1">Resumen general de tu negocio</p>
+      <motion.div variants={itemVariants} className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Dashboard</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">Resumen general de tu negocio</p>
+        </div>
+        <ExportPDFButton />
       </motion.div>
 
       <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

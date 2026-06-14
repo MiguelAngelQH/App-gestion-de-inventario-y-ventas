@@ -62,14 +62,17 @@ Aplicación móvil Android para administrar inventarios, ventas, compras, cuenta
 | [Cloud Firestore](https://firebase.google.com/docs/firestore) | Base de datos NoSQL |
 | [Firebase Messaging](https://firebase.google.com/docs/cloud-messaging) | Notificaciones push |
 | [fl_chart](https://pub.dev/packages/fl_chart) | Gráficas interactivas |
+| [API REST (HTTP)](https://pub.dev/packages/http) | Comunicación con backend dashboard |
 
 ### 🏗 Arquitectura
 
 Patrón **MVVM** con `ChangeNotifier` + `ListenableBuilder`:
 
 ```
-UI (Screens) → ViewModels (ChangeNotifier) → Services (Firebase) → Models
+UI (Screens) → ViewModels (ChangeNotifier) → Services (Firebase + REST API) → Models
 ```
+
+La app usa **Firestore** como almacenamiento principal (tiempo real, offline) y consume **API REST** del servidor web para métricas del dashboard como fallback optimizado.
 
 ### 📁 Estructura
 
@@ -163,6 +166,14 @@ docker run -p 3000:3000 \
   smart-ventas-web
 ```
 
+#### Despliegue en K3s
+
+```bash
+docker build -t zaynok/smart-ventas-web:vX .
+docker push zaynok/smart-ventas-web:vX
+kubectl set image deployment/smart-ventas-web web=zaynok/smart-ventas-web:vX -n 2023205111
+```
+
 ---
 
 ## 🔧 Configuración de Firebase
@@ -187,6 +198,7 @@ docker run -p 3000:3000 \
 - [x] Dashboard con métricas
 - [x] Reportes con gráficas
 - [x] Notificaciones push
+- [x] API REST para dashboard (fallback desde servidor)
 - [ ] Exportar reportes a PDF/Excel
 - [ ] Modo oscuro completo
 - [ ] Escáner de código de barras
@@ -201,6 +213,9 @@ docker run -p 3000:3000 \
 - [x] Registro de ventas y compras
 - [x] Gestión de clientes y proveedores
 - [x] Reportes con gráficas
+- [x] Filtro de ventas completadas en dashboard
+- [x] Auto-refresh del dashboard (30s)
+- [x] Soporte de zona horaria Ecuador (TZ)
 - [ ] Exportar reportes a PDF
 - [ ] Modo oscuro
 - [ ] Panel de administración de usuarios

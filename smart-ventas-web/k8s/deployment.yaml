@@ -17,7 +17,7 @@ spec:
       dnsPolicy: Default
       containers:
       - name: web
-        image: zaynok/smart-ventas-web:v6
+        image: zaynok/smart-ventas-web:v15
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
