@@ -137,9 +137,9 @@ class _SplashScreenState extends State<SplashScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              const Color(0xFF1E88E5),
-              const Color(0xFF1565C0),
-              const Color(0xFF0D47A1),
+              const Color(0xFF00897B),
+              const Color(0xFF00695C),
+              const Color(0xFF004D40),
             ],
           ),
         ),
@@ -216,7 +216,7 @@ class _SplashScreenState extends State<SplashScreen>
                       child: Icon(
                         Icons.store_rounded,
                         size: 60,
-                        color: const Color(0xFF1E88E5),
+                        color: const Color(0xFF00897B),
                       ),
                     ),
                   ),

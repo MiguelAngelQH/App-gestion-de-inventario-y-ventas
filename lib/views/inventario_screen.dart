@@ -152,12 +152,8 @@ class InventarioScreen extends StatelessWidget {
   Widget _buildProductoCard(
       BuildContext context, ThemeData theme, Producto producto) {
     return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.outlineVariant),
-      ),
+      margin: const EdgeInsets.only(bottom: 10),
+      surfaceTintColor: Colors.transparent,
       child: InkWell(
         onTap: () => Navigator.push(
           context,
@@ -181,79 +177,93 @@ class InventarioScreen extends StatelessWidget {
           ),
         ),
         onLongPress: () => _confirmarEliminar(context, producto),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(14),
           child: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 50,
+                height: 50,
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(8),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      theme.colorScheme.primaryContainer,
+                      theme.colorScheme.primary.withValues(alpha: 0.3),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
-                  Icons.inventory_2_outlined,
-                  color: theme.colorScheme.onPrimaryContainer,
+                  Icons.inventory_2_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 24,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       producto.nombre,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         _buildInfoChip(
                           Icons.sell_outlined,
                           Formatters.currency(producto.precio),
-                          Colors.green,
+                          theme.colorScheme.primary,
                         ),
                         const SizedBox(width: 8),
                         _buildInfoChip(
                           Icons.category_outlined,
                           producto.categoria,
-                          theme.colorScheme.onSurfaceVariant,
+                          theme.colorScheme.secondary,
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
-              Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: producto.stockBajo
-                          ? Colors.red.withValues(alpha: 0.1)
-                          : Colors.green.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: producto.stockBajo
+                      ? Colors.red.withValues(alpha: 0.1)
+                      : Colors.green.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  children: [
+                    Text(
                       '${producto.stock}',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
+                        fontSize: 18,
                         color:
                             producto.stockBajo ? Colors.red : Colors.green,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'uds',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                    Text(
+                      'uds',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: producto.stockBajo
+                            ? Colors.red.withValues(alpha: 0.7)
+                            : Colors.green.withValues(alpha: 0.7),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),

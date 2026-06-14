@@ -138,9 +138,9 @@ class _LoginScreenState extends State<LoginScreen>
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        const Color(0xFF1E88E5),
-                        const Color(0xFF1565C0),
-                        const Color(0xFF0D47A1),
+                        const Color(0xFF00897B),
+                        const Color(0xFF00695C),
+                        const Color(0xFF004D40),
                       ],
                     ),
                     borderRadius: const BorderRadius.only(
@@ -205,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 child: Icon(
                                   Icons.store_rounded,
                                   size: 40,
-                                  color: const Color(0xFF1E88E5),
+                                  color: const Color(0xFF00897B),
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -374,10 +374,10 @@ class _LoginScreenState extends State<LoginScreen>
                             child: FilledButton(
                               onPressed: isLoading ? null : _login,
                               style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF1E88E5),
+                                backgroundColor: const Color(0xFF00897B),
                                 foregroundColor: Colors.white,
                                 disabledBackgroundColor:
-                                    const Color(0xFF1E88E5).withValues(alpha: 0.4),
+                                    const Color(0xFF00897B).withValues(alpha: 0.4),
                               ),
                               child: isLoading
                                   ? const SizedBox(

@@ -60,19 +60,53 @@ class SmartVentasApp extends StatelessWidget {
     );
   }
 
+  static const _primaryColor = Color(0xFF00695C);
+  static const _secondaryColor = Color(0xFFFF8F00);
+  static const _tertiaryColor = Color(0xFF7B1FA2);
+
   ThemeData _buildLightTheme() {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF1E88E5),
-      brightness: Brightness.light,
+    final colorScheme = ColorScheme.light(
+      primary: _primaryColor,
+      onPrimary: Colors.white,
+      primaryContainer: const Color(0xFFB2DFDB),
+      onPrimaryContainer: const Color(0xFF00251A),
+      secondary: _secondaryColor,
+      onSecondary: Colors.white,
+      secondaryContainer: const Color(0xFFFFECB3),
+      onSecondaryContainer: const Color(0xFF3E2723),
+      tertiary: _tertiaryColor,
+      onTertiary: Colors.white,
+      tertiaryContainer: const Color(0xFFE1BEE7),
+      surface: Colors.white,
+      onSurface: const Color(0xFF1C1B1F),
+      surfaceContainerLow: const Color(0xFFF5F5F5),
+      surfaceContainerHighest: const Color(0xFFE8E8E8),
+      error: const Color(0xFFD32F2F),
+      outlineVariant: const Color(0xFFCAC4D0),
     );
 
     return _buildThemeData(colorScheme);
   }
 
   ThemeData _buildDarkTheme() {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF1E88E5),
-      brightness: Brightness.dark,
+    final colorScheme = ColorScheme.dark(
+      primary: const Color(0xFF80CBC4),
+      onPrimary: const Color(0xFF00382A),
+      primaryContainer: const Color(0xFF005043),
+      onPrimaryContainer: const Color(0xFFB2DFDB),
+      secondary: const Color(0xFFFFD54F),
+      onSecondary: const Color(0xFF3E2723),
+      secondaryContainer: const Color(0xFF5D4037),
+      onSecondaryContainer: const Color(0xFFFFECB3),
+      tertiary: const Color(0xFFCE93D8),
+      onTertiary: const Color(0xFF3E1A5E),
+      tertiaryContainer: const Color(0xFF5C2E7A),
+      surface: const Color(0xFF1C1B1F),
+      onSurface: const Color(0xFFE6E1E5),
+      surfaceContainerLow: const Color(0xFF252529),
+      surfaceContainerHighest: const Color(0xFF38383B),
+      error: const Color(0xFFEF5350),
+      outlineVariant: const Color(0xFF49454F),
     );
 
     return _buildThemeData(colorScheme);
@@ -87,14 +121,22 @@ class SmartVentasApp extends StatelessWidget {
         elevation: 0,
         backgroundColor: colorScheme.surface,
         foregroundColor: colorScheme.onSurface,
-        scrolledUnderElevation: 1,
+        scrolledUnderElevation: 2,
+        titleTextStyle: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: colorScheme.onSurface,
+          letterSpacing: -0.3,
+        ),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
+        shadowColor: Colors.black.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
         clipBehavior: Clip.antiAlias,
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -125,6 +167,10 @@ class SmartVentasApp extends StatelessWidget {
           ),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        labelStyle: TextStyle(
+          color: colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w500,
+        ),
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
@@ -133,6 +179,10 @@ class SmartVentasApp extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
           ),
           elevation: 0,
+          textStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -141,6 +191,10 @@ class SmartVentasApp extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
+          textStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -148,41 +202,81 @@ class SmartVentasApp extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
+          textStyle: const TextStyle(
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        elevation: 0,
+        elevation: 4,
         height: 68,
-        indicatorColor: colorScheme.secondaryContainer,
+        indicatorColor: colorScheme.primaryContainer,
+        indicatorShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return TextStyle(
               fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSecondaryContainer,
+              fontWeight: FontWeight.w700,
+              color: colorScheme.primary,
+              letterSpacing: 0.2,
             );
           }
           return TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: colorScheme.onSurfaceVariant,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(
+              size: 24,
+              color: colorScheme.primary,
+            );
+          }
+          return IconThemeData(
+            size: 22,
             color: colorScheme.onSurfaceVariant,
           );
         }),
       ),
       navigationDrawerTheme: NavigationDrawerThemeData(
-        elevation: 0,
+        elevation: 4,
+        shadowColor: Colors.black.withValues(alpha: 0.15),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        elevation: 2,
+        elevation: 4,
+        extendedIconLabelSpacing: 8,
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
+        ),
+        contentTextStyle: const TextStyle(
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+      ),
+      dividerTheme: DividerThemeData(
+        color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+        thickness: 0.5,
+      ),
+      chipTheme: ChipThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
         ),
       ),
     );

@@ -165,7 +165,7 @@ class DashboardScreen extends StatelessWidget {
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
-                                      color: Color(0xFF1E88E5),
+                                      color: Color(0xFF00897B),
                                     ),
                                   ),
                                 ],
@@ -194,7 +194,7 @@ class DashboardScreen extends StatelessWidget {
                 titulo: 'Ventas Hoy',
                 valor: Formatters.currency(viewModel.totalVentasHoy),
                 icono: Icons.today,
-                color: const Color(0xFF1E88E5),
+                color: const Color(0xFF00897B),
                 subtitulo: '${viewModel.ventasHoy} transacciones',
               ),
             ),

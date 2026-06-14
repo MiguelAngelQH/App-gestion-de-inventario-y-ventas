@@ -116,9 +116,9 @@ class _RegisterScreenState extends State<RegisterScreen>
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        const Color(0xFF1E88E5),
-                        const Color(0xFF1565C0),
-                        const Color(0xFF0D47A1),
+                        const Color(0xFF00897B),
+                        const Color(0xFF00695C),
+                        const Color(0xFF004D40),
                       ],
                     ),
                     borderRadius: const BorderRadius.only(
@@ -181,7 +181,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                               child: Icon(
                                 Icons.person_add_rounded,
                                 size: 40,
-                                color: const Color(0xFF1E88E5),
+                                color: const Color(0xFF00897B),
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -305,10 +305,10 @@ class _RegisterScreenState extends State<RegisterScreen>
                             child: FilledButton(
                               onPressed: isLoading ? null : _register,
                               style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF1E88E5),
+                                backgroundColor: const Color(0xFF00897B),
                                 foregroundColor: Colors.white,
                                 disabledBackgroundColor:
-                                    const Color(0xFF1E88E5).withValues(alpha: 0.4),
+                                    const Color(0xFF00897B).withValues(alpha: 0.4),
                               ),
                               child: isLoading
                                   ? const SizedBox(
