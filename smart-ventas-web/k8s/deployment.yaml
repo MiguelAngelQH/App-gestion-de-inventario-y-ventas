@@ -13,6 +13,8 @@ spec:
       labels:
         app: smart-ventas-web
     spec:
+      hostNetwork: true
+      dnsPolicy: Default
       containers:
       - name: web
         image: zaynok/smart-ventas-web:v15
