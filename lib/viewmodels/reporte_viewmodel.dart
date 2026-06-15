@@ -131,7 +131,8 @@ class ReporteViewModel extends ChangeNotifier {
       map7[start7 + i * 86400000] = 0;
     }
     final conteo = <String, int>{};
-    final productoMap = <String, Producto>{};
+    final nombreMap = <String, String>{};
+    final categoriaMap = <String, String>{};
 
     for (final v in ventas) {
       final esCompletada = v.estado == 'completada';
@@ -151,7 +152,7 @@ class ReporteViewModel extends ChangeNotifier {
 
         double costoItems = 0;
         for (final item in v.items) {
-          costoItems += item.producto.costo * item.cantidad;
+          costoItems += item.costoUnitario * item.cantidad;
         }
         ganancia += v.total - costoItems;
 
@@ -161,14 +162,16 @@ class ReporteViewModel extends ChangeNotifier {
       }
 
       for (final item in v.items) {
-        final cat = item.producto.categoria;
+        final cat = item.categoria;
         final catKey = cat.isNotEmpty ? cat : 'General';
         categorias.update(catKey, (s) => s + item.subtotal,
             ifAbsent: () => item.subtotal);
 
-        conteo.update(item.producto.id, (c) => c + item.cantidad,
-            ifAbsent: () => item.cantidad);
-        productoMap[item.producto.id] = item.producto;
+        final cant = item.cantidad.toInt();
+        conteo.update(item.productoId, (c) => c + cant,
+            ifAbsent: () => cant);
+        nombreMap[item.productoId] = item.productoNombre;
+        categoriaMap[item.productoId] = item.categoria;
       }
     }
 
@@ -192,8 +195,13 @@ class ReporteViewModel extends ChangeNotifier {
     _topProductos = [];
     final limit = sortedEntries.length > 5 ? 5 : sortedEntries.length;
     for (int i = 0; i < limit; i++) {
-      final p = productoMap[sortedEntries[i].key];
-      if (p != null) _topProductos.add(p);
+      final id = sortedEntries[i].key;
+      _topProductos.add(Producto(
+        id: id,
+        nombre: nombreMap[id] ?? '',
+        unidadBase: 'unidad',
+        categoria: categoriaMap[id] ?? 'General',
+      ));
     }
   }
 

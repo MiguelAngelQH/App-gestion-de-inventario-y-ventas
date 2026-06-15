@@ -145,7 +145,7 @@ class DashboardViewModel extends ChangeNotifier {
           unawaited(FcmService().showLocalNotification(
             id: id.hashCode,
             title: 'Stock Bajo',
-            body: '${p.nombre} — stock actual: ${p.stock}',
+            body: '${p.nombre} — stock actual: ${p.stockTotal.toStringAsFixed(1)}',
           ));
         }
       }
@@ -184,7 +184,7 @@ class DashboardViewModel extends ChangeNotifier {
 
         double costo = 0;
         for (final item in v.items) {
-          costo += item.producto.costo * item.cantidad;
+          costo += item.costoUnitario * item.cantidad;
         }
         ganancia += v.total - costo;
       }
@@ -210,12 +210,13 @@ class DashboardViewModel extends ChangeNotifier {
     }
 
     final conteo = <String, int>{};
-    final productoMap = <String, Producto>{};
+    final nombres = <String, String>{};
     for (final v in ventas) {
       for (final item in v.items) {
-        conteo.update(item.producto.id, (c) => c + item.cantidad,
-            ifAbsent: () => item.cantidad);
-        productoMap[item.producto.id] = item.producto;
+        final cant = item.cantidad.toInt();
+        conteo.update(item.productoId, (c) => c + cant,
+            ifAbsent: () => cant);
+        nombres[item.productoId] = item.productoNombre;
       }
     }
     final sortedEntries = conteo.entries.toList()
@@ -223,8 +224,12 @@ class DashboardViewModel extends ChangeNotifier {
     _topProductos = [];
     final limit = sortedEntries.length > 5 ? 5 : sortedEntries.length;
     for (int i = 0; i < limit; i++) {
-      final p = productoMap[sortedEntries[i].key];
-      if (p != null) _topProductos.add(p);
+      final id = sortedEntries[i].key;
+      _topProductos.add(Producto(
+        id: id,
+        nombre: nombres[id] ?? '',
+        unidadBase: 'unidad',
+      ));
     }
   }
 

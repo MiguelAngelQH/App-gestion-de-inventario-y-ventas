@@ -34,7 +34,7 @@ class _CompraFormScreenState extends State<CompraFormScreen> {
 
   void _agregarProducto() {
     final productos = widget.productoViewModel.productos
-        .where((p) => !_items.any((i) => i.producto.id == p.id))
+        .where((p) => !_items.any((i) => i.productoId == p.id))
         .toList();
 
     if (productos.isEmpty) {
@@ -48,10 +48,15 @@ class _CompraFormScreenState extends State<CompraFormScreen> {
       context: context,
       builder: (ctx) => _SeleccionarProductoCompraDialog(
         productos: productos,
-        onSeleccionar: (producto, cantidad, costo) {
+        onSeleccionar: (producto, presentacion, cantidad, costo) {
           setState(() {
             _items.add(ItemCompra(
-              producto: producto,
+              productoId: producto.id,
+              productoNombre: producto.nombre,
+              categoria: producto.categoria,
+              presentacionId: presentacion.id,
+              presentacionNombre: presentacion.nombreVisual,
+              factor: presentacion.factor,
               cantidad: cantidad,
               costoUnitario: costo,
             ));
@@ -162,9 +167,9 @@ class _CompraFormScreenState extends State<CompraFormScreen> {
                         (entry) => Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
-                            title: Text(entry.value.producto.nombre),
+                            title: Text(entry.value.productoNombre),
                             subtitle: Text(
-                              '${entry.value.cantidad} x ${Formatters.currency(entry.value.costoUnitario)}',
+                              '${entry.value.cantidad} ${entry.value.presentacionNombre} x ${Formatters.currency(entry.value.costoUnitario)}',
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -176,7 +181,8 @@ class _CompraFormScreenState extends State<CompraFormScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 IconButton(
-                                  icon: const Icon(Icons.remove_circle_outline,
+                                  icon: const Icon(
+                                      Icons.remove_circle_outline,
                                       color: Colors.red),
                                   onPressed: () => _quitarItem(entry.key),
                                 ),
@@ -252,7 +258,7 @@ class _CompraFormScreenState extends State<CompraFormScreen> {
 
 class _SeleccionarProductoCompraDialog extends StatefulWidget {
   final List<Producto> productos;
-  final void Function(Producto, int, double) onSeleccionar;
+  final void Function(Producto, Presentacion, double, double) onSeleccionar;
 
   const _SeleccionarProductoCompraDialog({
     required this.productos,
@@ -266,9 +272,17 @@ class _SeleccionarProductoCompraDialog extends StatefulWidget {
 
 class _SeleccionarProductoCompraDialogState
     extends State<_SeleccionarProductoCompraDialog> {
-  int _cantidad = 1;
-  double _costo = 0;
   Producto? _seleccionado;
+  Presentacion? _presentacion;
+  final _cantidadCtrl = TextEditingController(text: '1');
+  final _costoCtrl = TextEditingController(text: '0');
+
+  @override
+  void dispose() {
+    _cantidadCtrl.dispose();
+    _costoCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -289,31 +303,57 @@ class _SeleccionarProductoCompraDialogState
             onChanged: (v) {
               setState(() {
                 _seleccionado = v;
-                _costo = v?.costo ?? 0;
+                _presentacion = v?.presentaciones.isNotEmpty == true
+                    ? v!.presentaciones.first
+                    : null;
+                if (_presentacion != null) {
+                  _costoCtrl.text = _presentacion!.costo.toStringAsFixed(2);
+                }
               });
             },
           ),
+          if (_seleccionado != null && _seleccionado!.presentaciones.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            DropdownButtonFormField<Presentacion>(
+              initialValue: _presentacion,
+              decoration: const InputDecoration(labelText: 'Presentación'),
+              items: _seleccionado!.presentaciones
+                  .map((pr) => DropdownMenuItem(
+                        value: pr,
+                        child: Text(
+                            '${pr.nombreVisual} — ${Formatters.currency(pr.costo)}/${pr.unidad}'),
+                      ))
+                  .toList(),
+              onChanged: (v) {
+                setState(() {
+                  _presentacion = v;
+                  if (v != null) {
+                    _costoCtrl.text = v.costo.toStringAsFixed(2);
+                  }
+                });
+              },
+            ),
+          ],
           const SizedBox(height: 16),
           TextField(
             decoration: const InputDecoration(
               labelText: 'Cantidad',
               prefixIcon: Icon(Icons.production_quantity_limits),
             ),
-            keyboardType: TextInputType.number,
-            controller: TextEditingController(text: '1'),
-            onChanged: (v) => _cantidad = int.tryParse(v) ?? 1,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+            controller: _cantidadCtrl,
           ),
           const SizedBox(height: 16),
           TextField(
             decoration: const InputDecoration(
               labelText: 'Costo unitario',
-                prefixText: 'S/ ',
+              prefixText: 'S/ ',
               prefixIcon: Icon(Icons.money_off),
             ),
-            keyboardType: TextInputType.number,
-            controller:
-                TextEditingController(text: _costo.toStringAsFixed(2)),
-            onChanged: (v) => _costo = double.tryParse(v) ?? 0,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+            controller: _costoCtrl,
           ),
         ],
       ),
@@ -323,10 +363,13 @@ class _SeleccionarProductoCompraDialogState
           child: const Text('Cancelar'),
         ),
         FilledButton(
-          onPressed: _seleccionado == null || _costo <= 0
+          onPressed: _seleccionado == null || _presentacion == null
               ? null
               : () {
-                  widget.onSeleccionar(_seleccionado!, _cantidad, _costo);
+                  final cant = double.tryParse(_cantidadCtrl.text) ?? 1;
+                  final costo = double.tryParse(_costoCtrl.text) ?? 0;
+                  widget.onSeleccionar(
+                      _seleccionado!, _presentacion!, cant, costo);
                   Navigator.pop(context);
                 },
           child: const Text('Agregar'),

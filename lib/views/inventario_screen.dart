@@ -180,90 +180,107 @@ class InventarioScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(14),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      theme.colorScheme.primaryContainer,
-                      theme.colorScheme.primary.withValues(alpha: 0.3),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  Icons.inventory_2_rounded,
-                  color: theme.colorScheme.primary,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      producto.nombre,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
+              Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          theme.colorScheme.primaryContainer,
+                          theme.colorScheme.primary.withValues(alpha: 0.3),
+                        ],
                       ),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    const SizedBox(height: 6),
-                    Row(
+                    child: Icon(
+                      Icons.inventory_2_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildInfoChip(
-                          Icons.sell_outlined,
-                          Formatters.currency(producto.precio),
-                          theme.colorScheme.primary,
+                        Text(
+                          producto.nombre,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                          ),
                         ),
-                        const SizedBox(width: 8),
-                        _buildInfoChip(
-                          Icons.category_outlined,
-                          producto.categoria,
-                          theme.colorScheme.secondary,
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: producto.presentaciones.map((pres) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.secondaryContainer
+                                    .withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${Formatters.currency(pres.precio)}/${pres.unidad}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: theme
+                                      .colorScheme.onSecondaryContainer,
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: producto.stockBajo
-                      ? Colors.red.withValues(alpha: 0.1)
-                      : Colors.green.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      '${producto.stock}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color:
-                            producto.stockBajo ? Colors.red : Colors.green,
-                      ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: producto.stockBajo
+                          ? Colors.red.withValues(alpha: 0.1)
+                          : Colors.green.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    Text(
-                      'uds',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: producto.stockBajo
-                            ? Colors.red.withValues(alpha: 0.7)
-                            : Colors.green.withValues(alpha: 0.7),
-                        fontWeight: FontWeight.w500,
-                      ),
+                    child: Column(
+                      children: [
+                        Text(
+                          producto.stockTotal % 1 == 0
+                              ? '${producto.stockTotal.toInt()}'
+                              : producto.stockTotal.toStringAsFixed(1),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                            color: producto.stockBajo
+                                ? Colors.red
+                                : Colors.green,
+                          ),
+                        ),
+                        Text(
+                          producto.unidadBase,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: producto.stockBajo
+                                ? Colors.red.withValues(alpha: 0.7)
+                                : Colors.green.withValues(alpha: 0.7),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -295,20 +312,6 @@ class InventarioScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildInfoChip(IconData icon, String texto, Color color) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 12, color: color),
-        const SizedBox(width: 4),
-        Text(
-          texto,
-          style: TextStyle(fontSize: 11, color: color),
-        ),
-      ],
     );
   }
 }

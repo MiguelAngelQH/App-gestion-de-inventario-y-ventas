@@ -1,51 +1,112 @@
+class Presentacion {
+  String id;
+  String nombreVisual;
+  String unidad;
+  double precio;
+  double costo;
+  double factor;
+
+  Presentacion({
+    String? id,
+    required this.nombreVisual,
+    required this.unidad,
+    required this.precio,
+    required this.costo,
+    required this.factor,
+  }) : id = id ?? '';
+
+  double get ganancia => precio - costo;
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'nombreVisual': nombreVisual,
+        'unidad': unidad,
+        'precio': precio,
+        'costo': costo,
+        'factor': factor,
+      };
+
+  factory Presentacion.fromMap(Map<String, dynamic> map) => Presentacion(
+        id: map['id'] ?? '',
+        nombreVisual: map['nombreVisual'] ?? '',
+        unidad: map['unidad'] ?? 'unidad',
+        precio: (map['precio'] as num?)?.toDouble() ?? 0,
+        costo: (map['costo'] as num?)?.toDouble() ?? 0,
+        factor: (map['factor'] as num?)?.toDouble() ?? 1,
+      );
+
+  Presentacion copyWith({
+    String? nombreVisual,
+    String? unidad,
+    double? precio,
+    double? costo,
+    double? factor,
+  }) =>
+      Presentacion(
+        id: id,
+        nombreVisual: nombreVisual ?? this.nombreVisual,
+        unidad: unidad ?? this.unidad,
+        precio: precio ?? this.precio,
+        costo: costo ?? this.costo,
+        factor: factor ?? this.factor,
+      );
+}
+
 class Producto {
   final String id;
   String nombre;
   String descripcion;
-  double precio;
-  double costo;
-  int stock;
   String codigoBarras;
   String categoria;
+  String unidadBase;
+  double stockTotal;
+  List<Presentacion> presentaciones;
   DateTime fechaCreacion;
 
   Producto({
     required this.id,
     required this.nombre,
     this.descripcion = '',
-    required this.precio,
-    required this.costo,
-    this.stock = 0,
     this.codigoBarras = '',
     this.categoria = 'General',
+    required this.unidadBase,
+    this.stockTotal = 0,
+    List<Presentacion>? presentaciones,
     DateTime? fechaCreacion,
-  }) : fechaCreacion = fechaCreacion ?? DateTime.now();
+  })  : presentaciones = presentaciones ?? [],
+        fechaCreacion = fechaCreacion ?? DateTime.now();
 
-  double get ganancia => precio - costo;
-
-  bool get stockBajo => stock <= 5;
+  bool get stockBajo => stockTotal <= 5;
 
   Map<String, dynamic> toMap() => {
         'id': id,
         'nombre': nombre,
         'descripcion': descripcion,
-        'precio': precio,
-        'costo': costo,
-        'stock': stock,
         'codigoBarras': codigoBarras,
         'categoria': categoria,
+        'unidadBase': unidadBase,
+        'stockTotal': stockTotal,
+        'presentaciones': presentaciones.map((p) => p.toMap()).toList(),
         'fechaCreacion': fechaCreacion.toIso8601String(),
       };
 
-  factory Producto.fromMap(Map<String, dynamic> map) => Producto(
-        id: map['id'],
-        nombre: map['nombre'],
-        descripcion: map['descripcion'] ?? '',
-        precio: (map['precio'] as num).toDouble(),
-        costo: (map['costo'] as num).toDouble(),
-        stock: map['stock'] as int,
-        codigoBarras: map['codigoBarras'] ?? '',
-        categoria: map['categoria'] ?? 'General',
-        fechaCreacion: DateTime.parse(map['fechaCreacion']),
-      );
+  factory Producto.fromMap(Map<String, dynamic> map) {
+    final presentacionesRaw = map['presentaciones'] as List<dynamic>?;
+    return Producto(
+      id: map['id'] ?? '',
+      nombre: map['nombre'] ?? '',
+      descripcion: map['descripcion'] ?? '',
+      codigoBarras: map['codigoBarras'] ?? '',
+      categoria: map['categoria'] ?? 'General',
+      unidadBase: map['unidadBase'] ?? 'unidad',
+      stockTotal: (map['stockTotal'] as num?)?.toDouble() ??
+          (map['stock'] as num?)?.toDouble() ??
+          0,
+      presentaciones: presentacionesRaw
+              ?.map((p) => Presentacion.fromMap(p as Map<String, dynamic>))
+              .toList() ??
+          [],
+      fechaCreacion: DateTime.parse(map['fechaCreacion']),
+    );
+  }
 }

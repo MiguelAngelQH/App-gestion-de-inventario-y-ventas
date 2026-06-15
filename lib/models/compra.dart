@@ -1,36 +1,46 @@
-import 'package:smart_ventas/models/producto.dart';
-
 class ItemCompra {
-  Producto producto;
-  int cantidad;
+  String productoId;
+  String productoNombre;
+  String categoria;
+  String presentacionId;
+  String presentacionNombre;
+  double factor;
+  double cantidad;
   double costoUnitario;
 
   ItemCompra({
-    required this.producto,
-    required this.cantidad,
+    required this.productoId,
+    required this.productoNombre,
+    required this.categoria,
+    required this.presentacionId,
+    required this.presentacionNombre,
+    this.factor = 1,
+    this.cantidad = 1,
     required this.costoUnitario,
   });
 
   double get subtotal => cantidad * costoUnitario;
 
   Map<String, dynamic> toMap() => {
-        'productoId': producto.id,
-        'productoNombre': producto.nombre,
-        'categoria': producto.categoria,
+        'productoId': productoId,
+        'productoNombre': productoNombre,
+        'categoria': categoria,
+        'presentacionId': presentacionId,
+        'presentacionNombre': presentacionNombre,
+        'factor': factor,
         'cantidad': cantidad,
         'costoUnitario': costoUnitario,
         'subtotal': subtotal,
       };
 
   factory ItemCompra.fromMap(Map<String, dynamic> map) => ItemCompra(
-        producto: Producto(
-          id: map['productoId'],
-          nombre: map['productoNombre'] ?? '',
-          precio: 0,
-          costo: (map['costoUnitario'] ?? 0).toDouble(),
-          categoria: map['categoria'] ?? 'General',
-        ),
-        cantidad: map['cantidad'],
+        productoId: map['productoId'] ?? '',
+        productoNombre: map['productoNombre'] ?? '',
+        categoria: map['categoria'] ?? 'General',
+        presentacionId: map['presentacionId'] ?? '',
+        presentacionNombre: map['presentacionNombre'] ?? '',
+        factor: (map['factor'] as num?)?.toDouble() ?? 1,
+        cantidad: (map['cantidad'] as num?)?.toDouble() ?? 1,
         costoUnitario: (map['costoUnitario'] ?? 0).toDouble(),
       );
 }

@@ -197,7 +197,7 @@ class VentasScreen extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        '${item.cantidad}x ${item.producto.nombre}',
+                        '${item.cantidad}x ${item.productoNombre}',
                         style: theme.textTheme.bodyMedium,
                       ),
                     ),

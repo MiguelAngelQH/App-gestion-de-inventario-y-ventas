@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:smart_ventas/services/fcm_service.dart';
 import 'package:smart_ventas/utils/constants.dart';
 import 'package:smart_ventas/viewmodels/config_viewmodel.dart';
+import 'package:smart_ventas/viewmodels/precios_viewmodel.dart';
+import 'package:smart_ventas/views/configuracion_precios_screen.dart';
 
 class ConfiguracionScreen extends StatefulWidget {
   final ConfigViewModel viewModel;
@@ -16,6 +18,7 @@ class ConfiguracionScreen extends StatefulWidget {
 class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   String? _token;
   bool _copiado = false;
+  late final PreciosViewModel _preciosVM;
 
   @override
   void initState() {
@@ -24,6 +27,13 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     FcmService().onTokenChanged = (t) {
       if (mounted) setState(() => _token = t);
     };
+    _preciosVM = PreciosViewModel();
+  }
+
+  @override
+  void dispose() {
+    _preciosVM.dispose();
+    super.dispose();
   }
 
   @override
@@ -88,6 +98,44 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                       trailing: const Icon(Icons.edit),
                       onTap: () =>
                           _editarTexto(context, 'Teléfono', vm.phone, vm.setPhone),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side:
+                      BorderSide(color: theme.colorScheme.outlineVariant),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Text(
+                        'Productos',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.price_change_outlined),
+                      title: const Text('Configuración de Precios'),
+                      subtitle: const Text('Editar precios y costos de todas las presentaciones'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ConfiguracionPreciosScreen(
+                            viewModel: _preciosVM,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),

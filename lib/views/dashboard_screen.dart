@@ -161,7 +161,9 @@ class DashboardScreen extends StatelessWidget {
                                     ),
                                   ),
                                   Text(
-                                    Formatters.currency(entry.value.precio),
+                                    Formatters.currency(entry.value.presentaciones.isNotEmpty
+                                        ? entry.value.presentaciones.first.precio
+                                        : 0),
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,

@@ -73,9 +73,9 @@ class FirestoreService {
     batch.set(ventaRef, _withUid(v.toMap()..remove('id')));
 
     for (final item in v.items) {
-      final prodRef = _productos.doc(item.producto.id);
+      final prodRef = _productos.doc(item.productoId);
       batch.update(prodRef, {
-        'stock': FieldValue.increment(-item.cantidad),
+        'stockTotal': FieldValue.increment(-(item.cantidad * item.factor)),
       });
     }
 
@@ -104,15 +104,41 @@ class FirestoreService {
     batch.set(compraRef, _withUid(c.toMap()..remove('id')));
 
     for (final item in c.items) {
-      final prodRef = _productos.doc(item.producto.id);
+      final prodRef = _productos.doc(item.productoId);
       batch.update(prodRef, {
-        'stock': FieldValue.increment(item.cantidad),
-        'costo': item.costoUnitario,
+        'stockTotal': FieldValue.increment(item.cantidad * item.factor),
       });
     }
 
     await batch.commit();
+
+    for (final item in c.items) {
+      await _actualizarCostoPresentacion(item.productoId, item.presentacionId, item.costoUnitario);
+    }
+
     return compraRef.id;
+  }
+
+  Future<void> _actualizarCostoPresentacion(
+      String productoId, String presentacionId, double nuevoCosto) async {
+    final doc = await _productos.doc(productoId).get();
+    if (!doc.exists) return;
+    final data = doc.data() as Map<String, dynamic>;
+    final presentaciones = (data['presentaciones'] as List<dynamic>?)
+            ?.map((p) => Map<String, dynamic>.from(p as Map))
+            .toList() ??
+        [];
+    bool updated = false;
+    for (final p in presentaciones) {
+      if (p['id'] == presentacionId) {
+        p['costo'] = nuevoCosto;
+        updated = true;
+        break;
+      }
+    }
+    if (updated) {
+      await _productos.doc(productoId).update({'presentaciones': presentaciones});
+    }
   }
 
   Future<void> updateCompraEstado(String id, String estado) =>
@@ -269,7 +295,7 @@ class FirestoreService {
   Future<int> productosStockBajoCount() async {
     try {
       final snap =
-          await _userQuery(_productos).where('stock', isLessThanOrEqualTo: 5).get();
+          await _userQuery(_productos).where('stockTotal', isLessThanOrEqualTo: 5).get();
       return snap.docs.length;
     } catch (_) {
       return 0;
@@ -417,7 +443,7 @@ class FirestoreService {
 
   Future<bool> verificarStockBajo() async {
     final snap =
-        await _userQuery(_productos).where('stock', isLessThanOrEqualTo: 5).get();
+        await _userQuery(_productos).where('stockTotal', isLessThanOrEqualTo: 5).get();
     return snap.docs.isNotEmpty;
   }
 
@@ -467,6 +493,44 @@ class FirestoreService {
 
   Stream<QuerySnapshot<Object?>> streamVentas() =>
       _ventas.where('uid', isEqualTo: _uid).snapshots();
+
+  // ============ PRESENTACIONES ============
+
+  Future<void> actualizarPrecioPresentacion(
+      String productoId, String presentacionId, double nuevoPrecio) async {
+    final doc = await _productos.doc(productoId).get();
+    if (!doc.exists) return;
+    final data = doc.data() as Map<String, dynamic>;
+    final presentaciones = (data['presentaciones'] as List<dynamic>?)
+            ?.map((p) => Map<String, dynamic>.from(p as Map))
+            .toList() ??
+        [];
+    for (final p in presentaciones) {
+      if (p['id'] == presentacionId) {
+        p['precio'] = nuevoPrecio;
+        break;
+      }
+    }
+    await _productos.doc(productoId).update({'presentaciones': presentaciones});
+  }
+
+  Future<void> actualizarCostoPresentacion(
+      String productoId, String presentacionId, double nuevoCosto) async {
+    final doc = await _productos.doc(productoId).get();
+    if (!doc.exists) return;
+    final data = doc.data() as Map<String, dynamic>;
+    final presentaciones = (data['presentaciones'] as List<dynamic>?)
+            ?.map((p) => Map<String, dynamic>.from(p as Map))
+            .toList() ??
+        [];
+    for (final p in presentaciones) {
+      if (p['id'] == presentacionId) {
+        p['costo'] = nuevoCosto;
+        break;
+      }
+    }
+    await _productos.doc(productoId).update({'presentaciones': presentaciones});
+  }
 
   // ============ CONFIG ============
 

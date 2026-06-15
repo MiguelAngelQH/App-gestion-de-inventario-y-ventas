@@ -36,7 +36,8 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
 
   void _agregarProducto() {
     final productos = widget.productoViewModel.productos
-        .where((p) => p.stock > 0 && !_items.any((i) => i.producto.id == p.id))
+        .where((p) =>
+            p.stockTotal > 0 && !_items.any((i) => i.productoId == p.id))
         .toList();
 
     if (productos.isEmpty) {
@@ -50,12 +51,18 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
       context: context,
       builder: (ctx) => _SeleccionarProductoDialog(
         productos: productos,
-        onSeleccionar: (producto, cantidad) {
+        onSeleccionar: (producto, presentacion, cantidad) {
           setState(() {
             _items.add(ItemVenta(
-              producto: producto,
+              productoId: producto.id,
+              productoNombre: producto.nombre,
+              categoria: producto.categoria,
+              presentacionId: presentacion.id,
+              presentacionNombre: presentacion.nombreVisual,
+              factor: presentacion.factor,
               cantidad: cantidad,
-              precioUnitario: producto.precio,
+              precioUnitario: presentacion.precio,
+              costoUnitario: presentacion.costo,
             ));
           });
         },
@@ -133,7 +140,8 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                   items: AppConstants.metodosPago
                       .map((m) => DropdownMenuItem(value: m, child: Text(m)))
                       .toList(),
-                  onChanged: (v) => setState(() => _metodoPago = v ?? 'Efectivo'),
+                  onChanged: (v) =>
+                      setState(() => _metodoPago = v ?? 'Efectivo'),
                 ),
                 const SizedBox(height: 20),
                 Row(
@@ -171,9 +179,9 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                         (entry) => Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
-                            title: Text(entry.value.producto.nombre),
+                            title: Text(entry.value.productoNombre),
                             subtitle: Text(
-                              '${entry.value.cantidad} x ${Formatters.currency(entry.value.precioUnitario)}',
+                              '${entry.value.cantidad} ${entry.value.presentacionNombre} x ${Formatters.currency(entry.value.precioUnitario)}',
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -185,7 +193,8 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 IconButton(
-                                  icon: const Icon(Icons.remove_circle_outline,
+                                  icon: const Icon(
+                                      Icons.remove_circle_outline,
                                       color: Colors.red),
                                   onPressed: () => _quitarItem(entry.key),
                                 ),
@@ -261,7 +270,7 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
 
 class _SeleccionarProductoDialog extends StatefulWidget {
   final List<Producto> productos;
-  final void Function(Producto, int) onSeleccionar;
+  final void Function(Producto, Presentacion, double) onSeleccionar;
 
   const _SeleccionarProductoDialog({
     required this.productos,
@@ -275,8 +284,15 @@ class _SeleccionarProductoDialog extends StatefulWidget {
 
 class _SeleccionarProductoDialogState
     extends State<_SeleccionarProductoDialog> {
-  int _cantidad = 1;
   Producto? _seleccionado;
+  Presentacion? _presentacion;
+  final _cantidadCtrl = TextEditingController(text: '1');
+
+  @override
+  void dispose() {
+    _cantidadCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -291,21 +307,44 @@ class _SeleccionarProductoDialogState
             items: widget.productos
                 .map((p) => DropdownMenuItem(
                       value: p,
-                      child: Text('${p.nombre} (stock: ${p.stock})'),
+                      child: Text(
+                          '${p.nombre} (stock: ${p.stockTotal.toStringAsFixed(1)} ${p.unidadBase})'),
                     ))
                 .toList(),
-            onChanged: (v) => setState(() => _seleccionado = v),
+            onChanged: (v) {
+              setState(() {
+                _seleccionado = v;
+                _presentacion = v?.presentaciones.isNotEmpty == true
+                    ? v!.presentaciones.first
+                    : null;
+              });
+            },
           ),
+          if (_seleccionado != null && _seleccionado!.presentaciones.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            DropdownButtonFormField<Presentacion>(
+              initialValue: _presentacion,
+              decoration: const InputDecoration(labelText: 'Presentación'),
+              items: _seleccionado!.presentaciones
+                  .map((pr) => DropdownMenuItem(
+                        value: pr,
+                        child: Text(
+                            '${pr.nombreVisual} — ${Formatters.currency(pr.precio)}/${pr.unidad}'),
+                      ))
+                  .toList(),
+              onChanged: (v) =>
+                  setState(() => _presentacion = v),
+            ),
+          ],
           const SizedBox(height: 16),
           TextField(
             decoration: const InputDecoration(
               labelText: 'Cantidad',
               prefixIcon: Icon(Icons.production_quantity_limits),
             ),
-            keyboardType: TextInputType.number,
-            controller: TextEditingController(text: '1'),
-            onChanged: (v) =>
-                _cantidad = int.tryParse(v) ?? 1,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+            controller: _cantidadCtrl,
           ),
         ],
       ),
@@ -315,10 +354,12 @@ class _SeleccionarProductoDialogState
           child: const Text('Cancelar'),
         ),
         FilledButton(
-          onPressed: _seleccionado == null
+          onPressed: _seleccionado == null || _presentacion == null
               ? null
               : () {
-                  widget.onSeleccionar(_seleccionado!, _cantidad);
+                  final cant = double.tryParse(_cantidadCtrl.text) ?? 1;
+                  widget.onSeleccionar(
+                      _seleccionado!, _presentacion!, cant);
                   Navigator.pop(context);
                 },
           child: const Text('Agregar'),

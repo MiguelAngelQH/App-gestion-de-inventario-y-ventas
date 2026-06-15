@@ -358,7 +358,9 @@ class ReportesScreen extends StatelessWidget {
               title: Text(producto.nombre),
               subtitle: Text(producto.categoria),
               trailing: Text(
-                Formatters.currency(producto.precio),
+                producto.presentaciones.isNotEmpty
+                    ? Formatters.currency(producto.presentaciones.first.precio)
+                    : '-',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
