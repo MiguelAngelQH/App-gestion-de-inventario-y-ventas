@@ -228,7 +228,6 @@ class DashboardViewModel extends ChangeNotifier {
       _topProductos.add(Producto(
         id: id,
         nombre: nombres[id] ?? '',
-        unidadBase: 'unidad',
       ));
     }
   }

@@ -58,8 +58,7 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
               productoNombre: producto.nombre,
               categoria: producto.categoria,
               presentacionId: presentacion.id,
-              presentacionNombre: presentacion.nombreVisual,
-              factor: presentacion.factor,
+              presentacionNombre: presentacion.nombre,
               cantidad: cantidad,
               precioUnitario: presentacion.precio,
               costoUnitario: presentacion.costo,
@@ -301,41 +300,39 @@ class _SeleccionarProductoDialogState
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          DropdownButtonFormField<Producto>(
-            initialValue: _seleccionado,
-            decoration: const InputDecoration(labelText: 'Producto'),
-            items: widget.productos
-                .map((p) => DropdownMenuItem(
-                      value: p,
-                      child: Text(
-                          '${p.nombre} (stock: ${p.stockTotal.toStringAsFixed(1)} ${p.unidadBase})'),
-                    ))
-                .toList(),
-            onChanged: (v) {
-              setState(() {
-                _seleccionado = v;
-                _presentacion = v?.presentaciones.isNotEmpty == true
-                    ? v!.presentaciones.first
-                    : null;
-              });
-            },
-          ),
-          if (_seleccionado != null && _seleccionado!.presentaciones.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            DropdownButtonFormField<Presentacion>(
-              initialValue: _presentacion,
-              decoration: const InputDecoration(labelText: 'Presentación'),
-              items: _seleccionado!.presentaciones
-                  .map((pr) => DropdownMenuItem(
-                        value: pr,
-                        child: Text(
-                            '${pr.nombreVisual} — ${Formatters.currency(pr.precio)}/${pr.unidad}'),
+            DropdownButtonFormField<Producto>(
+              initialValue: _seleccionado,
+              decoration: const InputDecoration(labelText: 'Producto'),
+              items: widget.productos
+                  .map((p) => DropdownMenuItem(
+                        value: p,
+                        child: Text('${p.nombre} (stock: ${p.stockTotal.toStringAsFixed(1)})'),
                       ))
                   .toList(),
-              onChanged: (v) =>
-                  setState(() => _presentacion = v),
+              onChanged: (v) {
+                setState(() {
+                  _seleccionado = v;
+                  _presentacion = v?.presentaciones.isNotEmpty == true
+                      ? v!.presentaciones.first
+                      : null;
+                });
+              },
             ),
-          ],
+            if (_seleccionado != null && _seleccionado!.presentaciones.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              DropdownButtonFormField<Presentacion>(
+                initialValue: _presentacion,
+                decoration: const InputDecoration(labelText: 'Variante'),
+                items: _seleccionado!.presentaciones
+                    .map((pr) => DropdownMenuItem(
+                          value: pr,
+                          child: Text('${pr.nombre} — ${Formatters.currency(pr.precio)}/${pr.unidad} (stock: ${pr.stock.toStringAsFixed(1)})'),
+                        ))
+                    .toList(),
+                onChanged: (v) =>
+                    setState(() => _presentacion = v),
+              ),
+            ],
           const SizedBox(height: 16),
           TextField(
             decoration: const InputDecoration(

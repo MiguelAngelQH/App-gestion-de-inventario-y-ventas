@@ -217,7 +217,7 @@ class InventarioScreen extends StatelessWidget {
                             fontSize: 15,
                           ),
                         ),
-                        if (producto.marca.isNotEmpty)
+                          if (producto.marca.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 2),
                             child: Text(
@@ -228,23 +228,29 @@ class InventarioScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.secondaryContainer
-                                .withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${Formatters.currency(producto.precio)}/${producto.unidadBase}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: theme
-                                  .colorScheme.onSecondaryContainer,
-                            ),
-                          ),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: producto.presentaciones.map((pr) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.secondaryContainer
+                                    .withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '${Formatters.currency(pr.precio)}/${pr.unidad}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: theme
+                                      .colorScheme.onSecondaryContainer,
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
                       ],
                     ),
@@ -273,7 +279,7 @@ class InventarioScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          producto.unidadBase,
+                          'stock',
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: producto.stockBajo
                                 ? Colors.red.withValues(alpha: 0.7)

@@ -87,9 +87,18 @@ class FirestoreService {
 
     for (final item in v.items) {
       final prodRef = _productos.doc(item.productoId);
-      batch.update(prodRef, {
-        'stockTotal': FieldValue.increment(-(item.cantidad * item.factor)),
-      });
+      await _actualizarStockVariante(item.productoId, item.presentacionId, -item.cantidad);
+      final prodDoc = await prodRef.get();
+      final prodData = prodDoc.data() as Map<String, dynamic>?;
+      if (prodData != null) {
+        final presentaciones = (prodData['presentaciones'] as List<dynamic>?)
+                ?.map((p) => Map<String, dynamic>.from(p as Map)).toList() ?? [];
+        double total = 0;
+        for (final p in presentaciones) {
+          total += (p['stock'] as num?)?.toDouble() ?? 0;
+        }
+        batch.update(prodRef, {'stockTotal': total});
+      }
     }
 
     await batch.commit();
@@ -118,9 +127,18 @@ class FirestoreService {
 
     for (final item in c.items) {
       final prodRef = _productos.doc(item.productoId);
-      batch.update(prodRef, {
-        'stockTotal': FieldValue.increment(item.cantidad * item.factor),
-      });
+      await _actualizarStockVariante(item.productoId, item.presentacionId, item.cantidad);
+      final prodDoc = await prodRef.get();
+      final prodData = prodDoc.data() as Map<String, dynamic>?;
+      if (prodData != null) {
+        final presentaciones = (prodData['presentaciones'] as List<dynamic>?)
+                ?.map((p) => Map<String, dynamic>.from(p as Map)).toList() ?? [];
+        double total = 0;
+        for (final p in presentaciones) {
+          total += (p['stock'] as num?)?.toDouble() ?? 0;
+        }
+        batch.update(prodRef, {'stockTotal': total});
+      }
     }
 
     await batch.commit();
@@ -157,6 +175,23 @@ class FirestoreService {
   Future<void> updateCompraEstado(String id, String estado) =>
       _compras.doc(id).update({'estado': estado});
 
+  Future<void> _actualizarStockVariante(
+      String productoId, String presentacionId, double cantidad) async {
+    final doc = await _productos.doc(productoId).get();
+    if (!doc.exists) return;
+    final data = doc.data() as Map<String, dynamic>;
+    final presentaciones = (data['presentaciones'] as List<dynamic>?)
+            ?.map((p) => Map<String, dynamic>.from(p as Map))
+            .toList() ?? [];
+    for (final p in presentaciones) {
+      if (p['id'] == presentacionId) {
+        p['stock'] = ((p['stock'] as num?)?.toDouble() ?? 0) + cantidad;
+        break;
+      }
+    }
+    await _productos.doc(productoId).update({'presentaciones': presentaciones});
+  }
+
   Future<void> deleteVenta(String id) async {
     final doc = await _ventas.doc(id).get();
     if (!doc.exists) return;
@@ -169,11 +204,19 @@ class FirestoreService {
     final items = data['items'] as List<dynamic>? ?? [];
     for (final item in items) {
       final prodRef = _productos.doc(item['productoId'] as String);
-      batch.update(prodRef, {
-        'stockTotal': FieldValue.increment(
-            ((item['cantidad'] ?? 0) as num).toDouble() *
-                ((item['factor'] ?? 1) as num).toDouble()),
-      });
+      await _actualizarStockVariante(
+          item['productoId'], item['presentacionId'], (item['cantidad'] ?? 0).toDouble());
+      final prodDoc = await prodRef.get();
+      final prodData = prodDoc.data() as Map<String, dynamic>?;
+      if (prodData != null) {
+        final presentaciones = (prodData['presentaciones'] as List<dynamic>?)
+                ?.map((p) => Map<String, dynamic>.from(p as Map)).toList() ?? [];
+        double total = 0;
+        for (final p in presentaciones) {
+          total += (p['stock'] as num?)?.toDouble() ?? 0;
+        }
+        batch.update(prodRef, {'stockTotal': total});
+      }
     }
     await batch.commit();
   }
@@ -190,11 +233,19 @@ class FirestoreService {
     final items = data['items'] as List<dynamic>? ?? [];
     for (final item in items) {
       final prodRef = _productos.doc(item['productoId'] as String);
-      batch.update(prodRef, {
-        'stockTotal': FieldValue.increment(
-            -((item['cantidad'] ?? 0) as num).toDouble() *
-                ((item['factor'] ?? 1) as num).toDouble()),
-      });
+      await _actualizarStockVariante(
+          item['productoId'], item['presentacionId'], -(item['cantidad'] ?? 0).toDouble());
+      final prodDoc = await prodRef.get();
+      final prodData = prodDoc.data() as Map<String, dynamic>?;
+      if (prodData != null) {
+        final presentaciones = (prodData['presentaciones'] as List<dynamic>?)
+                ?.map((p) => Map<String, dynamic>.from(p as Map)).toList() ?? [];
+        double total = 0;
+        for (final p in presentaciones) {
+          total += (p['stock'] as num?)?.toDouble() ?? 0;
+        }
+        batch.update(prodRef, {'stockTotal': total});
+      }
     }
     await batch.commit();
   }
@@ -274,8 +325,10 @@ class FirestoreService {
                 'id': doc.id,
               })).toList());
 
-  Future<void> addProveedor(Proveedor p) =>
-      _proveedores.add(_withUid(p.toMap()..remove('id')));
+  Future<String> addProveedor(Proveedor p) async {
+    final ref = await _proveedores.add(_withUid(p.toMap()..remove('id')));
+    return ref.id;
+  }
 
   Future<void> updateProveedor(Proveedor p) =>
       _proveedores.doc(p.id).update(p.toMap()..remove('id'));

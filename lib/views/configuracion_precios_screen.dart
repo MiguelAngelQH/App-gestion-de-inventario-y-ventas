@@ -52,7 +52,7 @@ class ConfiguracionPreciosScreen extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              pres.nombreVisual,
+                              pres.nombre,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: theme.colorScheme.onSurfaceVariant,

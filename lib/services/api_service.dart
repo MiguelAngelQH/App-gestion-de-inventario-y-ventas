@@ -119,6 +119,47 @@ class ApiService {
         if (_token != null) 'Authorization': 'Bearer $_token',
       };
 
+  Future<Map<String, dynamic>?> getProductoBarcode(String codigo) async {
+    try {
+      final res = await _client.get(
+        Uri.parse('$_baseUrl/api/productos/barcode/$codigo'),
+        headers: _headers,
+      );
+      if (res.statusCode == 404) return null;
+      if (res.statusCode != 200) return null;
+      return jsonDecode(res.body) as Map<String, dynamic>;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<bool> contributeBarcode({
+    required String codigo,
+    required String nombre,
+    String descripcion = '',
+    String marca = '',
+    String proveedorNombre = '',
+    String categoria = 'General',
+  }) async {
+    try {
+      final res = await _client.post(
+        Uri.parse('$_baseUrl/api/productos/barcode/$codigo'),
+        headers: _headers,
+        body: jsonEncode({
+          'codigo': codigo,
+          'nombre': nombre,
+          'descripcion': descripcion,
+          'marca': marca,
+          'proveedorNombre': proveedorNombre,
+          'categoria': categoria,
+        }),
+      );
+      return res.statusCode == 201;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<DashboardMetrics?> getDashboardMetrics() async {
     try {
       final res = await _client.get(

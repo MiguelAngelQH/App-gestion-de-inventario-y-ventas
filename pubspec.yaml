@@ -56,6 +56,9 @@ dependencies:
   # HTTP client for API calls
   http: ^1.2.0
 
+  # Barcode scanner
+  mobile_scanner: ^6.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

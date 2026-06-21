@@ -199,7 +199,6 @@ class ReporteViewModel extends ChangeNotifier {
       _topProductos.add(Producto(
         id: id,
         nombre: nombreMap[id] ?? '',
-        unidadBase: 'unidad',
         categoria: categoriaMap[id] ?? 'General',
       ));
     }

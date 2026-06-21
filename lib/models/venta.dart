@@ -4,7 +4,6 @@ class ItemVenta {
   String categoria;
   String presentacionId;
   String presentacionNombre;
-  double factor;
   double cantidad;
   double precioUnitario;
   double costoUnitario;
@@ -15,7 +14,6 @@ class ItemVenta {
     required this.categoria,
     required this.presentacionId,
     required this.presentacionNombre,
-    this.factor = 1,
     this.cantidad = 1,
     required this.precioUnitario,
     this.costoUnitario = 0,
@@ -29,7 +27,6 @@ class ItemVenta {
         'categoria': categoria,
         'presentacionId': presentacionId,
         'presentacionNombre': presentacionNombre,
-        'factor': factor,
         'cantidad': cantidad,
         'precioUnitario': precioUnitario,
         'subtotal': subtotal,
@@ -42,7 +39,6 @@ class ItemVenta {
         categoria: map['categoria'] ?? 'General',
         presentacionId: map['presentacionId'] ?? '',
         presentacionNombre: map['presentacionNombre'] ?? '',
-        factor: (map['factor'] as num?)?.toDouble() ?? 1,
         cantidad: (map['cantidad'] as num?)?.toDouble() ?? 1,
         precioUnitario: (map['precioUnitario'] ?? 0).toDouble(),
         costoUnitario: (map['costoUnitario'] ?? 0).toDouble(),

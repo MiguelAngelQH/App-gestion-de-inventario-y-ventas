@@ -55,8 +55,7 @@ class _CompraFormScreenState extends State<CompraFormScreen> {
               productoNombre: producto.nombre,
               categoria: producto.categoria,
               presentacionId: presentacion.id,
-              presentacionNombre: presentacion.nombreVisual,
-              factor: presentacion.factor,
+              presentacionNombre: presentacion.nombre,
               cantidad: cantidad,
               costoUnitario: costo,
             ));
@@ -316,12 +315,11 @@ class _SeleccionarProductoCompraDialogState
             const SizedBox(height: 16),
             DropdownButtonFormField<Presentacion>(
               initialValue: _presentacion,
-              decoration: const InputDecoration(labelText: 'Presentación'),
+              decoration: const InputDecoration(labelText: 'Variante'),
               items: _seleccionado!.presentaciones
                   .map((pr) => DropdownMenuItem(
                         value: pr,
-                        child: Text(
-                            '${pr.nombreVisual} — ${Formatters.currency(pr.costo)}/${pr.unidad}'),
+                        child: Text('${pr.nombre} — ${Formatters.currency(pr.costo)}/${pr.unidad}'),
                       ))
                   .toList(),
               onChanged: (v) {

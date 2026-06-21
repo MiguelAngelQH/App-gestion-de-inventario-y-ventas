@@ -129,6 +129,19 @@ class ProductoViewModel extends ChangeNotifier {
   String proveedorNombre(String id) =>
       _proveedores.where((p) => p.id == id).firstOrNull?.nombre ?? '';
 
+  Future<String> crearProveedorSiNoExiste(String nombre) async {
+    final existente = _proveedores.where(
+      (p) => p.nombre.toLowerCase() == nombre.toLowerCase(),
+    ).firstOrNull;
+    if (existente != null) return existente.id;
+
+    final nuevoId = await _firestore.addProveedor(Proveedor(
+      id: '',
+      nombre: nombre,
+    ));
+    return nuevoId;
+  }
+
   void clearError() {
     _error = null;
     notifyListeners();
