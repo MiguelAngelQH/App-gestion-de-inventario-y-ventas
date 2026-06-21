@@ -58,8 +58,13 @@ class Producto {
   String descripcion;
   String codigoBarras;
   String categoria;
+  String marca;
+  String proveedorId;
+  String proveedorNombre;
   String unidadBase;
   double stockTotal;
+  double precio;
+  double costo;
   List<Presentacion> presentaciones;
   DateTime fechaCreacion;
 
@@ -69,14 +74,20 @@ class Producto {
     this.descripcion = '',
     this.codigoBarras = '',
     this.categoria = 'General',
+    this.marca = '',
+    this.proveedorId = '',
+    this.proveedorNombre = '',
     required this.unidadBase,
     this.stockTotal = 0,
+    this.precio = 0,
+    this.costo = 0,
     List<Presentacion>? presentaciones,
     DateTime? fechaCreacion,
   })  : presentaciones = presentaciones ?? [],
         fechaCreacion = fechaCreacion ?? DateTime.now();
 
   bool get stockBajo => stockTotal <= 5;
+  double get ganancia => precio - costo;
 
   Map<String, dynamic> toMap() => {
         'id': id,
@@ -84,8 +95,13 @@ class Producto {
         'descripcion': descripcion,
         'codigoBarras': codigoBarras,
         'categoria': categoria,
+        'marca': marca,
+        'proveedorId': proveedorId,
+        'proveedorNombre': proveedorNombre,
         'unidadBase': unidadBase,
         'stockTotal': stockTotal,
+        'precio': precio,
+        'costo': costo,
         'presentaciones': presentaciones.map((p) => p.toMap()).toList(),
         'fechaCreacion': fechaCreacion.toIso8601String(),
       };
@@ -98,10 +114,15 @@ class Producto {
       descripcion: map['descripcion'] ?? '',
       codigoBarras: map['codigoBarras'] ?? '',
       categoria: map['categoria'] ?? 'General',
+      marca: map['marca'] ?? '',
+      proveedorId: map['proveedorId'] ?? '',
+      proveedorNombre: map['proveedorNombre'] ?? '',
       unidadBase: map['unidadBase'] ?? 'unidad',
       stockTotal: (map['stockTotal'] as num?)?.toDouble() ??
           (map['stock'] as num?)?.toDouble() ??
           0,
+      precio: (map['precio'] as num?)?.toDouble() ?? 0,
+      costo: (map['costo'] as num?)?.toDouble() ?? 0,
       presentaciones: presentacionesRaw
               ?.map((p) => Presentacion.fromMap(p as Map<String, dynamic>))
               .toList() ??

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, SlidersHorizontal, Plus, Package, Pencil, Trash2, X } from 'lucide-react';
-import { Producto, Presentacion, formatearMoneda, CATEGORIAS, UNIDADES_MEDIDA } from '@/lib/types';
+import { Search, SlidersHorizontal, Plus, Package, Pencil, Trash2, X, HelpCircle } from 'lucide-react';
+import { Producto, Proveedor, Presentacion, formatearMoneda, CATEGORIAS, UNIDADES_MEDIDA } from '@/lib/types';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -29,8 +29,25 @@ function newPres(): FormPres {
   return { id: `new_${++presCounter}`, nombreVisual: '', unidad: 'kg', precio: 0, costo: 0, factor: 1 };
 }
 
+function HelpButton({ tip }: { tip: string }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="relative inline-flex">
+      <button type="button" onClick={() => setShow(!show)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+        <HelpCircle size={16} />
+      </button>
+      {show && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-2.5 text-xs bg-gray-900 dark:bg-gray-700 text-white rounded-lg shadow-lg z-50" onClick={() => setShow(false)}>
+          {tip}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ProductosPage() {
   const [productos, setProductos] = useState<Producto[]>([]);
+  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
@@ -38,9 +55,11 @@ export default function ProductosPage() {
   const [showLowStock, setShowLowStock] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editando, setEditando] = useState<Producto | null>(null);
+  const [showVariants, setShowVariants] = useState(false);
   const [form, setForm] = useState({
     nombre: '', descripcion: '', codigoBarras: '', categoria: 'General',
-    unidadBase: 'kg', stockTotal: 0, presentaciones: [] as FormPres[],
+    marca: '', proveedorId: '', proveedorNombre: '',
+    unidadBase: 'kg', stockTotal: 0, precio: 0, costo: 0, presentaciones: [] as FormPres[],
   });
 
   const load = async () => {
@@ -53,16 +72,24 @@ export default function ProductosPage() {
     } catch {
       setError('Error de conexion al cargar productos');
       setProductos([]);
-    } finally {
-      setLoading(false);
     }
   };
 
-  useEffect(() => { load(); }, []);
+  const loadProveedores = async () => {
+    try {
+      const res = await fetch('/api/proveedores');
+      const data = await res.json();
+      setProveedores(Array.isArray(data) ? data : []);
+    } catch { setProveedores([]); }
+  };
+
+  useEffect(() => {
+    Promise.all([load(), loadProveedores()]).finally(() => setLoading(false));
+  }, []);
 
   const filtered = Array.isArray(productos)
     ? productos.filter(p => {
-        if (search && !p.nombre.toLowerCase().includes(search.toLowerCase()) && !p.codigoBarras.toLowerCase().includes(search.toLowerCase())) return false;
+        if (search && !p.nombre.toLowerCase().includes(search.toLowerCase()) && !p.codigoBarras.toLowerCase().includes(search.toLowerCase()) && !(p.marca || '').toLowerCase().includes(search.toLowerCase())) return false;
         if (filterCat && p.categoria !== filterCat) return false;
         if (showLowStock && p.stockTotal > 5) return false;
         return true;
@@ -84,17 +111,29 @@ export default function ProductosPage() {
   };
 
   const guardar = async () => {
-    const presentaciones = form.presentaciones.map(p => ({
-      id: p.id.startsWith('new_') ? crypto.randomUUID() : p.id,
-      nombreVisual: p.nombreVisual,
-      unidad: p.unidad,
-      precio: p.precio,
-      costo: p.costo,
-      factor: p.factor,
-    }));
-    const body = editando
-      ? { ...form, presentaciones, id: editando.id }
-      : { ...form, presentaciones };
+    const presentaciones = showVariants && form.presentaciones.length > 0
+      ? form.presentaciones.map(p => ({
+          id: p.id.startsWith('new_') ? crypto.randomUUID() : p.id,
+          nombreVisual: p.nombreVisual,
+          unidad: p.unidad,
+          precio: p.precio,
+          costo: p.costo,
+          factor: p.factor,
+        }))
+      : [{
+          id: crypto.randomUUID(),
+          nombreVisual: 'Unidad',
+          unidad: form.unidadBase,
+          precio: form.precio,
+          costo: form.costo,
+          factor: 1,
+        }];
+    const provNombre = proveedores.find(p => p.id === form.proveedorId)?.nombre || '';
+    const body = {
+      ...form, proveedorNombre: provNombre,
+      presentaciones,
+      id: editando ? editando.id : undefined,
+    };
     const url = editando ? `/api/productos?id=${editando.id}` : '/api/productos';
     const method = editando ? 'PUT' : 'POST';
     await fetch(url, {
@@ -104,7 +143,8 @@ export default function ProductosPage() {
     });
     setFormOpen(false);
     setEditando(null);
-    setForm({ nombre: '', descripcion: '', codigoBarras: '', categoria: 'General', unidadBase: 'kg', stockTotal: 0, presentaciones: [] });
+    setShowVariants(false);
+    setForm({ nombre: '', descripcion: '', codigoBarras: '', categoria: 'General', marca: '', proveedorId: '', proveedorNombre: '', unidadBase: 'kg', stockTotal: 0, precio: 0, costo: 0, presentaciones: [] });
     load();
   };
 
@@ -115,14 +155,22 @@ export default function ProductosPage() {
   };
 
   const openEdit = (p: Producto) => {
+    const hasVariants = (p.presentaciones || []).length > 1 ||
+      (p.presentaciones?.[0]?.nombreVisual && p.presentaciones[0].nombreVisual !== 'Unidad');
+    setShowVariants(hasVariants);
     setEditando(p);
     setForm({
       nombre: p.nombre,
       descripcion: p.descripcion,
       codigoBarras: p.codigoBarras,
       categoria: p.categoria,
+      marca: p.marca || '',
+      proveedorId: p.proveedorId || '',
+      proveedorNombre: p.proveedorNombre || '',
       unidadBase: p.unidadBase,
       stockTotal: p.stockTotal,
+      precio: p.precio || 0,
+      costo: p.costo || 0,
       presentaciones: (p.presentaciones || []).map(pr => ({
         id: pr.id,
         nombreVisual: pr.nombreVisual,
@@ -153,7 +201,7 @@ export default function ProductosPage() {
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Productos</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">Gestiona tu inventario de productos</p>
         </div>
-        <button onClick={() => { setEditando(null); setForm({ nombre: '', descripcion: '', codigoBarras: '', categoria: 'General', unidadBase: 'kg', stockTotal: 0, presentaciones: [newPres()] }); setFormOpen(true); }} className="btn-primary">
+        <button onClick={() => { setEditando(null); setShowVariants(false); setForm({ nombre: '', descripcion: '', codigoBarras: '', categoria: 'General', marca: '', proveedorId: '', proveedorNombre: '', unidadBase: 'kg', stockTotal: 0, precio: 0, costo: 0, presentaciones: [] }); setFormOpen(true); }} className="btn-primary">
           <Plus size={16} /> Nuevo Producto
         </button>
       </motion.div>
@@ -184,7 +232,7 @@ export default function ProductosPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr><th>Producto</th><th>Categoria</th><th>Presentaciones</th><th className="text-right">Stock</th><th className="text-center">Codigo</th><th className="text-center">Acciones</th></tr>
+              <tr><th>Producto</th><th>Categoria</th><th>Marca</th><th>Precio</th><th className="text-right">Stock</th><th className="text-center">Codigo</th><th className="text-center">Acciones</th></tr>
             </thead>
             <tbody>
               {filtered.map(p => (
@@ -198,15 +246,8 @@ export default function ProductosPage() {
                     </div>
                   </td>
                   <td className="text-[var(--text-secondary)]">{p.categoria}</td>
-                  <td>
-                    <div className="flex flex-wrap gap-1">
-                      {(p.presentaciones || []).map(pr => (
-                        <span key={pr.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-500/10 text-xs font-medium text-blue-700 dark:text-blue-300">
-                          {formatearMoneda(pr.precio)}/{pr.unidad}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
+                  <td className="text-[var(--text-secondary)]">{p.marca || '—'}</td>
+                  <td className="font-medium text-[var(--text-primary)]">{formatearMoneda(p.precio || 0)}</td>
                   <td className={`text-right font-medium ${p.stockTotal <= 5 ? 'text-red-600 dark:text-red-400' : 'text-[var(--text-primary)]'}`}>
                     {p.stockTotal} {p.unidadBase}
                   </td>
@@ -220,7 +261,7 @@ export default function ProductosPage() {
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={6} className="p-12 text-center text-[var(--text-muted)]">No hay productos</td></tr>
+                <tr><td colSpan={7} className="p-12 text-center text-[var(--text-muted)]">No hay productos</td></tr>
               )}
             </tbody>
           </table>
@@ -234,48 +275,99 @@ export default function ProductosPage() {
               <h2 className="text-lg font-bold text-[var(--text-primary)]">{editando ? 'Editar' : 'Nuevo'} Producto</h2>
               <button onClick={() => setFormOpen(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"><X size={20} /></button>
             </div>
-            <input placeholder="Nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="w-full" />
-            <input placeholder="Descripcion" value={form.descripcion} onChange={e => setForm({ ...form, descripcion: e.target.value })} className="w-full" />
-            <div className="grid grid-cols-2 gap-3">
-              <select value={form.unidadBase} onChange={e => setForm({ ...form, unidadBase: e.target.value })} className="w-full">
-                {UNIDADES_MEDIDA.map(u => <option key={u} value={u}>{u}</option>)}
-              </select>
-              <input type="number" step="0.01" placeholder="Stock Total" value={form.stockTotal} onChange={e => setForm({ ...form, stockTotal: parseFloat(e.target.value) || 0 })} />
+
+            <div className="flex items-center gap-2">
+              <input placeholder="Nombre del producto" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="w-full" />
+              <HelpButton tip="Nombre con el que identificas el producto en tu tienda" />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <select value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })} className="w-full">
-                {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
+              <div className="flex items-center gap-2">
+                <input placeholder="Descripcion" value={form.descripcion} onChange={e => setForm({ ...form, descripcion: e.target.value })} className="w-full" />
+                <HelpButton tip="Informacion adicional opcional (sabor, presentacion, etc.)" />
+              </div>
+              <div className="flex items-center gap-2">
+                <input placeholder="Marca" value={form.marca} onChange={e => setForm({ ...form, marca: e.target.value })} className="w-full" />
+                <HelpButton tip="Nombre de la marca del producto (ej: Gloria, Nestle, Molitalia)" />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <select value={form.proveedorId} onChange={e => setForm({ ...form, proveedorId: e.target.value })} className="w-full">
+                <option value="">Sin proveedor</option>
+                {proveedores.map(prov => <option key={prov.id} value={prov.id}>{prov.nombre}</option>)}
               </select>
-              <input placeholder="Codigo de barras" value={form.codigoBarras} onChange={e => setForm({ ...form, codigoBarras: e.target.value })} />
+              <HelpButton tip="Selecciona el proveedor que te vende este producto" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-2">
+                <select value={form.unidadBase} onChange={e => setForm({ ...form, unidadBase: e.target.value })} className="w-full">
+                  {UNIDADES_MEDIDA.map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
+                <HelpButton tip="Como se mide este producto: kg, litros, unidades, etc." />
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="number" step="0.01" placeholder="Stock Total" value={form.stockTotal} onChange={e => setForm({ ...form, stockTotal: parseFloat(e.target.value) || 0 })} className="w-full" />
+                <HelpButton tip="Cantidad disponible actualmente en tu inventario" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-2">
+                <select value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })} className="w-full">
+                  {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <HelpButton tip="Clasifica el producto para organizar tu inventario y reportes" />
+              </div>
+              <div className="flex items-center gap-2">
+                <input placeholder="Codigo de barras" value={form.codigoBarras} onChange={e => setForm({ ...form, codigoBarras: e.target.value })} className="w-full" />
+                <HelpButton tip="Codigo unico del producto (EAN-13)" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-2">
+                <input type="number" step="0.01" placeholder="Precio de venta" value={form.precio} onChange={e => setForm({ ...form, precio: parseFloat(e.target.value) || 0 })} className="w-full" />
+                <HelpButton tip="Precio al que vendes este producto al cliente" />
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="number" step="0.01" placeholder="Costo" value={form.costo} onChange={e => setForm({ ...form, costo: parseFloat(e.target.value) || 0 })} className="w-full" />
+                <HelpButton tip="Cuanto te costo adquirir este producto (tu costo)" />
+              </div>
             </div>
 
-            <div className="border-t border-[var(--border)] pt-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-[var(--text-primary)]">Presentaciones</h3>
-                <button onClick={addPres} className="btn-secondary text-xs py-1 px-3">+ Agregar</button>
-              </div>
-              {form.presentaciones.length === 0 && (
-                <p className="text-xs text-[var(--text-muted)] text-center py-4">Agrega al menos una presentacion</p>
-              )}
-              {form.presentaciones.map((pres, idx) => (
-                <div key={idx} className="border border-[var(--border)] rounded-lg p-3 mb-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-[var(--text-secondary)]">Presentacion {idx + 1}</span>
-                    <button onClick={() => removePres(idx)} className="text-red-500 hover:text-red-700"><X size={14} /></button>
-                  </div>
-                  <input placeholder="Nombre visual (ej: Por Kilo)" value={pres.nombreVisual} onChange={e => updatePres(idx, 'nombreVisual', e.target.value)} className="w-full text-sm" />
-                  <div className="grid grid-cols-3 gap-2">
-                    <select value={pres.unidad} onChange={e => updatePres(idx, 'unidad', e.target.value)} className="w-full text-sm">
-                      {UNIDADES_MEDIDA.map(u => <option key={u} value={u}>{u}</option>)}
-                    </select>
-                    <input type="number" step="0.01" placeholder="Factor" value={pres.factor} onChange={e => updatePres(idx, 'factor', parseFloat(e.target.value) || 1)} className="w-full text-sm" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input type="number" step="0.01" placeholder="Precio" value={pres.precio} onChange={e => updatePres(idx, 'precio', parseFloat(e.target.value) || 0)} className="w-full text-sm" />
-                    <input type="number" step="0.01" placeholder="Costo" value={pres.costo} onChange={e => updatePres(idx, 'costo', parseFloat(e.target.value) || 0)} className="w-full text-sm" />
-                  </div>
+            {/* Variants section */}
+            <div className="border border-[var(--border)] rounded-lg overflow-hidden">
+              <button type="button" onClick={() => setShowVariants(!showVariants)} className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--border)]/30 transition-colors">
+                <span>Variantes del producto</span>
+                <div className="flex items-center gap-2">
+                  <HelpButton tip="Si vendes este producto en diferentes formatos (ej: 'Por Kilo' y 'Bolsa 20kg'), agrega variantes aqui. Si solo tienes un formato, ignora esta seccion." />
+                  <svg className={`w-4 h-4 transition-transform ${showVariants ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                 </div>
-              ))}
+              </button>
+              {showVariants && (
+                <div className="border-t border-[var(--border)] p-4 space-y-3">
+                  {form.presentaciones.length === 0 && (
+                    <p className="text-xs text-[var(--text-muted)] text-center py-2">Aun no hay variantes. Agrega una si vendes este producto en varios formatos.</p>
+                  )}
+                  {form.presentaciones.map((pres, idx) => (
+                    <div key={idx} className="border border-[var(--border)] rounded-lg p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-[var(--text-secondary)]">Variante {idx + 1}</span>
+                        <button onClick={() => removePres(idx)} className="text-red-500 hover:text-red-700"><X size={14} /></button>
+                      </div>
+                      <input placeholder="Nombre (ej: Por Kilo, Caja 20kg)" value={pres.nombreVisual} onChange={e => updatePres(idx, 'nombreVisual', e.target.value)} className="w-full text-sm" />
+                      <div className="grid grid-cols-3 gap-2">
+                        <select value={pres.unidad} onChange={e => updatePres(idx, 'unidad', e.target.value)} className="w-full text-sm">
+                          {UNIDADES_MEDIDA.map(u => <option key={u} value={u}>{u}</option>)}
+                        </select>
+                        <input type="number" step="0.01" placeholder="Factor" value={pres.factor} onChange={e => updatePres(idx, 'factor', parseFloat(e.target.value) || 1)} className="w-full text-sm" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input type="number" step="0.01" placeholder="Precio" value={pres.precio} onChange={e => updatePres(idx, 'precio', parseFloat(e.target.value) || 0)} className="w-full text-sm" />
+                        <input type="number" step="0.01" placeholder="Costo" value={pres.costo} onChange={e => updatePres(idx, 'costo', parseFloat(e.target.value) || 0)} className="w-full text-sm" />
+                      </div>
+                    </div>
+                  ))}
+                  <button onClick={addPres} className="btn-secondary text-xs py-1.5 px-3 w-full">+ Agregar variante</button>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-3 justify-end pt-2">

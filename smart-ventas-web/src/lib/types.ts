@@ -13,8 +13,13 @@ export interface Producto {
   descripcion: string;
   codigoBarras: string;
   categoria: string;
+  marca: string;
+  proveedorId: string;
+  proveedorNombre: string;
   unidadBase: string;
   stockTotal: number;
+  precio: number;
+  costo: number;
   presentaciones: Presentacion[];
   fechaCreacion: string;
 }

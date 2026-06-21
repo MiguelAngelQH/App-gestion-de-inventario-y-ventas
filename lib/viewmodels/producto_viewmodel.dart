@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:smart_ventas/models/producto.dart';
+import 'package:smart_ventas/models/proveedor.dart';
 import 'package:smart_ventas/services/firestore_service.dart';
 
 class ProductoViewModel extends ChangeNotifier {
@@ -9,16 +10,19 @@ class ProductoViewModel extends ChangeNotifier {
 
   List<Producto> _productos = [];
   List<Producto> _productosFiltrados = [];
+  List<Proveedor> _proveedores = [];
   String _busqueda = '';
   String _categoriaSeleccionada = 'Todas';
   bool _soloStockBajo = false;
   bool _isLoading = true;
   String? _error;
   StreamSubscription? _subscription;
+  StreamSubscription? _provSubscription;
 
   List<Producto> get productos => _soloStockBajo
       ? _productosFiltrados.where((p) => p.stockBajo).toList()
       : _productosFiltrados;
+  List<Proveedor> get proveedores => _proveedores;
   String get busqueda => _busqueda;
   String get categoriaSeleccionada => _categoriaSeleccionada;
   bool get soloStockBajo => _soloStockBajo;
@@ -30,7 +34,19 @@ class ProductoViewModel extends ChangeNotifier {
 
   ProductoViewModel() {
     _subscribe();
-    FirebaseAuth.instance.authStateChanges().listen((_) => _subscribe());
+    _subscribeProveedores();
+    FirebaseAuth.instance.authStateChanges().listen((_) {
+      _subscribe();
+      _subscribeProveedores();
+    });
+  }
+
+  void _subscribeProveedores() {
+    _provSubscription?.cancel();
+    _provSubscription = _firestore.getProveedores().listen((proveedores) {
+      _proveedores = proveedores;
+      notifyListeners();
+    });
   }
 
   void _subscribe() {
@@ -51,7 +67,8 @@ class ProductoViewModel extends ChangeNotifier {
     _productosFiltrados = _productos.where((p) {
       final coincideBusqueda = _busqueda.isEmpty ||
           p.nombre.toLowerCase().contains(_busqueda.toLowerCase()) ||
-          p.codigoBarras.toLowerCase().contains(_busqueda.toLowerCase());
+          p.codigoBarras.toLowerCase().contains(_busqueda.toLowerCase()) ||
+          p.marca.toLowerCase().contains(_busqueda.toLowerCase());
       final coincideCategoria = _categoriaSeleccionada == 'Todas' ||
           p.categoria == _categoriaSeleccionada;
       return coincideBusqueda && coincideCategoria;
@@ -101,8 +118,26 @@ class ProductoViewModel extends ChangeNotifier {
     }
   }
 
+  Future<Producto?> getProductoByBarcode(String codigo) async {
+    try {
+      return await _firestore.getProductoByBarcode(codigo);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String proveedorNombre(String id) =>
+      _proveedores.where((p) => p.id == id).firstOrNull?.nombre ?? '';
+
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    _provSubscription?.cancel();
+    super.dispose();
   }
 }

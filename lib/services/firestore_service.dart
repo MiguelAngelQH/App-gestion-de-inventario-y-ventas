@@ -55,6 +55,19 @@ class FirestoreService {
     });
   }
 
+  Future<Producto?> getProductoByBarcode(String codigo) async {
+    final snap = await _userQuery(_productos)
+        .where('codigoBarras', isEqualTo: codigo)
+        .limit(1)
+        .get();
+    if (snap.docs.isEmpty) return null;
+    final doc = snap.docs.first;
+    return Producto.fromMap({
+      ...doc.data(),
+      'id': doc.id,
+    });
+  }
+
   // ============ VENTAS ============
 
   Stream<List<Venta>> getVentas() =>

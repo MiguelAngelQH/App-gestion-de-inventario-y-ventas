@@ -372,7 +372,7 @@ class PagarScreen extends StatelessWidget {
                     ),
                     child: Text(
                       fechaVenc != null
-                          ? Formatters.shortDate(fechaVenc)
+                          ? Formatters.shortDate(fechaVenc!)
                           : 'Seleccionar fecha',
                     ),
                   ),
