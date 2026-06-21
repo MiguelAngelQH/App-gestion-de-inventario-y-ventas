@@ -171,10 +171,8 @@ class CobrarScreen extends StatelessWidget {
                                       label: const Text('Registrar Pago'),
                                     ),
                                   ),
-                                  if (cliente.estado != 'pagado') ...[
-                                    const SizedBox(width: 8),
-                                    _estadoMenu(context, cliente, theme),
-                                  ],
+                                  const SizedBox(width: 8),
+                                  _accionesMenu(context, cliente, theme),
                                 ],
                               ),
                             ],
@@ -210,20 +208,233 @@ class CobrarScreen extends StatelessWidget {
     );
   }
 
-  Widget _estadoMenu(
+  Widget _accionesMenu(
       BuildContext context, Cliente cliente, ThemeData theme) {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert, size: 20),
-      onSelected: (estado) =>
-          viewModel.actualizarEstado(cliente.id, estado),
+      onSelected: (opcion) {
+        switch (opcion) {
+          case 'historial':
+            _mostrarHistorialPagos(context, cliente.id, cliente.nombre);
+            break;
+          case 'editar':
+            _mostrarEditarCliente(context, cliente);
+            break;
+          case 'eliminar':
+            _confirmarEliminar(context, cliente);
+            break;
+          default:
+            viewModel.actualizarEstado(cliente.id, opcion);
+        }
+      },
       itemBuilder: (_) => [
+        const PopupMenuItem(
+            value: 'historial',
+            child: ListTile(
+              leading: Icon(Icons.history, size: 20),
+              title: Text('Historial de Pagos'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+            )),
+        const PopupMenuItem(
+            value: 'editar',
+            child: ListTile(
+              leading: Icon(Icons.edit, size: 20),
+              title: Text('Editar'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+            )),
+        const PopupMenuItem(
+            value: 'eliminar',
+            child: ListTile(
+              leading: Icon(Icons.delete, size: 20, color: Colors.red),
+              title: Text('Eliminar', style: TextStyle(color: Colors.red)),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+            )),
+        const PopupMenuDivider(),
         if (cliente.estado != 'pendiente')
-          const PopupMenuItem(value: 'pendiente', child: Text('Marcar Pendiente')),
+          const PopupMenuItem(
+              value: 'pendiente', child: Text('Marcar Pendiente')),
         if (cliente.estado != 'pagado')
-          const PopupMenuItem(value: 'pagado', child: Text('Marcar Pagado')),
+          const PopupMenuItem(
+              value: 'pagado', child: Text('Marcar Pagado')),
         if (cliente.estado != 'vencido')
-          const PopupMenuItem(value: 'vencido', child: Text('Marcar Vencido')),
+          const PopupMenuItem(
+              value: 'vencido', child: Text('Marcar Vencido')),
       ],
+    );
+  }
+
+  void _mostrarHistorialPagos(
+      BuildContext context, String clienteId, String nombre) async {
+    final pagos = await viewModel.getPagosHistorial(clienteId);
+    if (!context.mounted) return;
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Historial de Pagos - $nombre',
+                style: Theme.of(context).textTheme.titleMedium),
+            const Divider(),
+            if (pagos.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(child: Text('Sin pagos registrados')),
+              )
+            else
+              ...pagos.map((p) => ListTile(
+                    leading: const Icon(Icons.check_circle, color: Colors.green),
+                    title: Text(Formatters.currency(
+                        (p['monto'] ?? 0).toDouble())),
+                    subtitle: Text(Formatters.dateTime(p['fecha'] ?? '')),
+                    trailing: p['nota'] != null && (p['nota'] as String).isNotEmpty
+                        ? Chip(label: Text(p['nota'] as String))
+                        : null,
+                    dense: true,
+                  )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _mostrarEditarCliente(BuildContext context, Cliente cliente) {
+    final nombreCtrl = TextEditingController(text: cliente.nombre);
+    final telCtrl = TextEditingController(text: cliente.telefono);
+    final emailCtrl = TextEditingController(text: cliente.email);
+    final dirCtrl = TextEditingController(text: cliente.direccion);
+    final deudaCtrl =
+        TextEditingController(text: cliente.deuda.toStringAsFixed(2));
+    DateTime? fechaVenc = cliente.fechaVencimiento;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Editar Cliente'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nombreCtrl,
+                  decoration: const InputDecoration(
+                      labelText: 'Nombre *',
+                      border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: deudaCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                      labelText: 'Deuda (S/)',
+                      prefixText: 'S/ ',
+                      border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: telCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                      labelText: 'Teléfono',
+                      border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                      labelText: 'Email',
+                      border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: dirCtrl,
+                  decoration: const InputDecoration(
+                      labelText: 'Dirección',
+                      border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: ctx,
+                      initialDate: fechaVenc ?? DateTime.now().add(const Duration(days: 7)),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) {
+                      setDialogState(() => fechaVenc = picked);
+                    }
+                  },
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Fecha de Vencimiento',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    child: Text(
+                      fechaVenc != null
+                          ? Formatters.shortDate(fechaVenc)
+                          : 'Seleccionar fecha',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (nombreCtrl.text.trim().isEmpty) return;
+                viewModel.updateCliente(cliente.copyWith(
+                  nombre: nombreCtrl.text.trim(),
+                  deuda: double.tryParse(deudaCtrl.text) ?? cliente.deuda,
+                  telefono: telCtrl.text.trim(),
+                  email: emailCtrl.text.trim(),
+                  direccion: dirCtrl.text.trim(),
+                  fechaVencimiento: fechaVenc,
+                ));
+                Navigator.pop(ctx);
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmarEliminar(BuildContext context, Cliente cliente) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar Cliente'),
+        content: Text('¿Eliminar a "${cliente.nombre}"?\nEsta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              viewModel.deleteCliente(cliente.id);
+              Navigator.pop(ctx);
+            },
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
     );
   }
 

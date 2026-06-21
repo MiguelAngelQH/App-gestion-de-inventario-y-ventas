@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
     let stockBajo = 0;
     for (const doc of productosSnap.docs) {
       const data: any = doc.data();
-      if ((data.stock ?? 0) <= 5) stockBajo++;
+      if ((data.stockTotal ?? data.stock ?? 0) <= 5) stockBajo++;
     }
 
     let cuentasCobrar = 0;

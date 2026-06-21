@@ -45,7 +45,35 @@ class DashboardScreen extends StatelessWidget {
           listenable: viewModel,
           builder: (context, _) {
             if (viewModel.isLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                child: Column(
+                  children: [
+                    Row(children: const [
+                      Expanded(child: SkeletonCard(height: 120)),
+                      SizedBox(width: 12),
+                      Expanded(child: SkeletonCard(height: 120)),
+                    ]),
+                    const SizedBox(height: 12),
+                    Row(children: const [
+                      Expanded(child: SkeletonCard(height: 120)),
+                      SizedBox(width: 12),
+                      Expanded(child: SkeletonCard(height: 120)),
+                    ]),
+                    const SizedBox(height: 12),
+                    Row(children: const [
+                      Expanded(child: SkeletonCard(height: 120)),
+                      SizedBox(width: 12),
+                      Expanded(child: SkeletonCard(height: 120)),
+                    ]),
+                    const SizedBox(height: 28),
+                    const SkeletonListTile(),
+                    const SkeletonListTile(),
+                    const SkeletonListTile(),
+                  ],
+                ),
+              );
             }
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),

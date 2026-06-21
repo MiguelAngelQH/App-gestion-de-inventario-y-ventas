@@ -4,17 +4,40 @@ import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'];
+const COLORS = ['#2563eb', '#6366f1', '#16a34a', '#d97706', '#dc2626', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6', '#84cc16'];
 
 interface Props {
   data: { categoria: string; total: number }[];
 }
 
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white dark:bg-[#0a0428] rounded-xl px-4 py-3 shadow-lg border border-gray-100 dark:border-white/10">
+        <p className="text-xs text-gray-500 dark:text-white/50 mb-1">{payload[0].name}</p>
+        <p className="text-sm font-semibold text-gray-900 dark:text-white">S/ {Number(payload[0].value).toFixed(2)}</p>
+      </div>
+    );
+  }
+  return null;
+};
+
+const CustomLegend = ({ payload }: any) => (
+  <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 mt-2">
+    {payload.map((entry: any, index: number) => (
+      <div key={index} className="flex items-center gap-1.5">
+        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: entry.color }} />
+        <span className="text-xs text-[var(--text-secondary)]">{entry.value}</span>
+      </div>
+    ))}
+  </div>
+);
+
 export default function CategoryChart({ data }: Props) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-      <h3 className="text-sm font-semibold text-slate-700 mb-4">Ventas por Categoría</h3>
-      <ResponsiveContainer width="100%" height={250}>
+    <div className="card p-5">
+      <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Ventas por Categoria</h3>
+      <ResponsiveContainer width="100%" height={280}>
         <PieChart>
           <Pie
             data={data}
@@ -22,15 +45,16 @@ export default function CategoryChart({ data }: Props) {
             nameKey="categoria"
             cx="50%"
             cy="50%"
-            outerRadius={80}
-            label={(entry: any) => `${entry.categoria} ${(entry.percent * 100).toFixed(0)}%`}
+            outerRadius={90}
+            innerRadius={50}
+            paddingAngle={3}
           >
             {data.map((_, index) => (
-              <Cell key={index} fill={COLORS[index % COLORS.length]} />
+              <Cell key={index} fill={COLORS[index % COLORS.length]} stroke="transparent" />
             ))}
           </Pie>
-          <Tooltip formatter={(value: any) => `S/ ${Number(value).toFixed(2)}`} />
-          <Legend />
+          <Tooltip content={<CustomTooltip />} />
+          <Legend content={<CustomLegend />} />
         </PieChart>
       </ResponsiveContainer>
     </div>

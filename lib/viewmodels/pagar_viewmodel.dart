@@ -62,6 +62,28 @@ class PagarViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> updateProveedor(Proveedor p) async {
+    try {
+      await _firestore.updateProveedor(p);
+    } catch (e) {
+      _error = 'Error al actualizar proveedor';
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteProveedor(String id) async {
+    try {
+      await _firestore.deleteProveedor(id);
+    } catch (e) {
+      _error = 'Error al eliminar proveedor';
+      notifyListeners();
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getPagosHistorial(String proveedorId) async {
+    return await _firestore.getPagosPagar(proveedorId);
+  }
+
   void clearError() {
     _error = null;
     notifyListeners();

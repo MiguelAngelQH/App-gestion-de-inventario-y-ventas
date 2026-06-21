@@ -1,7 +1,7 @@
 class AppConstants {
   static const String appName = 'SmartVentas';
   static const String appTagline = 'Gestión inteligente para tu negocio';
-  static const String appVersion = '1.1.0';
+  static const String appVersion = '1.2.0';
 
   static const List<String> categorias = [
     'General',
@@ -38,5 +38,15 @@ class AppConstants {
 
   static const int splashDuration = 2;
 
-  static const String apiBaseUrl = 'http://172.16.10.31:30349';
+  // URL del servidor web para reportes avanzados (dashboard vía API).
+  // Se puede configurar con --dart-define=SERVER_URL=http://xxx
+  static String get apiBaseUrl {
+    const defaultUrl = 'http://172.16.10.31:30349';
+    try {
+      return const String.fromEnvironment('SERVER_URL',
+          defaultValue: defaultUrl);
+    } catch (_) {
+      return defaultUrl;
+    }
+  }
 }

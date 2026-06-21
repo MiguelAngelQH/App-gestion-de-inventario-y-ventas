@@ -24,6 +24,26 @@ class Cliente {
       fechaVencimiento != null &&
       fechaVencimiento!.isBefore(DateTime.now());
 
+  Cliente copyWith({
+    String? nombre,
+    String? telefono,
+    String? email,
+    String? direccion,
+    double? deuda,
+    String? estado,
+    DateTime? fechaVencimiento,
+  }) =>
+      Cliente(
+        id: id,
+        nombre: nombre ?? this.nombre,
+        telefono: telefono ?? this.telefono,
+        email: email ?? this.email,
+        direccion: direccion ?? this.direccion,
+        deuda: deuda ?? this.deuda,
+        estado: estado ?? this.estado,
+        fechaVencimiento: fechaVencimiento ?? this.fechaVencimiento,
+      );
+
   Map<String, dynamic> toMap() => {
         'id': id,
         'nombre': nombre,

@@ -5,8 +5,8 @@ import { requireAuth } from '@/lib/auth-utils';
 
 export async function POST(request: NextRequest) {
   try {
-    const uid = await requireAuth();
     const { proveedorId, monto, nota } = await request.json();
+    const uid = await requireAuth(request);
     const batch = db.batch();
     const proveedorRef = db.collection('proveedores').doc(proveedorId);
     batch.update(proveedorRef, {

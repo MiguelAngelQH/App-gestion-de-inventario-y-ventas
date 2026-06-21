@@ -144,6 +144,72 @@ class FirestoreService {
   Future<void> updateCompraEstado(String id, String estado) =>
       _compras.doc(id).update({'estado': estado});
 
+  Future<void> deleteVenta(String id) async {
+    final doc = await _ventas.doc(id).get();
+    if (!doc.exists) return;
+    final data = doc.data() as Map<String, dynamic>;
+    if (data['estado'] == 'completada') return;
+
+    final batch = _db.batch();
+    batch.delete(_ventas.doc(id));
+
+    final items = data['items'] as List<dynamic>? ?? [];
+    for (final item in items) {
+      final prodRef = _productos.doc(item['productoId'] as String);
+      batch.update(prodRef, {
+        'stockTotal': FieldValue.increment(
+            ((item['cantidad'] ?? 0) as num).toDouble() *
+                ((item['factor'] ?? 1) as num).toDouble()),
+      });
+    }
+    await batch.commit();
+  }
+
+  Future<void> deleteCompra(String id) async {
+    final doc = await _compras.doc(id).get();
+    if (!doc.exists) return;
+    final data = doc.data() as Map<String, dynamic>;
+    if (data['estado'] == 'recibida') return;
+
+    final batch = _db.batch();
+    batch.delete(_compras.doc(id));
+
+    final items = data['items'] as List<dynamic>? ?? [];
+    for (final item in items) {
+      final prodRef = _productos.doc(item['productoId'] as String);
+      batch.update(prodRef, {
+        'stockTotal': FieldValue.increment(
+            -((item['cantidad'] ?? 0) as num).toDouble() *
+                ((item['factor'] ?? 1) as num).toDouble()),
+      });
+    }
+    await batch.commit();
+  }
+
+  Future<List<Map<String, dynamic>>> getPagosCobrar(String clienteId) async {
+    try {
+      final snap = await _userQuery(_pagosCobrar)
+          .where('clienteId', isEqualTo: clienteId)
+          .orderBy('fecha', descending: true)
+          .get();
+      return snap.docs.map((d) => d.data()).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getPagosPagar(String proveedorId) async {
+    try {
+      final snap = await _userQuery(_pagosPagar)
+          .where('proveedorId', isEqualTo: proveedorId)
+          .orderBy('fecha', descending: true)
+          .get();
+      return snap.docs.map((d) => d.data()).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
   // ============ CLIENTES ============
 
   Stream<List<Cliente>> getClientes() =>
@@ -158,6 +224,8 @@ class FirestoreService {
 
   Future<void> updateCliente(Cliente c) =>
       _clientes.doc(c.id).update(c.toMap()..remove('id'));
+
+  Future<void> deleteCliente(String id) => _clientes.doc(id).delete();
 
   Future<void> registrarPagoCobrar(
       String clienteId, double monto, String nota) async {
@@ -198,6 +266,8 @@ class FirestoreService {
 
   Future<void> updateProveedor(Proveedor p) =>
       _proveedores.doc(p.id).update(p.toMap()..remove('id'));
+
+  Future<void> deleteProveedor(String id) => _proveedores.doc(id).delete();
 
   Future<void> registrarPagoPagar(
       String proveedorId, double monto, String nota) async {

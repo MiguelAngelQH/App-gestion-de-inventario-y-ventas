@@ -56,6 +56,12 @@ service cloud.firestore {
       allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
     }
 
+    // Configuración de usuario
+    match /config/{docId} {
+      allow read, update, delete: if isOwner();
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+    }
+
     // Regla por defecto: denegar todo lo demás
     match /{document=**} {
       allow read, write: if false;

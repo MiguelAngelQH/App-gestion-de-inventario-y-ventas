@@ -60,6 +60,28 @@ class CobrarViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> updateCliente(Cliente c) async {
+    try {
+      await _firestore.updateCliente(c);
+    } catch (e) {
+      _error = 'Error al actualizar cliente';
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteCliente(String id) async {
+    try {
+      await _firestore.deleteCliente(id);
+    } catch (e) {
+      _error = 'Error al eliminar cliente';
+      notifyListeners();
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getPagosHistorial(String clienteId) async {
+    return await _firestore.getPagosCobrar(clienteId);
+  }
+
   void clearError() {
     _error = null;
     notifyListeners();

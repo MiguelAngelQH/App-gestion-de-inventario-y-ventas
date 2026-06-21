@@ -21,6 +21,15 @@ class Formatters {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
+  static String dateTimeFromStr(String iso) {
+    try {
+      final d = DateTime.parse(iso);
+      return dateTime(d);
+    } catch (_) {
+      return iso;
+    }
+  }
+
   static String shortDate(DateTime date) {
     const meses = [
       'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',

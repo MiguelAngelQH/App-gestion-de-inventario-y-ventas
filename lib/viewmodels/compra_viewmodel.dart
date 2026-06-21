@@ -71,6 +71,15 @@ class CompraViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> deleteCompra(String id) async {
+    try {
+      await _firestore.deleteCompra(id);
+    } catch (e) {
+      _error = 'Error al eliminar compra';
+      notifyListeners();
+    }
+  }
+
   void clearError() {
     _error = null;
     notifyListeners();

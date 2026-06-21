@@ -163,10 +163,8 @@ class PagarScreen extends StatelessWidget {
                                       label: const Text('Registrar Pago'),
                                     ),
                                   ),
-                                  if (proveedor.estado != 'pagado') ...[
-                                    const SizedBox(width: 8),
-                                    _estadoMenu(context, proveedor, theme),
-                                  ],
+                                  const SizedBox(width: 8),
+                                  _accionesMenu(context, proveedor, theme),
                                 ],
                               ),
                             ],
@@ -202,20 +200,233 @@ class PagarScreen extends StatelessWidget {
     );
   }
 
-  Widget _estadoMenu(
+  Widget _accionesMenu(
       BuildContext context, Proveedor proveedor, ThemeData theme) {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert, size: 20),
-      onSelected: (estado) =>
-          viewModel.actualizarEstado(proveedor.id, estado),
+      onSelected: (opcion) {
+        switch (opcion) {
+          case 'historial':
+            _mostrarHistorialPagos(context, proveedor.id, proveedor.nombre);
+            break;
+          case 'editar':
+            _mostrarEditarProveedor(context, proveedor);
+            break;
+          case 'eliminar':
+            _confirmarEliminar(context, proveedor);
+            break;
+          default:
+            viewModel.actualizarEstado(proveedor.id, opcion);
+        }
+      },
       itemBuilder: (_) => [
+        const PopupMenuItem(
+            value: 'historial',
+            child: ListTile(
+              leading: Icon(Icons.history, size: 20),
+              title: Text('Historial de Pagos'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+            )),
+        const PopupMenuItem(
+            value: 'editar',
+            child: ListTile(
+              leading: Icon(Icons.edit, size: 20),
+              title: Text('Editar'),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+            )),
+        const PopupMenuItem(
+            value: 'eliminar',
+            child: ListTile(
+              leading: Icon(Icons.delete, size: 20, color: Colors.red),
+              title: Text('Eliminar', style: TextStyle(color: Colors.red)),
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+            )),
+        const PopupMenuDivider(),
         if (proveedor.estado != 'pendiente')
-          const PopupMenuItem(value: 'pendiente', child: Text('Marcar Pendiente')),
+          const PopupMenuItem(
+              value: 'pendiente', child: Text('Marcar Pendiente')),
         if (proveedor.estado != 'pagado')
-          const PopupMenuItem(value: 'pagado', child: Text('Marcar Pagado')),
+          const PopupMenuItem(
+              value: 'pagado', child: Text('Marcar Pagado')),
         if (proveedor.estado != 'vencido')
-          const PopupMenuItem(value: 'vencido', child: Text('Marcar Vencido')),
+          const PopupMenuItem(
+              value: 'vencido', child: Text('Marcar Vencido')),
       ],
+    );
+  }
+
+  void _mostrarHistorialPagos(
+      BuildContext context, String proveedorId, String nombre) async {
+    final pagos = await viewModel.getPagosHistorial(proveedorId);
+    if (!context.mounted) return;
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Historial de Pagos - $nombre',
+                style: Theme.of(context).textTheme.titleMedium),
+            const Divider(),
+            if (pagos.isEmpty)
+              const Padding(
+                padding: EdgeInsets.all(24),
+                child: Center(child: Text('Sin pagos registrados')),
+              )
+            else
+              ...pagos.map((p) => ListTile(
+                    leading: const Icon(Icons.check_circle, color: Colors.green),
+                    title: Text(Formatters.currency(
+                        (p['monto'] ?? 0).toDouble())),
+                    subtitle: Text(Formatters.dateTimeFromStr(p['fecha'] ?? '')),
+                    trailing: p['nota'] != null && (p['nota'] as String).isNotEmpty
+                        ? Chip(label: Text(p['nota'] as String))
+                        : null,
+                    dense: true,
+                  )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _mostrarEditarProveedor(BuildContext context, Proveedor proveedor) {
+    final nombreCtrl = TextEditingController(text: proveedor.nombre);
+    final telCtrl = TextEditingController(text: proveedor.telefono);
+    final emailCtrl = TextEditingController(text: proveedor.email);
+    final dirCtrl = TextEditingController(text: proveedor.direccion);
+    final saldoCtrl =
+        TextEditingController(text: proveedor.saldoPendiente.toStringAsFixed(2));
+    DateTime? fechaVenc = proveedor.fechaVencimiento;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Editar Proveedor'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nombreCtrl,
+                  decoration: const InputDecoration(
+                      labelText: 'Nombre *',
+                      border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: saldoCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                      labelText: 'Saldo Pendiente (S/)',
+                      prefixText: 'S/ ',
+                      border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: telCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                      labelText: 'Teléfono',
+                      border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                      labelText: 'Email',
+                      border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: dirCtrl,
+                  decoration: const InputDecoration(
+                      labelText: 'Dirección',
+                      border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: ctx,
+                      initialDate: fechaVenc ?? DateTime.now().add(const Duration(days: 7)),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) {
+                      setDialogState(() => fechaVenc = picked);
+                    }
+                  },
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Fecha de Vencimiento',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    child: Text(
+                      fechaVenc != null
+                          ? Formatters.shortDate(fechaVenc)
+                          : 'Seleccionar fecha',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (nombreCtrl.text.trim().isEmpty) return;
+                viewModel.updateProveedor(proveedor.copyWith(
+                  nombre: nombreCtrl.text.trim(),
+                  saldoPendiente: double.tryParse(saldoCtrl.text) ?? proveedor.saldoPendiente,
+                  telefono: telCtrl.text.trim(),
+                  email: emailCtrl.text.trim(),
+                  direccion: dirCtrl.text.trim(),
+                  fechaVencimiento: fechaVenc,
+                ));
+                Navigator.pop(ctx);
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmarEliminar(BuildContext context, Proveedor proveedor) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar Proveedor'),
+        content: Text('¿Eliminar a "${proveedor.nombre}"?\nEsta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              viewModel.deleteProveedor(proveedor.id);
+              Navigator.pop(ctx);
+            },
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
     );
   }
 

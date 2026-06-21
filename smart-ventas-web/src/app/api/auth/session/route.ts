@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
     const isSecure = request.headers.get('x-forwarded-proto') === 'https' || request.url.startsWith('https')
 
-    const response = NextResponse.json({ success: true })
+    const response = NextResponse.json({ success: true, token: sessionJWT })
     response.cookies.set('session', sessionJWT, {
       httpOnly: true,
       secure: isSecure,

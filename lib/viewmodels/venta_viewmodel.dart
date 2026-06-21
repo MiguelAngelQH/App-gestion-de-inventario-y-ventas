@@ -71,6 +71,15 @@ class VentaViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> deleteVenta(String id) async {
+    try {
+      await _firestore.deleteVenta(id);
+    } catch (e) {
+      _error = 'Error al eliminar venta';
+      notifyListeners();
+    }
+  }
+
   void clearError() {
     _error = null;
     notifyListeners();

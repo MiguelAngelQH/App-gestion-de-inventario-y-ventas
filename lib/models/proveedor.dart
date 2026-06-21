@@ -24,6 +24,26 @@ class Proveedor {
       fechaVencimiento != null &&
       fechaVencimiento!.isBefore(DateTime.now());
 
+  Proveedor copyWith({
+    String? nombre,
+    String? telefono,
+    String? email,
+    String? direccion,
+    double? saldoPendiente,
+    String? estado,
+    DateTime? fechaVencimiento,
+  }) =>
+      Proveedor(
+        id: id,
+        nombre: nombre ?? this.nombre,
+        telefono: telefono ?? this.telefono,
+        email: email ?? this.email,
+        direccion: direccion ?? this.direccion,
+        saldoPendiente: saldoPendiente ?? this.saldoPendiente,
+        estado: estado ?? this.estado,
+        fechaVencimiento: fechaVencimiento ?? this.fechaVencimiento,
+      );
+
   Map<String, dynamic> toMap() => {
         'id': id,
         'nombre': nombre,

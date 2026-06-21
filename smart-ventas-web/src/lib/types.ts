@@ -1,12 +1,21 @@
+export interface Presentacion {
+  id: string;
+  nombreVisual: string;
+  unidad: string;
+  precio: number;
+  costo: number;
+  factor: number;
+}
+
 export interface Producto {
   id: string;
   nombre: string;
   descripcion: string;
-  precio: number;
-  costo: number;
-  stock: number;
   codigoBarras: string;
   categoria: string;
+  unidadBase: string;
+  stockTotal: number;
+  presentaciones: Presentacion[];
   fechaCreacion: string;
 }
 
@@ -14,6 +23,9 @@ export interface ItemVenta {
   productoId: string;
   productoNombre: string;
   categoria: string;
+  presentacionId: string;
+  presentacionNombre: string;
+  factor: number;
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
@@ -36,6 +48,9 @@ export interface ItemCompra {
   productoId: string;
   productoNombre: string;
   categoria: string;
+  presentacionId: string;
+  presentacionNombre: string;
+  factor: number;
   cantidad: number;
   costoUnitario: number;
   subtotal: number;
@@ -109,6 +124,10 @@ export const CATEGORIAS = [
 
 export const METODOS_PAGO = [
   'Efectivo', 'Tarjeta Débito', 'Tarjeta Crédito', 'Transferencia', 'Depósito',
+];
+
+export const UNIDADES_MEDIDA = [
+  'kg', 'lb', 'lt', 'caja', 'docena', 'unidad',
 ];
 
 export const ESTADOS_VENTA = ['completada', 'pendiente', 'cancelada'];
