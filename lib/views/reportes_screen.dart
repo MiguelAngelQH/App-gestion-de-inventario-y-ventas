@@ -4,43 +4,55 @@ import 'package:smart_ventas/utils/formatters.dart';
 import 'package:smart_ventas/viewmodels/reporte_viewmodel.dart';
 import 'package:smart_ventas/widgets/reusable_widgets.dart';
 
-class ReportesScreen extends StatelessWidget {
+class ReportesScreen extends StatefulWidget {
   final ReporteViewModel viewModel;
 
   const ReportesScreen({super.key, required this.viewModel});
+
+  @override
+  State<ReportesScreen> createState() => _ReportesScreenState();
+}
+
+class _ReportesScreenState extends State<ReportesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    widget.viewModel.addListener(_onChanged);
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.viewModel.removeListener(_onChanged);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Reportes'),
-        centerTitle: true,
-      ),
-      body: ListenableBuilder(
-        listenable: viewModel,
-        builder: (context, _) {
-          if (viewModel.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildMetricas(theme),
-                const SizedBox(height: 24),
-                _buildChartVentas7Dias(theme),
-                const SizedBox(height: 24),
-                _buildVentasCategoria(theme),
-                const SizedBox(height: 24),
-                _buildTopProductos(theme),
-              ],
+      appBar: AppBar(title: const Text('Reportes'), centerTitle: true),
+      body: widget.viewModel.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildMetricas(theme),
+                  const SizedBox(height: 24),
+                  _buildChartVentas7Dias(theme),
+                  const SizedBox(height: 24),
+                  _buildVentasCategoria(theme),
+                  const SizedBox(height: 24),
+                  _buildTopProductos(theme),
+                ],
+              ),
             ),
-          );
-        },
-      ),
     );
   }
 
@@ -52,7 +64,7 @@ class ReportesScreen extends StatelessWidget {
             Expanded(
               child: MetricCard(
                 titulo: 'Ventas Hoy',
-                valor: Formatters.currency(viewModel.ventasHoy),
+                valor: Formatters.currency(widget.viewModel.ventasHoy),
                 icono: Icons.today,
                 color: Colors.blue,
               ),
@@ -61,7 +73,7 @@ class ReportesScreen extends StatelessWidget {
             Expanded(
               child: MetricCard(
                 titulo: 'Esta Semana',
-                valor: Formatters.currency(viewModel.ventasSemana),
+                valor: Formatters.currency(widget.viewModel.ventasSemana),
                 icono: Icons.date_range,
                 color: Colors.teal,
               ),
@@ -74,7 +86,7 @@ class ReportesScreen extends StatelessWidget {
             Expanded(
               child: MetricCard(
                 titulo: 'Ventas del Mes',
-                valor: Formatters.currency(viewModel.ventasMes),
+                valor: Formatters.currency(widget.viewModel.ventasMes),
                 icono: Icons.monetization_on,
                 color: Colors.green,
               ),
@@ -83,7 +95,7 @@ class ReportesScreen extends StatelessWidget {
             Expanded(
               child: MetricCard(
                 titulo: 'Ganancia',
-                valor: Formatters.currency(viewModel.gananciaTotal),
+                valor: Formatters.currency(widget.viewModel.gananciaTotal),
                 icono: Icons.trending_up,
                 color: Colors.indigo,
               ),
@@ -96,7 +108,7 @@ class ReportesScreen extends StatelessWidget {
             Expanded(
               child: MetricCard(
                 titulo: 'Por Cobrar',
-                valor: Formatters.currency(viewModel.cuentasCobrar),
+                valor: Formatters.currency(widget.viewModel.cuentasCobrar),
                 icono: Icons.account_balance_wallet,
                 color: Colors.orange,
               ),
@@ -105,7 +117,7 @@ class ReportesScreen extends StatelessWidget {
             Expanded(
               child: MetricCard(
                 titulo: 'Por Pagar',
-                valor: Formatters.currency(viewModel.cuentasPagar),
+                valor: Formatters.currency(widget.viewModel.cuentasPagar),
                 icono: Icons.receipt_long,
                 color: Colors.red,
               ),
@@ -118,7 +130,7 @@ class ReportesScreen extends StatelessWidget {
             Expanded(
               child: MetricCard(
                 titulo: 'Egresos del Mes',
-                valor: Formatters.currency(viewModel.egresosMes),
+                valor: Formatters.currency(widget.viewModel.egresosMes),
                 icono: Icons.shopping_cart,
                 color: Colors.red,
               ),
@@ -127,9 +139,9 @@ class ReportesScreen extends StatelessWidget {
             Expanded(
               child: MetricCard(
                 titulo: 'Ingreso Neto',
-                valor: Formatters.currency(viewModel.ingresoNeto),
+                valor: Formatters.currency(widget.viewModel.ingresoNeto),
                 icono: Icons.account_balance,
-                color: viewModel.ingresoNeto >= 0
+                color: widget.viewModel.ingresoNeto >= 0
                     ? Colors.green
                     : Colors.red,
               ),
@@ -141,13 +153,11 @@ class ReportesScreen extends StatelessWidget {
   }
 
   Widget _buildChartVentas7Dias(ThemeData theme) {
-    final data = viewModel.ventasUltimos7Dias;
-    final spots = data.entries.toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
+    final data = widget.viewModel.ventasUltimos7Dias;
+    final spots = data.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
 
-    final maxY = spots.fold<double>(
-            0, (max, e) => e.value > max ? e.value : max) *
-        1.2;
+    final maxY =
+        spots.fold<double>(0, (max, e) => e.value > max ? e.value : max) * 1.2;
 
     return Card(
       elevation: 0,
@@ -162,8 +172,9 @@ class ReportesScreen extends StatelessWidget {
           children: [
             Text(
               'Ventas Últimos 7 Días',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -238,8 +249,9 @@ class ReportesScreen extends StatelessWidget {
                     drawVerticalLine: false,
                     horizontalInterval: maxY > 0 ? maxY / 4 : 25,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: theme.colorScheme.outlineVariant
-                          .withValues(alpha: 0.5),
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.5,
+                      ),
                       strokeWidth: 1,
                     ),
                   ),
@@ -282,15 +294,17 @@ class ReportesScreen extends StatelessWidget {
           children: [
             Text(
               'Ventas por Categoría',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 16),
-            ...viewModel.ventasPorCategoria.entries.map((entry) {
-              final total = viewModel.ventasPorCategoria.values
-                  .fold(0.0, (s, v) => s + v);
-              final porcentaje =
-                  total > 0 ? (entry.value / total) * 100 : 0.0;
+            ...widget.viewModel.ventasPorCategoria.entries.map((entry) {
+              final total = widget.viewModel.ventasPorCategoria.values.fold(
+                0.0,
+                (s, v) => s + v,
+              );
+              final porcentaje = total > 0 ? (entry.value / total) * 100 : 0.0;
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Column(
@@ -299,12 +313,10 @@ class ReportesScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(entry.key,
-                            style: theme.textTheme.bodyMedium),
+                        Text(entry.key, style: theme.textTheme.bodyMedium),
                         Text(
                           Formatters.currency(entry.value),
-                          style:
-                              const TextStyle(fontWeight: FontWeight.w600),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
@@ -334,7 +346,7 @@ class ReportesScreen extends StatelessWidget {
       children: [
         SectionHeader(titulo: 'Productos Más Vendidos'),
         const SizedBox(height: 8),
-        ...viewModel.topProductos.asMap().entries.map((entry) {
+        ...widget.viewModel.topProductos.asMap().entries.map((entry) {
           final index = entry.key;
           final producto = entry.value;
           return Card(

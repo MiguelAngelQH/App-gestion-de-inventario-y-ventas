@@ -6,7 +6,7 @@ import 'package:smart_ventas/viewmodels/producto_viewmodel.dart';
 import 'package:smart_ventas/views/compra_form_screen.dart';
 import 'package:smart_ventas/widgets/reusable_widgets.dart';
 
-class ComprasScreen extends StatelessWidget {
+class ComprasScreen extends StatefulWidget {
   final CompraViewModel viewModel;
   final ProductoViewModel productoViewModel;
 
@@ -15,6 +15,27 @@ class ComprasScreen extends StatelessWidget {
     required this.viewModel,
     required this.productoViewModel,
   });
+
+  @override
+  State<ComprasScreen> createState() => _ComprasScreenState();
+}
+
+class _ComprasScreenState extends State<ComprasScreen> {
+  @override
+  void initState() {
+    super.initState();
+    widget.viewModel.addListener(_onChanged);
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.viewModel.removeListener(_onChanged);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,56 +50,55 @@ class ComprasScreen extends StatelessWidget {
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
       ),
-      body: ListenableBuilder(
-        listenable: viewModel,
-        builder: (context, _) {
-          if (viewModel.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return Column(
-            children: [
-              _buildSummary(theme),
-              _buildFilterBar(theme),
-              Expanded(
-                child: viewModel.compras.isEmpty
-                    ? const EmptyState(
-                        icono: Icons.shopping_cart_outlined,
-                        mensaje: 'No hay compras registradas',
-                      )
-                    : ListView.builder(
-                        padding:
-                            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                        itemCount: viewModel.compras.length,
-                        itemBuilder: (context, index) {
-                          final compra = viewModel.compras[index];
-                          return _buildCompraCard(context, theme, compra);
-                        },
-                      ),
-              ),
-            ],
-          );
-        },
-      ),
+      body: widget.viewModel.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _buildSummary(theme),
+                _buildFilterBar(theme),
+                Expanded(
+                  child: widget.viewModel.compras.isEmpty
+                      ? const EmptyState(
+                          icono: Icons.shopping_cart_outlined,
+                          mensaje: 'No hay compras registradas',
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
+                          itemCount: widget.viewModel.compras.length,
+                          itemBuilder: (context, index) {
+                            final compra = widget.viewModel.compras[index];
+                            return _buildCompraCard(context, theme, compra);
+                          },
+                        ),
+                ),
+              ],
+            ),
       floatingActionButton: FloatingActionButton(
         heroTag: null,
         onPressed: () => Navigator.push(
           context,
           PageRouteBuilder(
             pageBuilder: (context, animation, secondary) => CompraFormScreen(
-              compraViewModel: viewModel,
-              productoViewModel: productoViewModel,
+              compraViewModel: widget.viewModel,
+              productoViewModel: widget.productoViewModel,
             ),
             transitionsBuilder: (context, animation, secondary, child) =>
                 SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(1, 0),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutCubic,
-              )),
-              child: child,
-            ),
+                  position:
+                      Tween<Offset>(
+                        begin: const Offset(1, 0),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutCubic,
+                        ),
+                      ),
+                  child: child,
+                ),
             transitionDuration: const Duration(milliseconds: 350),
           ),
         ),
@@ -96,7 +116,7 @@ class ComprasScreen extends StatelessWidget {
           Expanded(
             child: MetricCard(
               titulo: 'Total Compras',
-              valor: Formatters.currency(viewModel.totalCompras),
+              valor: Formatters.currency(widget.viewModel.totalCompras),
               icono: Icons.shopping_cart,
               color: Colors.blue,
             ),
@@ -105,7 +125,7 @@ class ComprasScreen extends StatelessWidget {
           Expanded(
             child: MetricCard(
               titulo: 'Pendiente',
-              valor: Formatters.currency(viewModel.totalPendiente),
+              valor: Formatters.currency(widget.viewModel.totalPendiente),
               icono: Icons.pending_actions,
               color: Colors.orange,
             ),
@@ -131,17 +151,20 @@ class ComprasScreen extends StatelessWidget {
   }
 
   Widget _buildFilterChip(String estado, String label) {
-    final seleccionado = viewModel.filtroEstado == estado;
+    final seleccionado = widget.viewModel.filtroEstado == estado;
     return ChoiceChip(
       label: Text(label),
       selected: seleccionado,
-      onSelected: (_) => viewModel.setFiltroEstado(estado),
+      onSelected: (_) => widget.viewModel.setFiltroEstado(estado),
       visualDensity: VisualDensity.compact,
     );
   }
 
   Widget _buildCompraCard(
-      BuildContext context, ThemeData theme, Compra compra) {
+    BuildContext context,
+    ThemeData theme,
+    Compra compra,
+  ) {
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 8),
@@ -222,8 +245,7 @@ class ComprasScreen extends StatelessWidget {
     );
   }
 
-  void _mostrarDetalle(
-      BuildContext context, ThemeData theme, Compra compra) {
+  void _mostrarDetalle(BuildContext context, ThemeData theme, Compra compra) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -239,8 +261,9 @@ class ComprasScreen extends StatelessWidget {
               children: [
                 Text(
                   compra.folio,
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const Spacer(),
                 EstadoBadge(estado: compra.estado),
@@ -260,8 +283,9 @@ class ComprasScreen extends StatelessWidget {
             const Divider(height: 16),
             Text(
               'Productos',
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             ...compra.items.map(
@@ -289,10 +313,7 @@ class ComprasScreen extends StatelessWidget {
               children: [
                 const Text(
                   'Total',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   Formatters.currency(compra.total),

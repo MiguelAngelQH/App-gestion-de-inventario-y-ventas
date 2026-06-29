@@ -6,7 +6,7 @@ import 'package:smart_ventas/viewmodels/venta_viewmodel.dart';
 import 'package:smart_ventas/views/venta_form_screen.dart';
 import 'package:smart_ventas/widgets/reusable_widgets.dart';
 
-class VentasScreen extends StatelessWidget {
+class VentasScreen extends StatefulWidget {
   final VentaViewModel viewModel;
   final ProductoViewModel productoViewModel;
 
@@ -15,6 +15,27 @@ class VentasScreen extends StatelessWidget {
     required this.viewModel,
     required this.productoViewModel,
   });
+
+  @override
+  State<VentasScreen> createState() => _VentasScreenState();
+}
+
+class _VentasScreenState extends State<VentasScreen> {
+  @override
+  void initState() {
+    super.initState();
+    widget.viewModel.addListener(_onChanged);
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.viewModel.removeListener(_onChanged);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,67 +50,68 @@ class VentasScreen extends StatelessWidget {
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
       ),
-      body: ListenableBuilder(
-        listenable: viewModel,
-        builder: (context, _) {
-          if (viewModel.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return Column(
-            children: [
-              _buildSummary(theme),
-              _buildFilterBar(theme),
-              Expanded(
-                child: viewModel.ventas.isEmpty
-                    ? const EmptyState(
-                        icono: Icons.receipt_long_outlined,
-                        mensaje: 'No hay ventas registradas',
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.only(bottom: 80),
-                        itemCount: viewModel.ventas.length,
-                        itemBuilder: (context, index) {
-                          final venta = viewModel.ventas[index];
-                          final totalStr = Formatters.currency(venta.total);
-                          final clienteStr =
-                              venta.clienteNombre ?? 'Cliente general';
-                          final fechaStr = Formatters.date(venta.fecha);
-                          return VentaItem(
-                            folio: venta.folio,
-                            cliente: clienteStr,
-                            total: totalStr,
-                            estado: venta.estado,
-                            fecha: fechaStr,
-                            onTap: () => _mostrarDetalle(
-                                context, theme, venta, totalStr),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          );
-        },
-      ),
+      body: widget.viewModel.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _buildSummary(theme),
+                _buildFilterBar(theme),
+                Expanded(
+                  child: widget.viewModel.ventas.isEmpty
+                      ? const EmptyState(
+                          icono: Icons.receipt_long_outlined,
+                          mensaje: 'No hay ventas registradas',
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.only(bottom: 80),
+                          itemCount: widget.viewModel.ventas.length,
+                          itemBuilder: (context, index) {
+                            final venta = widget.viewModel.ventas[index];
+                            final totalStr = Formatters.currency(venta.total);
+                            final clienteStr =
+                                venta.clienteNombre ?? 'Cliente general';
+                            final fechaStr = Formatters.date(venta.fecha);
+                            return VentaItem(
+                              folio: venta.folio,
+                              cliente: clienteStr,
+                              total: totalStr,
+                              estado: venta.estado,
+                              fecha: fechaStr,
+                              onTap: () => _mostrarDetalle(
+                                context,
+                                theme,
+                                venta,
+                                totalStr,
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
       floatingActionButton: FloatingActionButton(
         heroTag: null,
         onPressed: () => Navigator.push(
           context,
           PageRouteBuilder(
             pageBuilder: (context, animation, secondary) => VentaFormScreen(
-              ventaViewModel: viewModel,
-              productoViewModel: productoViewModel,
+              ventaViewModel: widget.viewModel,
+              productoViewModel: widget.productoViewModel,
             ),
             transitionsBuilder: (context, animation, secondary, child) =>
                 SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(1, 0),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutCubic,
-              )),
-              child: child,
-            ),
+                  position:
+                      Tween<Offset>(
+                        begin: const Offset(1, 0),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutCubic,
+                        ),
+                      ),
+                  child: child,
+                ),
             transitionDuration: const Duration(milliseconds: 350),
           ),
         ),
@@ -107,10 +129,10 @@ class VentasScreen extends StatelessWidget {
           Expanded(
             child: MetricCard(
               titulo: 'Total Ventas',
-              valor: Formatters.currency(viewModel.totalVentas),
+              valor: Formatters.currency(widget.viewModel.totalVentas),
               icono: Icons.monetization_on,
               color: Colors.green,
-              subtitulo: '${viewModel.totalTransacciones} transacciones',
+              subtitulo: '${widget.viewModel.totalTransacciones} transacciones',
             ),
           ),
         ],
@@ -134,17 +156,21 @@ class VentasScreen extends StatelessWidget {
   }
 
   Widget _buildFilterChip(String estado, String label) {
-    final seleccionado = viewModel.filtroEstado == estado;
+    final seleccionado = widget.viewModel.filtroEstado == estado;
     return ChoiceChip(
       label: Text(label),
       selected: seleccionado,
-      onSelected: (_) => viewModel.setFiltroEstado(estado),
+      onSelected: (_) => widget.viewModel.setFiltroEstado(estado),
       visualDensity: VisualDensity.compact,
     );
   }
 
-  void _mostrarDetalle(BuildContext context, ThemeData theme, Venta venta,
-      String totalStr) {
+  void _mostrarDetalle(
+    BuildContext context,
+    ThemeData theme,
+    Venta venta,
+    String totalStr,
+  ) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -160,8 +186,9 @@ class VentasScreen extends StatelessWidget {
               children: [
                 Text(
                   venta.folio,
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const Spacer(),
                 EstadoBadge(estado: venta.estado),
@@ -186,8 +213,9 @@ class VentasScreen extends StatelessWidget {
             const Divider(height: 16),
             Text(
               'Productos',
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             ...venta.items.map(
@@ -215,10 +243,7 @@ class VentasScreen extends StatelessWidget {
               children: [
                 const Text(
                   'Total',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   totalStr,

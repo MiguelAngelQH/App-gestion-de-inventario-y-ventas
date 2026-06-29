@@ -5,15 +5,36 @@ import 'package:smart_ventas/viewmodels/cobrar_viewmodel.dart';
 import 'package:smart_ventas/widgets/reusable_widgets.dart';
 import 'package:uuid/uuid.dart';
 
-class CobrarScreen extends StatelessWidget {
+class CobrarScreen extends StatefulWidget {
   final CobrarViewModel viewModel;
 
   const CobrarScreen({super.key, required this.viewModel});
 
   @override
+  State<CobrarScreen> createState() => _CobrarScreenState();
+}
+
+class _CobrarScreenState extends State<CobrarScreen> {
+  @override
+  void initState() {
+    super.initState();
+    widget.viewModel.addListener(_onChanged);
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.viewModel.removeListener(_onChanged);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final clientes = viewModel.clientesConDeuda;
+    final clientes = widget.viewModel.clientesConDeuda;
 
     return Scaffold(
       appBar: AppBar(
@@ -22,169 +43,166 @@ class CobrarScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         heroTag: null,
-        onPressed: () =>
-            _mostrarAgregarCliente(context),
+        onPressed: () => _mostrarAgregarCliente(context),
         icon: const Icon(Icons.person_add),
         label: const Text('Agregar Cliente'),
       ),
-      body: ListenableBuilder(
-        listenable: viewModel,
-        builder: (context, _) {
-          return Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                color: theme.colorScheme.surfaceContainerLow,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: MetricCard(
-                        titulo: 'Total por Cobrar',
-                        valor: Formatters.currency(viewModel.totalDeuda),
-                        icono: Icons.account_balance_wallet,
-                        color: Colors.orange,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: MetricCard(
-                        titulo: 'Clientes',
-                        valor: '${viewModel.clientesMorosos}',
-                        icono: Icons.people,
-                        color: Colors.blue,
-                        subtitulo: 'con deuda pendiente',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (clientes.isEmpty)
-                const Expanded(
-                  child: EmptyState(
-                    icono: Icons.check_circle_outline,
-                    mensaje: 'No hay cuentas por cobrar',
-                    subtitulo: 'Todos los clientes están al corriente',
-                  ),
-                )
-              else
+      body: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: theme.colorScheme.surfaceContainerLow,
+            child: Row(
+              children: [
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: clientes.length,
-                    itemBuilder: (context, index) {
-                      final cliente = clientes[index];
-                      return Card(
-                        elevation: 0,
-                        margin: const EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          side: BorderSide(
-                            color: theme.colorScheme.outlineVariant,
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  child: MetricCard(
+                    titulo: 'Total por Cobrar',
+                    valor: Formatters.currency(widget.viewModel.totalDeuda),
+                    icono: Icons.account_balance_wallet,
+                    color: Colors.orange,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: MetricCard(
+                    titulo: 'Clientes',
+                    valor: '${widget.viewModel.clientesMorosos}',
+                    icono: Icons.people,
+                    color: Colors.blue,
+                    subtitulo: 'con deuda pendiente',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (clientes.isEmpty)
+            const Expanded(
+              child: EmptyState(
+                icono: Icons.check_circle_outline,
+                mensaje: 'No hay cuentas por cobrar',
+                subtitulo: 'Todos los clientes están al corriente',
+              ),
+            )
+          else
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: clientes.length,
+                itemBuilder: (context, index) {
+                  final cliente = clientes[index];
+                  return Card(
+                    elevation: 0,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(color: theme.colorScheme.outlineVariant),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    backgroundColor: theme
-                                        .colorScheme.primaryContainer,
-                                    child: Text(
-                                      cliente.nombre
-                                          .split(' ')
-                                          .where((w) => w.isNotEmpty)
-                                          .map((w) => w[0])
-                                          .take(2)
-                                          .join(),
-                                      style: TextStyle(
-                                        color: theme.colorScheme
-                                            .onPrimaryContainer,
-                                        fontWeight: FontWeight.bold,
+                              CircleAvatar(
+                                backgroundColor:
+                                    theme.colorScheme.primaryContainer,
+                                child: Text(
+                                  cliente.nombre
+                                      .split(' ')
+                                      .where((w) => w.isNotEmpty)
+                                      .map((w) => w[0])
+                                      .take(2)
+                                      .join(),
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      cliente.nombre,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          cliente.nombre,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        if (cliente.telefono.isNotEmpty)
-                                          Text(
-                                            cliente.telefono,
-                                            style: theme.textTheme.bodySmall
-                                                ?.copyWith(
-                                              color: theme.colorScheme
+                                    if (cliente.telefono.isNotEmpty)
+                                      Text(
+                                        cliente.telefono,
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme
+                                                  .colorScheme
                                                   .onSurfaceVariant,
                                             ),
-                                          ),
-                                        if (cliente.fechaVencimiento != null)
-                                          Text(
-                                            'Vence: ${Formatters.shortDate(cliente.fechaVencimiento!)}',
-                                            style: theme.textTheme.labelSmall
-                                                ?.copyWith(
+                                      ),
+                                    if (cliente.fechaVencimiento != null)
+                                      Text(
+                                        'Vence: ${Formatters.shortDate(cliente.fechaVencimiento!)}',
+                                        style: theme.textTheme.labelSmall
+                                            ?.copyWith(
                                               color: cliente.vencido
                                                   ? Colors.red
-                                                  : theme.colorScheme
-                                                      .onSurfaceVariant,
+                                                  : theme
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
                                             ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        Formatters.currency(cliente.deuda),
-                                        style: theme.textTheme.titleMedium
-                                            ?.copyWith(
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    Formatters.currency(cliente.deuda),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.orange.shade700,
                                         ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      _estadoBadge(cliente.estado, theme),
-                                    ],
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      onPressed: () =>
-                                          _mostrarRegistrarPago(
-                                              context, cliente.id, cliente.nombre),
-                                      icon: const Icon(Icons.payments_outlined,
-                                          size: 18),
-                                      label: const Text('Registrar Pago'),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _accionesMenu(context, cliente, theme),
+                                  const SizedBox(height: 4),
+                                  _estadoBadge(cliente.estado, theme),
                                 ],
                               ),
                             ],
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-            ],
-          );
-        },
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () => _mostrarRegistrarPago(
+                                    context,
+                                    cliente.id,
+                                    cliente.nombre,
+                                    cliente.deuda,
+                                  ),
+                                  icon: const Icon(
+                                    Icons.payments_outlined,
+                                    size: 18,
+                                  ),
+                                  label: const Text('Registrar Pago'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              _accionesMenu(context, cliente, theme),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -208,8 +226,7 @@ class CobrarScreen extends StatelessWidget {
     );
   }
 
-  Widget _accionesMenu(
-      BuildContext context, Cliente cliente, ThemeData theme) {
+  Widget _accionesMenu(BuildContext context, Cliente cliente, ThemeData theme) {
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert, size: 20),
       onSelected: (opcion) {
@@ -224,51 +241,57 @@ class CobrarScreen extends StatelessWidget {
             _confirmarEliminar(context, cliente);
             break;
           default:
-            viewModel.actualizarEstado(cliente.id, opcion);
+            widget.viewModel.actualizarEstado(cliente.id, opcion);
         }
       },
       itemBuilder: (_) => [
         const PopupMenuItem(
-            value: 'historial',
-            child: ListTile(
-              leading: Icon(Icons.history, size: 20),
-              title: Text('Historial de Pagos'),
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-            )),
+          value: 'historial',
+          child: ListTile(
+            leading: Icon(Icons.history, size: 20),
+            title: Text('Historial de Pagos'),
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
         const PopupMenuItem(
-            value: 'editar',
-            child: ListTile(
-              leading: Icon(Icons.edit, size: 20),
-              title: Text('Editar'),
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-            )),
+          value: 'editar',
+          child: ListTile(
+            leading: Icon(Icons.edit, size: 20),
+            title: Text('Editar'),
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
         const PopupMenuItem(
-            value: 'eliminar',
-            child: ListTile(
-              leading: Icon(Icons.delete, size: 20, color: Colors.red),
-              title: Text('Eliminar', style: TextStyle(color: Colors.red)),
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-            )),
+          value: 'eliminar',
+          child: ListTile(
+            leading: Icon(Icons.delete, size: 20, color: Colors.red),
+            title: Text('Eliminar', style: TextStyle(color: Colors.red)),
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
         const PopupMenuDivider(),
         if (cliente.estado != 'pendiente')
           const PopupMenuItem(
-              value: 'pendiente', child: Text('Marcar Pendiente')),
+            value: 'pendiente',
+            child: Text('Marcar Pendiente'),
+          ),
         if (cliente.estado != 'pagado')
-          const PopupMenuItem(
-              value: 'pagado', child: Text('Marcar Pagado')),
+          const PopupMenuItem(value: 'pagado', child: Text('Marcar Pagado')),
         if (cliente.estado != 'vencido')
-          const PopupMenuItem(
-              value: 'vencido', child: Text('Marcar Vencido')),
+          const PopupMenuItem(value: 'vencido', child: Text('Marcar Vencido')),
       ],
     );
   }
 
   void _mostrarHistorialPagos(
-      BuildContext context, String clienteId, String nombre) async {
-    final pagos = await viewModel.getPagosHistorial(clienteId);
+    BuildContext context,
+    String clienteId,
+    String nombre,
+  ) async {
+    final pagos = await widget.viewModel.getPagosHistorial(clienteId);
     if (!context.mounted) return;
     showModalBottomSheet(
       context: context,
@@ -278,8 +301,10 @@ class CobrarScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Historial de Pagos - $nombre',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Historial de Pagos - $nombre',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const Divider(),
             if (pagos.isEmpty)
               const Padding(
@@ -287,16 +312,20 @@ class CobrarScreen extends StatelessWidget {
                 child: Center(child: Text('Sin pagos registrados')),
               )
             else
-              ...pagos.map((p) => ListTile(
-                    leading: const Icon(Icons.check_circle, color: Colors.green),
-                    title: Text(Formatters.currency(
-                        (p['monto'] ?? 0).toDouble())),
-                    subtitle: Text(Formatters.dateTime(p['fecha'] ?? '')),
-                    trailing: p['nota'] != null && (p['nota'] as String).isNotEmpty
-                        ? Chip(label: Text(p['nota'] as String))
-                        : null,
-                    dense: true,
-                  )),
+              ...pagos.map(
+                (p) => ListTile(
+                  leading: const Icon(Icons.check_circle, color: Colors.green),
+                  title: Text(
+                    Formatters.currency((p['monto'] ?? 0).toDouble()),
+                  ),
+                  subtitle: Text(Formatters.dateTime(p['fecha'] ?? '')),
+                  trailing:
+                      p['nota'] != null && (p['nota'] as String).isNotEmpty
+                      ? Chip(label: Text(p['nota'] as String))
+                      : null,
+                  dense: true,
+                ),
+              ),
           ],
         ),
       ),
@@ -308,8 +337,9 @@ class CobrarScreen extends StatelessWidget {
     final telCtrl = TextEditingController(text: cliente.telefono);
     final emailCtrl = TextEditingController(text: cliente.email);
     final dirCtrl = TextEditingController(text: cliente.direccion);
-    final deudaCtrl =
-        TextEditingController(text: cliente.deuda.toStringAsFixed(2));
+    final deudaCtrl = TextEditingController(
+      text: cliente.deuda.toStringAsFixed(2),
+    );
     DateTime? fechaVenc = cliente.fechaVencimiento;
 
     showDialog(
@@ -324,47 +354,54 @@ class CobrarScreen extends StatelessWidget {
                 TextField(
                   controller: nombreCtrl,
                   decoration: const InputDecoration(
-                      labelText: 'Nombre *',
-                      border: OutlineInputBorder()),
+                    labelText: 'Nombre *',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: deudaCtrl,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                      labelText: 'Deuda (S/)',
-                      prefixText: 'S/ ',
-                      border: OutlineInputBorder()),
+                    labelText: 'Deuda (S/)',
+                    prefixText: 'S/ ',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: telCtrl,
                   keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(
-                      labelText: 'Teléfono',
-                      border: OutlineInputBorder()),
+                    labelText: 'Teléfono',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: emailCtrl,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder()),
+                    labelText: 'Email',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: dirCtrl,
                   decoration: const InputDecoration(
-                      labelText: 'Dirección',
-                      border: OutlineInputBorder()),
+                    labelText: 'Dirección',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 InkWell(
                   onTap: () async {
                     final picked = await showDatePicker(
                       context: ctx,
-                      initialDate: fechaVenc ?? DateTime.now().add(const Duration(days: 7)),
+                      initialDate:
+                          fechaVenc ??
+                          DateTime.now().add(const Duration(days: 7)),
                       firstDate: DateTime(2020),
                       lastDate: DateTime.now().add(const Duration(days: 365)),
                     );
@@ -396,14 +433,18 @@ class CobrarScreen extends StatelessWidget {
             FilledButton(
               onPressed: () {
                 if (nombreCtrl.text.trim().isEmpty) return;
-                viewModel.updateCliente(cliente.copyWith(
-                  nombre: nombreCtrl.text.trim(),
-                  deuda: double.tryParse(deudaCtrl.text) ?? cliente.deuda,
-                  telefono: telCtrl.text.trim(),
-                  email: emailCtrl.text.trim(),
-                  direccion: dirCtrl.text.trim(),
-                  fechaVencimiento: fechaVenc,
-                ));
+                final deuda = double.tryParse(deudaCtrl.text);
+                if (deuda != null && deuda < 0) return;
+                widget.viewModel.updateCliente(
+                  cliente.copyWith(
+                    nombre: nombreCtrl.text.trim(),
+                    deuda: deuda ?? cliente.deuda,
+                    telefono: telCtrl.text.trim(),
+                    email: emailCtrl.text.trim(),
+                    direccion: dirCtrl.text.trim(),
+                    fechaVencimiento: fechaVenc,
+                  ),
+                );
                 Navigator.pop(ctx);
               },
               child: const Text('Guardar'),
@@ -419,7 +460,9 @@ class CobrarScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Eliminar Cliente'),
-        content: Text('¿Eliminar a "${cliente.nombre}"?\nEsta acción no se puede deshacer.'),
+        content: Text(
+          '¿Eliminar a "${cliente.nombre}"?\nEsta acción no se puede deshacer.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -427,7 +470,7 @@ class CobrarScreen extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () {
-              viewModel.deleteCliente(cliente.id);
+              widget.viewModel.deleteCliente(cliente.id);
               Navigator.pop(ctx);
             },
             style: FilledButton.styleFrom(backgroundColor: Colors.red),
@@ -439,7 +482,11 @@ class CobrarScreen extends StatelessWidget {
   }
 
   void _mostrarRegistrarPago(
-      BuildContext context, String clienteId, String nombre) {
+    BuildContext context,
+    String clienteId,
+    String nombre,
+    double deuda,
+  ) {
     final controller = TextEditingController();
     showDialog(
       context: context,
@@ -449,6 +496,10 @@ class CobrarScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Cliente: $nombre'),
+            const SizedBox(height: 8),
+            Text('Deuda: ${Formatters.currency(deuda)}',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
@@ -469,9 +520,16 @@ class CobrarScreen extends StatelessWidget {
           FilledButton(
             onPressed: () {
               final monto = double.tryParse(controller.text);
-              if (monto != null && monto > 0) {
-                viewModel.registrarPago(clienteId, monto);
+              if (monto != null && monto > 0 && monto <= deuda) {
+                widget.viewModel.registrarPago(clienteId, monto);
                 Navigator.pop(context);
+              } else if (monto != null && monto > deuda) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('El monto no puede superar la deuda'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
               }
             },
             child: const Text('Registrar'),
@@ -555,17 +613,20 @@ class CobrarScreen extends StatelessWidget {
               child: const Text('Cancelar'),
             ),
             FilledButton(
-              onPressed: () {
+              onPressed: () async {
                 if (nombreCtrl.text.trim().isEmpty) return;
-                final deuda = double.tryParse(deudaCtrl.text) ?? 0;
-                viewModel.addCliente(Cliente(
-                  id: const Uuid().v4(),
-                  nombre: nombreCtrl.text.trim(),
-                  deuda: deuda,
-                  telefono: telCtrl.text.trim(),
-                  fechaVencimiento: fechaVenc,
-                ));
-                Navigator.pop(ctx);
+                final deuda = double.tryParse(deudaCtrl.text);
+                if (deuda == null || deuda < 0) return;
+                await widget.viewModel.addCliente(
+                  Cliente(
+                    id: const Uuid().v4(),
+                    nombre: nombreCtrl.text.trim(),
+                    deuda: deuda,
+                    telefono: telCtrl.text.trim(),
+                    fechaVencimiento: fechaVenc,
+                  ),
+                );
+                if (ctx.mounted) Navigator.pop(ctx);
               },
               child: const Text('Guardar'),
             ),

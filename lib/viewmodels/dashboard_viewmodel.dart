@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:smart_ventas/models/producto.dart';
 import 'package:smart_ventas/models/venta.dart';
 import 'package:smart_ventas/services/api_service.dart';
@@ -21,10 +21,12 @@ class DashboardViewModel extends ChangeNotifier {
   double _totalCuentasCobrar = 0;
   double _totalCuentasPagar = 0;
   List<Venta> _ultimasVentas = [];
+  List<Producto> _productos = [];
   List<Producto> _topProductos = [];
   bool _isLoading = true;
   bool _isFirstLoad = true;
   bool _usingServerData = false;
+  bool _disposed = false;
   Set<String> _prevStockBajoIds = {};
 
   int get productosStockBajo => _productosStockBajo;
@@ -53,8 +55,17 @@ class DashboardViewModel extends ChangeNotifier {
         FirebaseAuth.instance.authStateChanges().listen((_) => _init());
   }
 
+  void _safeNotify() {
+    if (!_disposed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_disposed) notifyListeners();
+      });
+    }
+  }
+
   @override
   void dispose() {
+    _disposed = true;
     _productosSub?.cancel();
     _ventasSub?.cancel();
     _clientesSub?.cancel();
@@ -68,7 +79,7 @@ class DashboardViewModel extends ChangeNotifier {
   void _debounceNotify() {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 150), () {
-      notifyListeners();
+      _safeNotify();
     });
   }
 
@@ -77,7 +88,7 @@ class DashboardViewModel extends ChangeNotifier {
     _isFirstLoad = true;
     _usingServerData = false;
     _debounceTimer?.cancel();
-    notifyListeners();
+    _safeNotify();
 
     _productosSub?.cancel();
     _ventasSub?.cancel();
@@ -89,7 +100,7 @@ class DashboardViewModel extends ChangeNotifier {
     }, onError: (_) {
       _isLoading = false;
       _isFirstLoad = false;
-      notifyListeners();
+      _safeNotify();
     });
 
     _ventasSub = _firestore.getVentas().listen((ventas) {
@@ -125,6 +136,7 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   void _processProductos(List<Producto> productos) {
+    _productos = productos;
     int stockBajoCount = 0;
     final stockBajoIds = <String>{};
     for (final p in productos) {
@@ -225,7 +237,8 @@ class DashboardViewModel extends ChangeNotifier {
     final limit = sortedEntries.length > 5 ? 5 : sortedEntries.length;
     for (int i = 0; i < limit; i++) {
       final id = sortedEntries[i].key;
-      _topProductos.add(Producto(
+      final full = _productos.where((p) => p.id == id).firstOrNull;
+      _topProductos.add(full ?? Producto(
         id: id,
         nombre: nombres[id] ?? '',
       ));
@@ -233,6 +246,7 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   Future<void> _fetchFromServer() async {
+    if (_disposed) return;
     _usingServerData = false;
     try {
       final ok = await _api.authenticate();
@@ -252,7 +266,7 @@ class DashboardViewModel extends ChangeNotifier {
     } catch (_) {
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
     }
   }
 

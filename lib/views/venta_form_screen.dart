@@ -5,6 +5,7 @@ import 'package:smart_ventas/utils/constants.dart';
 import 'package:smart_ventas/utils/formatters.dart';
 import 'package:smart_ventas/viewmodels/producto_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/venta_viewmodel.dart';
+import 'package:smart_ventas/views/scanner_screen.dart';
 
 class VentaFormScreen extends StatefulWidget {
   final VentaViewModel ventaViewModel;
@@ -67,6 +68,265 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _escanearCodigo() async {
+    final codigo = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const ScannerScreen()),
+    );
+    if (codigo == null || codigo.isEmpty) return;
+    if (!mounted) return;
+
+    final encontrado = widget.productoViewModel.getProductoByBarcode(codigo);
+
+    if (encontrado == null) {
+      _mostrarNoEncontrado(codigo);
+      return;
+    }
+    if (!mounted) return;
+
+    if (_items.any((i) => i.productoId == encontrado.id)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${encontrado.nombre} ya est\u00e1 en la venta'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    if (encontrado.presentaciones.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${encontrado.nombre} no tiene variantes'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    await _agregarDesdeProducto(encontrado);
+  }
+
+  void _mostrarNoEncontrado(String codigo) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.qr_code_scanner, color: Theme.of(ctx).colorScheme.primary),
+            const SizedBox(width: 8),
+            const Text('Producto no encontrado'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('C\u00f3digo escaneado: $codigo',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 13,
+                color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No hay un producto con este c\u00f3digo de barras en tu inventario.',
+              style: Theme.of(ctx).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Para agregarlo, ve a Productos y usa el esc\u00e1ner desde el formulario de nuevo producto.',
+              style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _agregarDesdeProducto(Producto producto) async {
+    final esUnica = producto.presentaciones.length == 1;
+    var presentacion = esUnica ? producto.presentaciones.first : null;
+    final ctrl = TextEditingController(text: '1');
+
+    final result = await showDialog<MapEntry<Presentacion, double>>(
+      context: context,
+      builder: (ctx) {
+        var sel = presentacion;
+        String? error;
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            final pr = sel;
+            final stock = pr?.stock ?? 0;
+            final cantVal = double.tryParse(ctrl.text);
+            final cantOk = cantVal != null && cantVal > 0;
+            final stockOk = cantVal != null && cantVal <= stock;
+            final puedeAgregar = pr != null && cantOk && stockOk;
+            final pierde = pr != null && pr.costo > pr.precio;
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: Row(
+                children: [
+                  Icon(pierde ? Icons.warning_amber_rounded : Icons.shopping_cart,
+                    color: pierde ? Colors.orange : Theme.of(ctx).colorScheme.primary,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(producto.nombre, style: const TextStyle(fontSize: 18))),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (esUnica) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Theme.of(ctx).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.sell, size: 18, color: Theme.of(ctx).colorScheme.primary),
+                              const SizedBox(width: 8),
+                              Text(presentacion!.nombre, style: const TextStyle(fontWeight: FontWeight.w500)),
+                              const Spacer(),
+                              Text(Formatters.currency(presentacion.precio),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Theme.of(ctx).colorScheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (pierde) ...[
+                            const SizedBox(height: 4),
+                            Text('Costo: ${Formatters.currency(presentacion.costo)} — se vende con pérdida',
+                              style: TextStyle(fontSize: 11, color: Colors.orange.shade700),
+                            ),
+                          ] else ...[
+                            const SizedBox(height: 4),
+                            Text('Costo: ${Formatters.currency(presentacion.costo)} — Ganancia: ${Formatters.currency(presentacion.precio - presentacion.costo)}',
+                              style: TextStyle(fontSize: 11, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    DropdownButtonFormField<Presentacion>(
+                      initialValue: sel,
+                      decoration: const InputDecoration(
+                        labelText: 'Variante',
+                        prefixIcon: Icon(Icons.sell),
+                      ),
+                      items: producto.presentaciones
+                          .map((pr) => DropdownMenuItem(
+                                value: pr,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(pr.nombre, overflow: TextOverflow.ellipsis),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text('${Formatters.currency(pr.precio)}/${pr.unidad}',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(ctx).colorScheme.primary,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ))
+                          .toList(),
+                      onChanged: (v) => setDialogState(() {
+                        sel = v;
+                        error = null;
+                      }),
+                    ),
+                    if (pierde)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text('Costo S/ ${pr.costo.toStringAsFixed(2)} — se vende con pérdida',
+                          style: TextStyle(fontSize: 11, color: Colors.orange.shade700),
+                        ),
+                      ),
+                  ],
+                  const SizedBox(height: 16),
+                  TextField(
+                    decoration: InputDecoration(
+                      labelText: 'Cantidad (stock: ${stock.toStringAsFixed(1)})',
+                      prefixIcon: const Icon(Icons.production_quantity_limits),
+                      border: const OutlineInputBorder(),
+                      errorText: error,
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    controller: ctrl,
+                    onChanged: (_) => setDialogState(() => error = null),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancelar'),
+                ),
+                FilledButton.icon(
+                  onPressed: puedeAgregar
+                      ? () => Navigator.pop(ctx, MapEntry(pr, cantVal))
+                      : null,
+                  icon: const Icon(Icons.add_shopping_cart, size: 18),
+                  label: Text(pr != null && !cantOk ? 'Cantidad inv\u00e1lida' : 'Agregar a la venta'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (result != null && mounted) {
+      final pr = result.key;
+      final cantidad = result.value;
+      setState(() {
+        _items.add(ItemVenta(
+          productoId: producto.id,
+          productoNombre: producto.nombre,
+          categoria: producto.categoria,
+          presentacionId: pr.id,
+          presentacionNombre: pr.nombre,
+          cantidad: cantidad,
+          precioUnitario: pr.precio,
+          costoUnitario: pr.costo,
+        ));
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${producto.nombre} agregado (${cantidad.toStringAsFixed(0)} ${pr.nombre})'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _quitarItem(int index) {
@@ -151,6 +411,11 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                           ?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const Spacer(),
+                    IconButton(
+                      onPressed: _escanearCodigo,
+                      icon: const Icon(Icons.qr_code_scanner),
+                      tooltip: 'Escanear código de barras',
+                    ),
                     FilledButton.tonalIcon(
                       onPressed: _agregarProducto,
                       icon: const Icon(Icons.add, size: 18),

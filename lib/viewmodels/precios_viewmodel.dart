@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/widgets.dart';
 import 'package:smart_ventas/models/producto.dart';
 import 'package:smart_ventas/services/firestore_service.dart';
 
@@ -14,13 +15,26 @@ class PreciosViewModel extends ChangeNotifier {
 
   List<FlatPres> _flat = [];
   bool _isLoading = true;
+  bool _disposed = false;
   StreamSubscription? _subscription;
+  StreamSubscription? _authSub;
 
   List<FlatPres> get flat => _flat;
   bool get isLoading => _isLoading;
 
   PreciosViewModel() {
     _subscribe();
+    _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (user != null) _subscribe();
+    });
+  }
+
+  void _safeNotify() {
+    if (!_disposed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_disposed) notifyListeners();
+      });
+    }
   }
 
   void _subscribe() {
@@ -34,10 +48,10 @@ class PreciosViewModel extends ChangeNotifier {
       }
       _flat = nueva;
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
     }, onError: (_) {
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
     });
   }
 
@@ -55,7 +69,9 @@ class PreciosViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _subscription?.cancel();
+    _authSub?.cancel();
     super.dispose();
   }
 }

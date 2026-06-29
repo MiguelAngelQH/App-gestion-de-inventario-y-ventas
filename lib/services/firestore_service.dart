@@ -38,8 +38,10 @@ class FirestoreService {
                 'id': doc.id,
               })).toList());
 
-  Future<void> addProducto(Producto p) =>
-      _productos.add(_withUid(p.toMap()..remove('id')));
+  Future<String> addProducto(Producto p) async {
+    final ref = await _productos.add(_withUid(p.toMap()..remove('id')));
+    return ref.id;
+  }
 
   Future<void> updateProducto(Producto p) =>
       _productos.doc(p.id).update(p.toMap()..remove('id'));
@@ -141,17 +143,25 @@ class FirestoreService {
       }
     }
 
+    if (c.credito && c.proveedorId.isNotEmpty) {
+      batch.update(_proveedores.doc(c.proveedorId), {
+        'saldoPendiente': FieldValue.increment(c.total),
+      });
+    }
+
     await batch.commit();
 
     for (final item in c.items) {
-      await _actualizarCostoPresentacion(item.productoId, item.presentacionId, item.costoUnitario);
+      await _actualizarCostoPresentacion(
+        item.productoId, item.presentacionId, item.cantidad, item.costoUnitario,
+      );
     }
 
     return compraRef.id;
   }
 
   Future<void> _actualizarCostoPresentacion(
-      String productoId, String presentacionId, double nuevoCosto) async {
+      String productoId, String presentacionId, double cantidadNueva, double nuevoCosto) async {
     final doc = await _productos.doc(productoId).get();
     if (!doc.exists) return;
     final data = doc.data() as Map<String, dynamic>;
@@ -159,17 +169,20 @@ class FirestoreService {
             ?.map((p) => Map<String, dynamic>.from(p as Map))
             .toList() ??
         [];
-    bool updated = false;
     for (final p in presentaciones) {
       if (p['id'] == presentacionId) {
-        p['costo'] = nuevoCosto;
-        updated = true;
+        final stockActual = (p['stock'] as num?)?.toDouble() ?? 0;
+        final costoActual = (p['costo'] as num?)?.toDouble() ?? 0;
+        final stockAnterior = stockActual - cantidadNueva;
+        if (stockAnterior <= 0) {
+          p['costo'] = nuevoCosto;
+        } else {
+          p['costo'] = (stockAnterior * costoActual + cantidadNueva * nuevoCosto) / stockActual;
+        }
         break;
       }
     }
-    if (updated) {
-      await _productos.doc(productoId).update({'presentaciones': presentaciones});
-    }
+    await _productos.doc(productoId).update({'presentaciones': presentaciones});
   }
 
   Future<void> updateCompraEstado(String id, String estado) =>
@@ -225,7 +238,6 @@ class FirestoreService {
     final doc = await _compras.doc(id).get();
     if (!doc.exists) return;
     final data = doc.data() as Map<String, dynamic>;
-    if (data['estado'] == 'recibida') return;
 
     final batch = _db.batch();
     batch.delete(_compras.doc(id));
@@ -247,6 +259,16 @@ class FirestoreService {
         batch.update(prodRef, {'stockTotal': total});
       }
     }
+
+    final fueCredito = data['credito'] == true;
+    final proveedorId = data['proveedorId'] as String? ?? '';
+    if (fueCredito && proveedorId.isNotEmpty) {
+      final totalCompra = (data['total'] ?? 0).toDouble();
+      batch.update(_proveedores.doc(proveedorId), {
+        'saldoPendiente': FieldValue.increment(-totalCompra),
+      });
+    }
+
     await batch.commit();
   }
 

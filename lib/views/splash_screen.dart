@@ -2,39 +2,15 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:smart_ventas/utils/constants.dart';
 import 'package:smart_ventas/viewmodels/auth_viewmodel.dart';
-import 'package:smart_ventas/viewmodels/cobrar_viewmodel.dart';
-import 'package:smart_ventas/viewmodels/compra_viewmodel.dart';
-import 'package:smart_ventas/viewmodels/config_viewmodel.dart';
-import 'package:smart_ventas/viewmodels/dashboard_viewmodel.dart';
-import 'package:smart_ventas/viewmodels/pagar_viewmodel.dart';
-import 'package:smart_ventas/viewmodels/producto_viewmodel.dart';
-import 'package:smart_ventas/viewmodels/reporte_viewmodel.dart';
-import 'package:smart_ventas/viewmodels/venta_viewmodel.dart';
-import 'package:smart_ventas/views/home_screen.dart';
-import 'package:smart_ventas/views/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   final AuthViewModel authViewModel;
-  final ProductoViewModel productoViewModel;
-  final VentaViewModel ventaViewModel;
-  final CompraViewModel compraViewModel;
-  final DashboardViewModel dashboardViewModel;
-  final CobrarViewModel cobrarViewModel;
-  final PagarViewModel pagarViewModel;
-  final ReporteViewModel reporteViewModel;
-  final ConfigViewModel configViewModel;
+  final VoidCallback onSplashComplete;
 
   const SplashScreen({
     super.key,
     required this.authViewModel,
-    required this.productoViewModel,
-    required this.ventaViewModel,
-    required this.compraViewModel,
-    required this.dashboardViewModel,
-    required this.cobrarViewModel,
-    required this.pagarViewModel,
-    required this.reporteViewModel,
-    required this.configViewModel,
+    required this.onSplashComplete,
   });
 
   @override
@@ -77,46 +53,7 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _checkAuth() async {
     await Future.delayed(const Duration(seconds: AppConstants.splashDuration));
     if (!mounted) return;
-
-    if (widget.authViewModel.isAuthenticated) {
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondary) => HomeScreen(
-            authViewModel: widget.authViewModel,
-            productoViewModel: widget.productoViewModel,
-            ventaViewModel: widget.ventaViewModel,
-            compraViewModel: widget.compraViewModel,
-            dashboardViewModel: widget.dashboardViewModel,
-            cobrarViewModel: widget.cobrarViewModel,
-            pagarViewModel: widget.pagarViewModel,
-            reporteViewModel: widget.reporteViewModel,
-            configViewModel: widget.configViewModel,
-          ),
-          transitionsBuilder: (context, animation, secondary, child) =>
-              FadeTransition(opacity: animation, child: child),
-          transitionDuration: const Duration(milliseconds: 600),
-        ),
-      );
-    } else {
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondary) => LoginScreen(
-            authViewModel: widget.authViewModel,
-            productoViewModel: widget.productoViewModel,
-            ventaViewModel: widget.ventaViewModel,
-            compraViewModel: widget.compraViewModel,
-            dashboardViewModel: widget.dashboardViewModel,
-            cobrarViewModel: widget.cobrarViewModel,
-            pagarViewModel: widget.pagarViewModel,
-            reporteViewModel: widget.reporteViewModel,
-            configViewModel: widget.configViewModel,
-          ),
-          transitionsBuilder: (context, animation, secondary, child) =>
-              FadeTransition(opacity: animation, child: child),
-          transitionDuration: const Duration(milliseconds: 600),
-        ),
-      );
-    }
+    widget.onSplashComplete();
   }
 
   @override

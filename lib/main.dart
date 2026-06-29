@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_ventas/services/fcm_service.dart';
+import 'package:smart_ventas/services/firestore_service.dart';
 import 'package:smart_ventas/utils/constants.dart';
 import 'package:smart_ventas/viewmodels/auth_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/cobrar_viewmodel.dart';
@@ -11,17 +12,48 @@ import 'package:smart_ventas/viewmodels/pagar_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/producto_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/reporte_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/venta_viewmodel.dart';
+import 'package:smart_ventas/views/home_screen.dart';
+import 'package:smart_ventas/views/login_screen.dart';
 import 'package:smart_ventas/views/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  FlutterError.onError = (details) {
+    if (details.exception
+        .toString()
+        .contains("_dependents.isEmpty")) {
+      return;
+    }
+    FlutterError.presentError(details);
+  };
+
   await Firebase.initializeApp();
   await FcmService().init();
-  runApp(SmartVentasApp());
+
+  ThemeMode initialThemeMode = ThemeMode.light;
+  try {
+    final firestore = FirestoreService();
+    final configData = await firestore.getConfig();
+    final themeStr = configData['themeMode'] as String?;
+    initialThemeMode = themeStr == 'dark' ? ThemeMode.dark : ThemeMode.light;
+  } catch (_) {}
+
+  runApp(SmartVentasApp(initialThemeMode: initialThemeMode));
 }
 
-class SmartVentasApp extends StatelessWidget {
-  SmartVentasApp({super.key});
+class SmartVentasApp extends StatefulWidget {
+  const SmartVentasApp({super.key, required this.initialThemeMode});
+
+  final ThemeMode initialThemeMode;
+
+  @override
+  State<SmartVentasApp> createState() => _SmartVentasAppState();
+}
+
+class _SmartVentasAppState extends State<SmartVentasApp> {
+  final _appKey = GlobalKey();
+  bool _splashComplete = false;
 
   final _authViewModel = AuthViewModel();
   final _productoViewModel = ProductoViewModel();
@@ -34,29 +66,56 @@ class SmartVentasApp extends StatelessWidget {
   final _reporteViewModel = ReporteViewModel();
 
   @override
+  void initState() {
+    super.initState();
+    _configViewModel.onThemeChanged = () {
+      if (mounted) setState(() {});
+    };
+  }
+
+  void _onSplashComplete() {
+    setState(() {
+      _splashComplete = true;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: _configViewModel,
-      builder: (context, _) {
-        return MaterialApp(
-          title: AppConstants.appName,
-          debugShowCheckedModeBanner: false,
-          themeMode: _configViewModel.themeMode,
-          theme: _buildLightTheme(),
-          darkTheme: _buildDarkTheme(),
-          home: SplashScreen(
-            authViewModel: _authViewModel,
-            productoViewModel: _productoViewModel,
-            ventaViewModel: _ventaViewModel,
-            compraViewModel: _compraViewModel,
-            dashboardViewModel: _dashboardViewModel,
-            cobrarViewModel: _cobrarViewModel,
-            pagarViewModel: _pagarViewModel,
-            reporteViewModel: _reporteViewModel,
-            configViewModel: _configViewModel,
-          ),
-        );
-      },
+    return MaterialApp(
+      key: _appKey,
+      title: AppConstants.appName,
+      debugShowCheckedModeBanner: false,
+      themeMode: _configViewModel.themeMode,
+      theme: _buildLightTheme(),
+      darkTheme: _buildDarkTheme(),
+      home: _splashComplete
+          ? (_authViewModel.isAuthenticated
+              ? HomeScreen(
+                  authViewModel: _authViewModel,
+                  productoViewModel: _productoViewModel,
+                  ventaViewModel: _ventaViewModel,
+                  compraViewModel: _compraViewModel,
+                  dashboardViewModel: _dashboardViewModel,
+                  cobrarViewModel: _cobrarViewModel,
+                  pagarViewModel: _pagarViewModel,
+                  reporteViewModel: _reporteViewModel,
+                  configViewModel: _configViewModel,
+                )
+              : LoginScreen(
+                  authViewModel: _authViewModel,
+                  productoViewModel: _productoViewModel,
+                  ventaViewModel: _ventaViewModel,
+                  compraViewModel: _compraViewModel,
+                  dashboardViewModel: _dashboardViewModel,
+                  cobrarViewModel: _cobrarViewModel,
+                  pagarViewModel: _pagarViewModel,
+                  reporteViewModel: _reporteViewModel,
+                  configViewModel: _configViewModel,
+                ))
+          : SplashScreen(
+              authViewModel: _authViewModel,
+              onSplashComplete: _onSplashComplete,
+            ),
     );
   }
 

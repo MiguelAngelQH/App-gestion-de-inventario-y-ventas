@@ -145,7 +145,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
     } catch (_) {}
 
     if (nombre == null || nombre.isEmpty) {
-      final prod = await widget.viewModel.getProductoByBarcode(codigo);
+      final prod = widget.viewModel.getProductoByBarcode(codigo);
       if (prod != null) {
         nombre = prod.nombre;
         descripcion = prod.descripcion;
@@ -155,7 +155,17 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
       }
     }
 
-    if (nombre == null || !mounted) return;
+    if (nombre == null || !mounted) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('No se encontró un producto con este código de barras'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
 
     final aceptado = await showDialog<bool>(
       context: context,
@@ -215,6 +225,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
       if (proveedorNombre != null && proveedorNombre.isNotEmpty) {
         final provId = await widget.viewModel
             .crearProveedorSiNoExiste(proveedorNombre);
+        if (!mounted) return;
         _proveedorId = provId;
       }
 
@@ -251,6 +262,41 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
         const SnackBar(content: Text('Agrega al menos una variante')),
       );
       return;
+    }
+
+    for (final v in _variants) {
+      final nom = v.nombreCtrl.text.trim();
+      final precio = double.tryParse(v.precioCtrl.text) ?? 0;
+      final costo = double.tryParse(v.costoCtrl.text) ?? 0;
+      final stock = double.tryParse(v.stockCtrl.text) ?? 0;
+      if (precio <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('"$nom": el precio de venta debe ser mayor a 0')),
+        );
+        return;
+      }
+      if (costo < 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('"$nom": el costo no puede ser negativo')),
+        );
+        return;
+      }
+      if (stock < 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('"$nom": el stock no puede ser negativo')),
+        );
+        return;
+      }
+      if (costo > precio) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '"$nom": el costo (S/ ${costo.toStringAsFixed(2)}) supera al precio de venta (S/ ${precio.toStringAsFixed(2)})',
+            ),
+          ),
+        );
+        return;
+      }
     }
 
     final presentaciones = _variants.map((v) {
@@ -504,7 +550,9 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                                       help: 'Precio al que vendes esta variante'),
                                   validator: (val) {
                                     if (val == null || val.isEmpty) return 'Req';
-                                    if (double.tryParse(val) == null) return 'Inv';
+                                    final n = double.tryParse(val);
+                                    if (n == null) return 'Inv';
+                                    if (n <= 0) return '>0';
                                     return null;
                                   },
                                 ),
@@ -518,7 +566,9 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                                       help: 'Cuánto te costó adquirir esta variante'),
                                   validator: (val) {
                                     if (val == null || val.isEmpty) return 'Req';
-                                    if (double.tryParse(val) == null) return 'Inv';
+                                    final n = double.tryParse(val);
+                                    if (n == null) return 'Inv';
+                                    if (n < 0) return '<0';
                                     return null;
                                   },
                                 ),
@@ -532,7 +582,9 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                                       help: 'Cantidad disponible actualmente'),
                                   validator: (val) {
                                     if (val == null || val.isEmpty) return 'Req';
-                                    if (double.tryParse(val) == null) return 'Inv';
+                                    final n = double.tryParse(val);
+                                    if (n == null) return 'Inv';
+                                    if (n < 0) return '<0';
                                     return null;
                                   },
                                 ),

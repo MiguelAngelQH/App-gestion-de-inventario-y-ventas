@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:smart_ventas/models/venta.dart';
 import 'package:smart_ventas/services/firestore_service.dart';
 
@@ -11,8 +11,10 @@ class VentaViewModel extends ChangeNotifier {
   List<Venta> _ventasFiltradas = [];
   String _filtroEstado = 'todas';
   bool _isLoading = true;
+  bool _disposed = false;
   String? _error;
   StreamSubscription? _subscription;
+  StreamSubscription? _authSub;
 
   List<Venta> get ventas => _ventasFiltradas;
   String get filtroEstado => _filtroEstado;
@@ -26,7 +28,16 @@ class VentaViewModel extends ChangeNotifier {
 
   VentaViewModel() {
     _subscribe();
-    FirebaseAuth.instance.authStateChanges().listen((_) => _subscribe());
+    _authSub =
+        FirebaseAuth.instance.authStateChanges().listen((_) => _subscribe());
+  }
+
+  void _safeNotify() {
+    if (!_disposed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_disposed) notifyListeners();
+      });
+    }
   }
 
   void _subscribe() {
@@ -43,7 +54,7 @@ class VentaViewModel extends ChangeNotifier {
     _ventasFiltradas = _ventas.where((v) {
       return _filtroEstado == 'todas' || v.estado == _filtroEstado;
     }).toList();
-    notifyListeners();
+    _safeNotify();
   }
 
   void setFiltroEstado(String estado) {
@@ -57,7 +68,7 @@ class VentaViewModel extends ChangeNotifier {
       return id;
     } catch (e) {
       _error = 'Error al registrar la venta';
-      notifyListeners();
+      _safeNotify();
       return null;
     }
   }
@@ -67,7 +78,7 @@ class VentaViewModel extends ChangeNotifier {
       await _firestore.updateVentaEstado(id, estado);
     } catch (e) {
       _error = 'Error al actualizar estado';
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -76,12 +87,20 @@ class VentaViewModel extends ChangeNotifier {
       await _firestore.deleteVenta(id);
     } catch (e) {
       _error = 'Error al eliminar venta';
-      notifyListeners();
+      _safeNotify();
     }
   }
 
   void clearError() {
     _error = null;
-    notifyListeners();
+    _safeNotify();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _subscription?.cancel();
+    _authSub?.cancel();
+    super.dispose();
   }
 }

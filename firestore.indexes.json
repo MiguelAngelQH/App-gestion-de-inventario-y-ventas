@@ -50,6 +50,14 @@
       ]
     },
     {
+      "collectionGroup": "productos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "uid", "order": "ASCENDING" },
+        { "fieldPath": "codigoBarras", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "ventas",
       "queryScope": "COLLECTION",
       "fields": [

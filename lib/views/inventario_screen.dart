@@ -5,10 +5,31 @@ import 'package:smart_ventas/viewmodels/producto_viewmodel.dart';
 import 'package:smart_ventas/views/producto_form_screen.dart';
 import 'package:smart_ventas/widgets/reusable_widgets.dart';
 
-class InventarioScreen extends StatelessWidget {
+class InventarioScreen extends StatefulWidget {
   final ProductoViewModel viewModel;
 
   const InventarioScreen({super.key, required this.viewModel});
+
+  @override
+  State<InventarioScreen> createState() => _InventarioScreenState();
+}
+
+class _InventarioScreenState extends State<InventarioScreen> {
+  @override
+  void initState() {
+    super.initState();
+    widget.viewModel.addListener(_onChanged);
+  }
+
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    widget.viewModel.removeListener(_onChanged);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,57 +44,51 @@ class InventarioScreen extends StatelessWidget {
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
       ),
-      body: ListenableBuilder(
-        listenable: viewModel,
-        builder: (context, _) {
-          if (viewModel.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          return Column(
-            children: [
-              _buildSearchBar(theme),
-              _buildFilterChips(theme),
-              Expanded(
-                child: viewModel.productos.isEmpty
-                    ? const EmptyState(
-                        icono: Icons.inventory_2_outlined,
-                        mensaje: 'No se encontraron productos',
-                        subtitulo:
-                            'Agrega tu primer producto con el botón +',
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-                        itemCount: viewModel.productos.length,
-                        itemBuilder: (context, index) {
-                          final producto = viewModel.productos[index];
-                          return _buildProductoCard(
-                              context, theme, producto);
-                        },
-                      ),
-              ),
-            ],
-          );
-        },
-      ),
+      body: widget.viewModel.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _buildSearchBar(theme),
+                _buildFilterChips(theme),
+                Expanded(
+                  child: widget.viewModel.productos.isEmpty
+                      ? const EmptyState(
+                          icono: Icons.inventory_2_outlined,
+                          mensaje: 'No se encontraron productos',
+                          subtitulo: 'Agrega tu primer producto con el botón +',
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                          itemCount: widget.viewModel.productos.length,
+                          itemBuilder: (context, index) {
+                            final producto = widget.viewModel.productos[index];
+                            return _buildProductoCard(context, theme, producto);
+                          },
+                        ),
+                ),
+              ],
+            ),
       floatingActionButton: FloatingActionButton(
         heroTag: null,
         onPressed: () => Navigator.push(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondary) => ProductoFormScreen(
-              viewModel: viewModel,
-            ),
+            pageBuilder: (context, animation, secondary) =>
+                ProductoFormScreen(viewModel: widget.viewModel),
             transitionsBuilder: (context, animation, secondary, child) =>
                 SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(1, 0),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutCubic,
-              )),
-              child: child,
-            ),
+                  position:
+                      Tween<Offset>(
+                        begin: const Offset(1, 0),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutCubic,
+                        ),
+                      ),
+                  child: child,
+                ),
             transitionDuration: const Duration(milliseconds: 350),
           ),
         ),
@@ -89,7 +104,7 @@ class InventarioScreen extends StatelessWidget {
       child: Column(
         children: [
           TextField(
-            onChanged: viewModel.setBusqueda,
+            onChanged: widget.viewModel.setBusqueda,
             decoration: InputDecoration(
               hintText: 'Buscar producto...',
               prefixIcon: const Icon(Icons.search),
@@ -106,7 +121,7 @@ class InventarioScreen extends StatelessWidget {
           Row(
             children: [
               Text(
-                '${viewModel.productos.length} productos',
+                '${widget.viewModel.productos.length} productos',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -114,9 +129,10 @@ class InventarioScreen extends StatelessWidget {
               const Spacer(),
               FilterChip(
                 label: const Text('Stock bajo'),
-                selected: viewModel.soloStockBajo,
-                onSelected: (_) =>
-                    viewModel.setSoloStockBajo(!viewModel.soloStockBajo),
+                selected: widget.viewModel.soloStockBajo,
+                onSelected: (_) => widget.viewModel.setSoloStockBajo(
+                  !widget.viewModel.soloStockBajo,
+                ),
                 visualDensity: VisualDensity.compact,
               ),
             ],
@@ -127,7 +143,7 @@ class InventarioScreen extends StatelessWidget {
   }
 
   Widget _buildFilterChips(ThemeData theme) {
-    final categorias = viewModel.categorias;
+    final categorias = widget.viewModel.categorias;
     return Container(
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -137,11 +153,11 @@ class InventarioScreen extends StatelessWidget {
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final cat = categorias[index];
-          final seleccionada = viewModel.categoriaSeleccionada == cat;
+          final seleccionada = widget.viewModel.categoriaSeleccionada == cat;
           return ChoiceChip(
             label: Text(cat),
             selected: seleccionada,
-            onSelected: (_) => viewModel.setCategoria(cat),
+            onSelected: (_) => widget.viewModel.setCategoria(cat),
             visualDensity: VisualDensity.compact,
           );
         },
@@ -150,7 +166,10 @@ class InventarioScreen extends StatelessWidget {
   }
 
   Widget _buildProductoCard(
-      BuildContext context, ThemeData theme, Producto producto) {
+    BuildContext context,
+    ThemeData theme,
+    Producto producto,
+  ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       surfaceTintColor: Colors.transparent,
@@ -158,21 +177,22 @@ class InventarioScreen extends StatelessWidget {
         onTap: () => Navigator.push(
           context,
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondary) => ProductoFormScreen(
-              viewModel: viewModel,
-              producto: producto,
-            ),
+            pageBuilder: (context, animation, secondary) =>
+                ProductoFormScreen(              viewModel: widget.viewModel, producto: producto),
             transitionsBuilder: (context, animation, secondary, child) =>
                 SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(1, 0),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutCubic,
-              )),
-              child: child,
-            ),
+                  position:
+                      Tween<Offset>(
+                        begin: const Offset(1, 0),
+                        end: Offset.zero,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOutCubic,
+                        ),
+                      ),
+                  child: child,
+                ),
             transitionDuration: const Duration(milliseconds: 350),
           ),
         ),
@@ -217,7 +237,7 @@ class InventarioScreen extends StatelessWidget {
                             fontSize: 15,
                           ),
                         ),
-                          if (producto.marca.isNotEmpty)
+                        if (producto.marca.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 2),
                             child: Text(
@@ -234,7 +254,9 @@ class InventarioScreen extends StatelessWidget {
                           children: producto.presentaciones.map((pr) {
                             return Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: theme.colorScheme.secondaryContainer
                                     .withValues(alpha: 0.5),
@@ -245,8 +267,7 @@ class InventarioScreen extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
-                                  color: theme
-                                      .colorScheme.onSecondaryContainer,
+                                  color: theme.colorScheme.onSecondaryContainer,
                                 ),
                               ),
                             );
@@ -257,7 +278,9 @@ class InventarioScreen extends StatelessWidget {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: producto.stockBajo
                           ? Colors.red.withValues(alpha: 0.1)
@@ -312,7 +335,7 @@ class InventarioScreen extends StatelessWidget {
           ),
           FilledButton(
             onPressed: () {
-              viewModel.deleteProducto(producto.id);
+              widget.viewModel.deleteProducto(producto.id);
               Navigator.pop(ctx);
             },
             style: FilledButton.styleFrom(

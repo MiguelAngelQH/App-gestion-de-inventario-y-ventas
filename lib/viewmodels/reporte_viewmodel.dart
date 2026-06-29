@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:smart_ventas/models/producto.dart';
 import 'package:smart_ventas/models/venta.dart';
 import 'package:smart_ventas/services/firestore_service.dart';
@@ -17,8 +17,10 @@ class ReporteViewModel extends ChangeNotifier {
   double _egresosMes = 0;
   Map<String, double> _ventasPorCategoria = {};
   Map<DateTime, double> _ventasUltimos7Dias = {};
+  List<Producto> _productos = [];
   List<Producto> _topProductos = [];
   bool _isLoading = true;
+  bool _disposed = false;
 
   double get ventasMes => _ventasMes;
   double get ventasSemana => _ventasSemana;
@@ -37,6 +39,7 @@ class ReporteViewModel extends ChangeNotifier {
   StreamSubscription? _comprasSub;
   StreamSubscription? _clientesSub;
   StreamSubscription? _proveedoresSub;
+  StreamSubscription? _productosSub;
   StreamSubscription? _authSub;
   Timer? _debounceTimer;
 
@@ -46,12 +49,22 @@ class ReporteViewModel extends ChangeNotifier {
         FirebaseAuth.instance.authStateChanges().listen((_) => _init());
   }
 
+  void _safeNotify() {
+    if (!_disposed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_disposed) notifyListeners();
+      });
+    }
+  }
+
   @override
   void dispose() {
+    _disposed = true;
     _ventasSub?.cancel();
     _comprasSub?.cancel();
     _clientesSub?.cancel();
     _proveedoresSub?.cancel();
+    _productosSub?.cancel();
     _authSub?.cancel();
     _debounceTimer?.cancel();
     super.dispose();
@@ -60,18 +73,23 @@ class ReporteViewModel extends ChangeNotifier {
   void _scheduleRecalculation() {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 200), () {
-      notifyListeners();
+      _safeNotify();
     });
   }
 
   void _init() {
     _isLoading = true;
-    notifyListeners();
+    _safeNotify();
 
     _ventasSub?.cancel();
     _comprasSub?.cancel();
     _clientesSub?.cancel();
     _proveedoresSub?.cancel();
+    _productosSub?.cancel();
+
+    _productosSub = _firestore.getProductos().listen((productos) {
+      _productos = productos;
+    });
 
     _ventasSub = _firestore.getVentas().listen((ventas) {
       _calcularMetricasVentas(ventas);
@@ -79,7 +97,7 @@ class ReporteViewModel extends ChangeNotifier {
       _scheduleRecalculation();
     }, onError: (_) {
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
     });
 
     _comprasSub = _firestore.getCompras().listen((compras) {
@@ -94,7 +112,7 @@ class ReporteViewModel extends ChangeNotifier {
       _scheduleRecalculation();
     }, onError: (_) {
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
     });
 
     _clientesSub = _firestore.getClientes().listen((clientes) {
@@ -196,7 +214,8 @@ class ReporteViewModel extends ChangeNotifier {
     final limit = sortedEntries.length > 5 ? 5 : sortedEntries.length;
     for (int i = 0; i < limit; i++) {
       final id = sortedEntries[i].key;
-      _topProductos.add(Producto(
+      final full = _productos.where((p) => p.id == id).firstOrNull;
+      _topProductos.add(full ?? Producto(
         id: id,
         nombre: nombreMap[id] ?? '',
         categoria: categoriaMap[id] ?? 'General',

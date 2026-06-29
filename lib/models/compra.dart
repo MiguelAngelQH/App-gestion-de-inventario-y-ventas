@@ -49,6 +49,7 @@ class Compra {
   List<ItemCompra> items;
   double total;
   String estado;
+  bool credito;
 
   Compra({
     required this.id,
@@ -58,6 +59,7 @@ class Compra {
     required this.items,
     required this.total,
     this.estado = 'pendiente',
+    this.credito = false,
   });
 
   String get folio {
@@ -75,6 +77,7 @@ class Compra {
         'items': items.map((i) => i.toMap()).toList(),
         'total': total,
         'estado': estado,
+        'credito': credito,
       };
 
   factory Compra.fromMap(Map<String, dynamic> map) => Compra(
@@ -87,5 +90,6 @@ class Compra {
             .toList(),
         total: (map['total'] ?? 0).toDouble(),
         estado: map['estado'] ?? 'pendiente',
+        credito: map['credito'] ?? false,
       );
 }

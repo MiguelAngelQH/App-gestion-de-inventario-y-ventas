@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:smart_ventas/models/producto.dart';
 import 'package:smart_ventas/models/proveedor.dart';
 import 'package:smart_ventas/services/firestore_service.dart';
@@ -15,9 +15,11 @@ class ProductoViewModel extends ChangeNotifier {
   String _categoriaSeleccionada = 'Todas';
   bool _soloStockBajo = false;
   bool _isLoading = true;
+  bool _disposed = false;
   String? _error;
   StreamSubscription? _subscription;
   StreamSubscription? _provSubscription;
+  StreamSubscription? _authSub;
 
   List<Producto> get productos => _soloStockBajo
       ? _productosFiltrados.where((p) => p.stockBajo).toList()
@@ -35,17 +37,25 @@ class ProductoViewModel extends ChangeNotifier {
   ProductoViewModel() {
     _subscribe();
     _subscribeProveedores();
-    FirebaseAuth.instance.authStateChanges().listen((_) {
+    _authSub = FirebaseAuth.instance.authStateChanges().listen((_) {
       _subscribe();
       _subscribeProveedores();
     });
+  }
+
+  void _safeNotify() {
+    if (!_disposed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_disposed) notifyListeners();
+      });
+    }
   }
 
   void _subscribeProveedores() {
     _provSubscription?.cancel();
     _provSubscription = _firestore.getProveedores().listen((proveedores) {
       _proveedores = proveedores;
-      notifyListeners();
+      _safeNotify();
     });
   }
 
@@ -59,7 +69,7 @@ class ProductoViewModel extends ChangeNotifier {
     }, onError: (e) {
       _error = 'Error al cargar productos: $e';
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
     });
   }
 
@@ -73,7 +83,7 @@ class ProductoViewModel extends ChangeNotifier {
           p.categoria == _categoriaSeleccionada;
       return coincideBusqueda && coincideCategoria;
     }).toList();
-    notifyListeners();
+    _safeNotify();
   }
 
   void setBusqueda(String busqueda) {
@@ -88,7 +98,7 @@ class ProductoViewModel extends ChangeNotifier {
 
   void setSoloStockBajo(bool value) {
     _soloStockBajo = value;
-    notifyListeners();
+    _safeNotify();
   }
 
   Future<void> addProducto(Producto p) async {
@@ -96,7 +106,7 @@ class ProductoViewModel extends ChangeNotifier {
       await _firestore.addProducto(p);
     } catch (e) {
       _error = 'Error al guardar producto';
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -105,7 +115,7 @@ class ProductoViewModel extends ChangeNotifier {
       await _firestore.updateProducto(p);
     } catch (e) {
       _error = 'Error al actualizar producto';
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -114,13 +124,15 @@ class ProductoViewModel extends ChangeNotifier {
       await _firestore.deleteProducto(id);
     } catch (e) {
       _error = 'Error al eliminar producto';
-      notifyListeners();
+      _safeNotify();
     }
   }
 
-  Future<Producto?> getProductoByBarcode(String codigo) async {
+  Producto? getProductoByBarcode(String codigo) {
     try {
-      return await _firestore.getProductoByBarcode(codigo);
+      return _productos.cast<Producto?>().firstWhere(
+        (p) => p!.codigoBarras == codigo,
+      );
     } catch (_) {
       return null;
     }
@@ -144,13 +156,15 @@ class ProductoViewModel extends ChangeNotifier {
 
   void clearError() {
     _error = null;
-    notifyListeners();
+    _safeNotify();
   }
 
   @override
   void dispose() {
+    _disposed = true;
     _subscription?.cancel();
     _provSubscription?.cancel();
+    _authSub?.cancel();
     super.dispose();
   }
 }

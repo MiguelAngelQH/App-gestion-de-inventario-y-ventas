@@ -1,9 +1,68 @@
 import 'package:flutter/material.dart';
 import 'package:smart_ventas/models/compra.dart';
 import 'package:smart_ventas/models/producto.dart';
+import 'package:smart_ventas/models/proveedor.dart';
 import 'package:smart_ventas/utils/formatters.dart';
+import 'package:smart_ventas/utils/constants.dart';
 import 'package:smart_ventas/viewmodels/compra_viewmodel.dart';
 import 'package:smart_ventas/viewmodels/producto_viewmodel.dart';
+
+class _ItemSeleccionado {
+  final Producto? producto;
+  final Presentacion? presentacion;
+  final String nombre;
+  final String categoria;
+  final String unidad;
+  final double cantidad;
+  final double costo;
+
+  _ItemSeleccionado._({
+    this.producto,
+    this.presentacion,
+    required this.nombre,
+    required this.categoria,
+    required this.unidad,
+    required this.cantidad,
+    required this.costo,
+  });
+
+  factory _ItemSeleccionado.existente(
+      Producto p, Presentacion pr, double cant, double cost) {
+    return _ItemSeleccionado._(
+      producto: p,
+      presentacion: pr,
+      nombre: p.nombre,
+      categoria: p.categoria,
+      unidad: pr.nombre,
+      cantidad: cant,
+      costo: cost,
+    );
+  }
+
+  factory _ItemSeleccionado.nuevo(
+    String nombre,
+    String categoria,
+    String unidad,
+    double cant,
+    double cost,
+  ) {
+    return _ItemSeleccionado._(
+      producto: null,
+      presentacion: null,
+      nombre: nombre,
+      categoria: categoria,
+      unidad: unidad,
+      cantidad: cant,
+      costo: cost,
+    );
+  }
+
+  bool get esNuevo => producto == null;
+  String get productoId => producto?.id ?? '';
+  String get presentacionId => presentacion?.id ?? '';
+  String get presentacionNombre => presentacion?.nombre ?? unidad;
+  double get subtotal => cantidad * costo;
+}
 
 class CompraFormScreen extends StatefulWidget {
   final CompraViewModel compraViewModel;
@@ -20,46 +79,30 @@ class CompraFormScreen extends StatefulWidget {
 }
 
 class _CompraFormScreenState extends State<CompraFormScreen> {
-  final _proveedorCtrl = TextEditingController();
-  final _items = <ItemCompra>[];
+  String? _proveedorId;
+  String _proveedorNombre = '';
+  bool _esCredito = false;
+  final _items = <_ItemSeleccionado>[];
   bool _guardando = false;
 
   @override
   void dispose() {
-    _proveedorCtrl.dispose();
     super.dispose();
   }
 
   double get _total => _items.fold(0, (s, i) => s + i.subtotal);
+  List<Proveedor> get _proveedores => widget.compraViewModel.proveedores;
 
   void _agregarProducto() {
-    final productos = widget.productoViewModel.productos
-        .where((p) => !_items.any((i) => i.productoId == p.id))
-        .toList();
-
-    if (productos.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No hay productos disponibles')),
-      );
-      return;
-    }
+    final productos = widget.productoViewModel.productos;
 
     showDialog(
       context: context,
       builder: (ctx) => _SeleccionarProductoCompraDialog(
         productos: productos,
-        onSeleccionar: (producto, presentacion, cantidad, costo) {
-          setState(() {
-            _items.add(ItemCompra(
-              productoId: producto.id,
-              productoNombre: producto.nombre,
-              categoria: producto.categoria,
-              presentacionId: presentacion.id,
-              presentacionNombre: presentacion.nombre,
-              cantidad: cantidad,
-              costoUnitario: costo,
-            ));
-          });
+        categorias: AppConstants.categorias,
+        onSeleccionar: (item) {
+          setState(() => _items.add(item));
         },
       ),
     );
@@ -76,30 +119,81 @@ class _CompraFormScreenState extends State<CompraFormScreen> {
       );
       return;
     }
-    if (_proveedorCtrl.text.trim().isEmpty) {
+    if (_proveedorNombre.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ingresa el nombre del proveedor')),
+        const SnackBar(content: Text('Selecciona un proveedor')),
       );
       return;
     }
 
     setState(() => _guardando = true);
 
+    final itemsCompra = <ItemCompra>[];
+
+    for (final item in _items) {
+      String pid;
+      String presId;
+      String presNombre;
+
+      if (item.esNuevo) {
+        // Crear producto en Firestore
+        final nuevoId = await widget.compraViewModel.crearProductoDesdeCompra(
+          nombre: item.nombre,
+          categoria: item.categoria,
+          unidad: item.unidad,
+          costo: item.costo,
+          stock: item.cantidad,
+          proveedorId: _proveedorId ?? '',
+          proveedorNombre: _proveedorNombre,
+        );
+        if (nuevoId == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Error al crear producto')),
+            );
+            setState(() => _guardando = false);
+          }
+          return;
+        }
+        pid = nuevoId;
+        presId = '';
+        presNombre = item.unidad;
+      } else {
+        pid = item.productoId;
+        presId = item.presentacionId;
+        presNombre = item.presentacionNombre;
+      }
+
+      itemsCompra.add(ItemCompra(
+        productoId: pid,
+        productoNombre: item.nombre,
+        categoria: item.categoria,
+        presentacionId: presId,
+        presentacionNombre: presNombre,
+        cantidad: item.cantidad,
+        costoUnitario: item.costo,
+      ));
+    }
+
     final compra = Compra(
       id: '',
       fecha: DateTime.now(),
-      proveedorId: '',
-      proveedorNombre: _proveedorCtrl.text.trim(),
-      items: List.from(_items),
+      proveedorId: _proveedorId ?? '',
+      proveedorNombre: _proveedorNombre,
+      items: itemsCompra,
       total: _total,
       estado: 'recibida',
+      credito: _esCredito,
     );
 
     final id = await widget.compraViewModel.addCompra(compra);
     if (mounted) {
       if (id != null) {
+        final msg = _esCredito
+            ? 'Compra registrada. Deuda actualizada.'
+            : 'Compra registrada. Stock actualizado.';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Compra registrada. Stock actualizado.')),
+          SnackBar(content: Text(msg)),
         );
         Navigator.pop(context);
       } else {
@@ -123,14 +217,13 @@ class _CompraFormScreenState extends State<CompraFormScreen> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                TextField(
-                  controller: _proveedorCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Proveedor',
-                    prefixIcon: Icon(Icons.business),
-                  ),
-                ),
+                // Proveedor
+                _buildProveedorSelector(theme),
+                const SizedBox(height: 16),
+                // Tipo de pago
+                _buildTipoPago(theme),
                 const SizedBox(height: 20),
+                // Productos
                 Row(
                   children: [
                     Text(
@@ -166,9 +259,9 @@ class _CompraFormScreenState extends State<CompraFormScreen> {
                         (entry) => Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
-                            title: Text(entry.value.productoNombre),
+                            title: Text(entry.value.nombre),
                             subtitle: Text(
-                              '${entry.value.cantidad} ${entry.value.presentacionNombre} x ${Formatters.currency(entry.value.costoUnitario)}',
+                              '${entry.value.cantidad} ${entry.value.unidad} x ${Formatters.currency(entry.value.costo)}',
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -253,14 +346,137 @@ class _CompraFormScreenState extends State<CompraFormScreen> {
       ),
     );
   }
+
+  Widget _buildProveedorSelector(ThemeData theme) {
+    final ids = _proveedores.map((p) => p.id).toSet();
+    assert(ids.length == _proveedores.length, 'IDs de proveedores duplicados');
+
+    final valorValido = _proveedorId != null &&
+        _proveedorId!.isNotEmpty &&
+        _proveedores.any((p) => p.id == _proveedorId);
+
+    return DropdownButtonFormField<String>(
+      initialValue: valorValido ? _proveedorId : null,
+      decoration: const InputDecoration(
+        labelText: 'Proveedor',
+        prefixIcon: Icon(Icons.business),
+      ),
+      items: [
+        if (_proveedores.isEmpty)
+          const DropdownMenuItem<String>(
+            value: null,
+            child: Text('No hay proveedores — crea uno'),
+          )
+        else
+          ..._proveedores.map((prov) => DropdownMenuItem<String>(
+                value: prov.id,
+                child: Text(prov.nombre),
+              )),
+        const DropdownMenuItem<String>(
+          value: '__nuevo__',
+          child: Row(
+            children: [
+              Icon(Icons.add, size: 18),
+              SizedBox(width: 8),
+              Text('Nuevo proveedor...'),
+            ],
+          ),
+        ),
+      ],
+      onChanged: (v) async {
+        if (v == '__nuevo__') {
+          final nombre = await _mostrarNuevoProveedor(context);
+          if (nombre != null && nombre.isNotEmpty) {
+            final id = await widget.compraViewModel.crearProveedorSiNoExiste(nombre);
+            if (mounted) {
+              setState(() {
+                _proveedorId = id;
+                _proveedorNombre = nombre;
+              });
+            }
+          }
+        } else if (v != null) {
+          final prov = _proveedores.firstWhere((p) => p.id == v);
+          setState(() {
+            _proveedorId = v;
+            _proveedorNombre = prov.nombre;
+          });
+        }
+      },
+    );
+  }
+
+  Future<String?> _mostrarNuevoProveedor(BuildContext context) async {
+    final nombre = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        final dialogCtrl = TextEditingController();
+        return AlertDialog(
+          title: const Text('Nuevo Proveedor'),
+          content: TextField(
+            controller: dialogCtrl,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Nombre del proveedor',
+              border: OutlineInputBorder(),
+            ),
+            textCapitalization: TextCapitalization.words,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, dialogCtrl.text.trim()),
+              child: const Text('Crear'),
+            ),
+          ],
+        );
+      },
+    );
+    return nombre;
+  }
+
+  Widget _buildTipoPago(ThemeData theme) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            Icon(Icons.payments_outlined,
+                size: 20, color: theme.colorScheme.primary),
+            const SizedBox(width: 12),
+            const Text('Tipo de pago:'),
+            const Spacer(),
+            ChoiceChip(
+              label: const Text('Contado'),
+              selected: !_esCredito,
+              onSelected: (_) => setState(() => _esCredito = false),
+              visualDensity: VisualDensity.compact,
+            ),
+            const SizedBox(width: 8),
+            ChoiceChip(
+              label: const Text('Crédito'),
+              selected: _esCredito,
+              onSelected: (_) => setState(() => _esCredito = true),
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _SeleccionarProductoCompraDialog extends StatefulWidget {
   final List<Producto> productos;
-  final void Function(Producto, Presentacion, double, double) onSeleccionar;
+  final List<String> categorias;
+  final void Function(_ItemSeleccionado) onSeleccionar;
 
   const _SeleccionarProductoCompraDialog({
     required this.productos,
+    required this.categorias,
     required this.onSeleccionar,
   });
 
@@ -271,89 +487,280 @@ class _SeleccionarProductoCompraDialog extends StatefulWidget {
 
 class _SeleccionarProductoCompraDialogState
     extends State<_SeleccionarProductoCompraDialog> {
-  Producto? _seleccionado;
-  Presentacion? _presentacion;
+  final _searchCtrl = TextEditingController();
   final _cantidadCtrl = TextEditingController(text: '1');
   final _costoCtrl = TextEditingController(text: '0');
+  final _nuevoNombreCtrl = TextEditingController();
+  String _busqueda = '';
+  Producto? _seleccionado;
+  Presentacion? _presentacion;
+  String _unidad = 'unidad';
+  bool _modoNuevo = false;
+  String _nuevaCategoria = 'General';
+
+  List<Producto> get _productosFiltrados {
+    if (_busqueda.isEmpty) return widget.productos;
+    final q = _busqueda.toLowerCase();
+    return widget.productos
+        .where((p) => p.nombre.toLowerCase().contains(q))
+        .toList();
+  }
+
+  bool get _hayCoincidenciaExacta =>
+      widget.productos.any((p) => p.nombre.toLowerCase() == _busqueda.toLowerCase());
+
+  @override
+  void initState() {
+    super.initState();
+    _searchCtrl.addListener(() {
+      setState(() {
+        _busqueda = _searchCtrl.text.trim();
+        if (_busqueda.isEmpty) {
+          _modoNuevo = false;
+          _seleccionado = null;
+          _presentacion = null;
+        }
+      });
+    });
+  }
 
   @override
   void dispose() {
+    _searchCtrl.dispose();
     _cantidadCtrl.dispose();
     _costoCtrl.dispose();
+    _nuevoNombreCtrl.dispose();
     super.dispose();
+  }
+
+  void _seleccionarExistente(Producto p) {
+    setState(() {
+      _seleccionado = p;
+      _presentacion = p.presentaciones.isNotEmpty ? p.presentaciones.first : null;
+      _modoNuevo = false;
+      if (_presentacion != null) {
+        _costoCtrl.text = _presentacion!.costo.toStringAsFixed(2);
+        _unidad = _presentacion!.nombre;
+      }
+    });
+  }
+
+  void _entrarModoNuevo() {
+    setState(() {
+      _modoNuevo = true;
+      _seleccionado = null;
+      _presentacion = null;
+      _unidad = 'unidad';
+      _costoCtrl.text = '0';
+      _nuevoNombreCtrl.text = _busqueda;
+    });
+  }
+
+  bool _validar() {
+    final cant = double.tryParse(_cantidadCtrl.text) ?? 0;
+    final costo = double.tryParse(_costoCtrl.text) ?? 0;
+    if (cant <= 0) return false;
+    if (costo < 0) return false;
+    if (_modoNuevo) {
+      return _nuevoNombreCtrl.text.trim().isNotEmpty;
+    }
+    return _seleccionado != null && _presentacion != null;
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return AlertDialog(
       title: const Text('Agregar Producto'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          DropdownButtonFormField<Producto>(
-            initialValue: _seleccionado,
-            decoration: const InputDecoration(labelText: 'Producto'),
-            items: widget.productos
-                .map((p) => DropdownMenuItem(
-                      value: p,
-                      child: Text(p.nombre),
-                    ))
-                .toList(),
-            onChanged: (v) {
-              setState(() {
-                _seleccionado = v;
-                _presentacion = v?.presentaciones.isNotEmpty == true
-                    ? v!.presentaciones.first
-                    : null;
-                if (_presentacion != null) {
-                  _costoCtrl.text = _presentacion!.costo.toStringAsFixed(2);
-                }
-              });
-            },
-          ),
-          if (_seleccionado != null && _seleccionado!.presentaciones.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            DropdownButtonFormField<Presentacion>(
-              initialValue: _presentacion,
-              decoration: const InputDecoration(labelText: 'Variante'),
-              items: _seleccionado!.presentaciones
-                  .map((pr) => DropdownMenuItem(
-                        value: pr,
-                        child: Text('${pr.nombre} — ${Formatters.currency(pr.costo)}/${pr.unidad}'),
-                      ))
-                  .toList(),
-              onChanged: (v) {
-                setState(() {
-                  _presentacion = v;
-                  if (v != null) {
-                    _costoCtrl.text = v.costo.toStringAsFixed(2);
-                  }
-                });
-              },
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Search field
+            TextField(
+              controller: _searchCtrl,
+              decoration: InputDecoration(
+                labelText: 'Buscar producto',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _busqueda.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () => _searchCtrl.clear(),
+                      )
+                    : null,
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Search results or new product option
+            if (!_modoNuevo && _busqueda.isNotEmpty)
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 160),
+                child: ListView(
+                  shrinkWrap: true,
+                  children: [
+                    if (_productosFiltrados.isEmpty)
+                      ListTile(
+                        dense: true,
+                        leading: const Icon(Icons.add_circle_outline),
+                        title: Text(
+                          'Crear "$_busqueda"',
+                          style: TextStyle(color: theme.colorScheme.primary),
+                        ),
+                        subtitle: const Text('Nuevo producto'),
+                        onTap: _entrarModoNuevo,
+                      )
+                    else ...[
+                      ..._productosFiltrados.take(5).map(
+                            (p) => ListTile(
+                              dense: true,
+                              leading: CircleAvatar(
+                                radius: 14,
+                                backgroundColor: theme.colorScheme.primaryContainer,
+                                child: Text(
+                                  p.nombre.isNotEmpty ? p.nombre[0].toUpperCase() : '?',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                  ),
+                                ),
+                              ),
+                              title: Text(p.nombre, style: const TextStyle(fontSize: 13)),
+                              subtitle: p.marca.isNotEmpty
+                                  ? Text(p.marca,
+                                      style: TextStyle(
+                                          fontSize: 11,
+                                          color: theme.colorScheme.onSurfaceVariant))
+                                  : null,
+                              selected: _seleccionado?.id == p.id,
+                              onTap: () => _seleccionarExistente(p),
+                            ),
+                          ),
+                      if (!_hayCoincidenciaExacta)
+                        ListTile(
+                          dense: true,
+                          leading: Icon(Icons.add_circle_outline,
+                              size: 20, color: theme.colorScheme.primary),
+                          title: Text(
+                            'Crear "$_busqueda"',
+                            style: TextStyle(
+                                fontSize: 13, color: theme.colorScheme.primary),
+                          ),
+                          onTap: _entrarModoNuevo,
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+
+            // Existing product variant selector
+            if (_seleccionado != null && _seleccionado!.presentaciones.length > 1)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: DropdownButtonFormField<Presentacion>(
+                  initialValue: _presentacion,
+                  decoration: const InputDecoration(
+                    labelText: 'Variante',
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  items: _seleccionado!.presentaciones
+                      .map((pr) => DropdownMenuItem(
+                            value: pr,
+                            child: Text('${pr.nombre} — ${Formatters.currency(pr.costo)}/${pr.unidad}',
+                                style: const TextStyle(fontSize: 13)),
+                          ))
+                      .toList(),
+                  onChanged: (v) {
+                    setState(() {
+                      _presentacion = v;
+                      if (v != null) {
+                        _costoCtrl.text = v.costo.toStringAsFixed(2);
+                        _unidad = v.nombre;
+                      }
+                    });
+                  },
+                ),
+              ),
+
+            // New product: name + category + unit
+            if (_modoNuevo) ...[
+              TextField(
+                controller: _nuevoNombreCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre del producto',
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+                textCapitalization: TextCapitalization.sentences,
+              ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                initialValue: _nuevaCategoria,
+                decoration: const InputDecoration(
+                  labelText: 'Categoría',
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+                items: widget.categorias
+                    .map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 13))))
+                    .toList(),
+                onChanged: (v) => setState(() => _nuevaCategoria = v ?? 'General'),
+              ),
+              const SizedBox(height: 8),
+            ],
+
+            // Unit (always visible when no product selected or in new mode)
+            if (_seleccionado == null || _modoNuevo)
+              DropdownButtonFormField<String>(
+                initialValue: _unidad,
+                decoration: const InputDecoration(
+                  labelText: 'Unidad',
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+                items: _unidades
+                    .map((u) => DropdownMenuItem(value: u, child: Text(u, style: const TextStyle(fontSize: 13))))
+                    .toList(),
+                onChanged: (v) => setState(() => _unidad = v ?? 'unidad'),
+              ),
+
+            const SizedBox(height: 12),
+
+            // Quantity and cost
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      labelText: _seleccionado != null
+                          ? 'Cantidad (stock: ${_presentacion?.stock.toStringAsFixed(1) ?? '0'})'
+                          : 'Cantidad',
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                    keyboardType: TextInputType.number,
+                    controller: _cantidadCtrl,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      labelText: 'Costo x unidad',
+                      prefixText: 'S/ ',
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    ),
+                    keyboardType: TextInputType.number,
+                    controller: _costoCtrl,
+                  ),
+                ),
+              ],
             ),
           ],
-          const SizedBox(height: 16),
-          TextField(
-            decoration: const InputDecoration(
-              labelText: 'Cantidad',
-              prefixIcon: Icon(Icons.production_quantity_limits),
-            ),
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
-            controller: _cantidadCtrl,
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            decoration: const InputDecoration(
-              labelText: 'Costo unitario',
-              prefixText: 'S/ ',
-              prefixIcon: Icon(Icons.money_off),
-            ),
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
-            controller: _costoCtrl,
-          ),
-        ],
+        ),
       ),
       actions: [
         TextButton(
@@ -361,13 +768,19 @@ class _SeleccionarProductoCompraDialogState
           child: const Text('Cancelar'),
         ),
         FilledButton(
-          onPressed: _seleccionado == null || _presentacion == null
+          onPressed: !_validar()
               ? null
               : () {
                   final cant = double.tryParse(_cantidadCtrl.text) ?? 1;
                   final costo = double.tryParse(_costoCtrl.text) ?? 0;
-                  widget.onSeleccionar(
-                      _seleccionado!, _presentacion!, cant, costo);
+                  if (cant <= 0 || costo < 0) return;
+                  if (_modoNuevo) {
+                    final nombre = _nuevoNombreCtrl.text.trim();
+                    widget.onSeleccionar(_ItemSeleccionado.nuevo(nombre, _nuevaCategoria, _unidad, cant, costo));
+                  } else if (_seleccionado != null && _presentacion != null) {
+                    widget.onSeleccionar(_ItemSeleccionado.existente(
+                        _seleccionado!, _presentacion!, cant, costo));
+                  }
                   Navigator.pop(context);
                 },
           child: const Text('Agregar'),
@@ -376,3 +789,5 @@ class _SeleccionarProductoCompraDialogState
     );
   }
 }
+
+const _unidades = ['kg', 'lb', 'lt', 'caja', 'docena', 'unidad', 'saco', 'pack', 'bolsa', 'botella'];

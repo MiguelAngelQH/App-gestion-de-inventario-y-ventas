@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show ThemeMode;
+import 'package:flutter/widgets.dart';
 import 'package:smart_ventas/services/firestore_service.dart';
 
 class ConfigViewModel extends ChangeNotifier {
@@ -11,6 +13,10 @@ class ConfigViewModel extends ChangeNotifier {
   bool _notificationsEnabled = true;
   ThemeMode _themeMode = ThemeMode.light;
   bool _isLoading = true;
+  bool _disposed = false;
+  StreamSubscription? _authSub;
+
+  VoidCallback? onThemeChanged;
 
   String get businessName => _businessName;
   String get address => _address;
@@ -21,9 +27,17 @@ class ConfigViewModel extends ChangeNotifier {
 
   ConfigViewModel() {
     _load();
-    FirebaseAuth.instance.authStateChanges().listen((user) {
+    _authSub = FirebaseAuth.instance.authStateChanges().listen((user) {
       if (user != null) _load();
     });
+  }
+
+  void _safeNotify() {
+    if (!_disposed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_disposed) notifyListeners();
+      });
+    }
   }
 
   Future<void> _load() async {
@@ -40,37 +54,45 @@ class ConfigViewModel extends ChangeNotifier {
       };
     } catch (_) {}
     _isLoading = false;
-    notifyListeners();
+    _safeNotify();
   }
 
   Future<void> setBusinessName(String v) async {
     _businessName = v;
-    notifyListeners();
+    _safeNotify();
     await _firestore.updateConfig({'businessName': v});
   }
 
   Future<void> setAddress(String v) async {
     _address = v;
-    notifyListeners();
+    _safeNotify();
     await _firestore.updateConfig({'address': v});
   }
 
   Future<void> setPhone(String v) async {
     _phone = v;
-    notifyListeners();
+    _safeNotify();
     await _firestore.updateConfig({'phone': v});
   }
 
   Future<void> setNotificationsEnabled(bool v) async {
     _notificationsEnabled = v;
-    notifyListeners();
+    _safeNotify();
     await _firestore.updateConfig({'notificationsEnabled': v});
   }
 
   Future<void> setThemeMode(ThemeMode v) async {
     _themeMode = v;
-    notifyListeners();
+    _safeNotify();
+    onThemeChanged?.call();
     final str = v == ThemeMode.dark ? 'dark' : 'light';
     await _firestore.updateConfig({'themeMode': str});
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _authSub?.cancel();
+    super.dispose();
   }
 }

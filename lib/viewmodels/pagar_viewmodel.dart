@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:smart_ventas/models/proveedor.dart';
 import 'package:smart_ventas/services/firestore_service.dart';
 
@@ -9,8 +9,10 @@ class PagarViewModel extends ChangeNotifier {
 
   List<Proveedor> _proveedores = [];
   bool _isLoading = true;
+  bool _disposed = false;
   String? _error;
   StreamSubscription? _subscription;
+  StreamSubscription? _authSub;
 
   List<Proveedor> get proveedoresConDeuda =>
       _proveedores.where((p) => p.saldoPendiente > 0).toList();
@@ -23,7 +25,16 @@ class PagarViewModel extends ChangeNotifier {
 
   PagarViewModel() {
     _subscribe();
-    FirebaseAuth.instance.authStateChanges().listen((_) => _subscribe());
+    _authSub =
+        FirebaseAuth.instance.authStateChanges().listen((_) => _subscribe());
+  }
+
+  void _safeNotify() {
+    if (!_disposed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_disposed) notifyListeners();
+      });
+    }
   }
 
   void _subscribe() {
@@ -31,7 +42,7 @@ class PagarViewModel extends ChangeNotifier {
     _subscription = _firestore.getProveedores().listen((proveedores) {
       _proveedores = proveedores;
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
     });
   }
 
@@ -40,7 +51,7 @@ class PagarViewModel extends ChangeNotifier {
       await _firestore.registrarPagoPagar(proveedorId, monto, 'Pago registrado');
     } catch (e) {
       _error = 'Error al registrar el pago';
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -49,7 +60,7 @@ class PagarViewModel extends ChangeNotifier {
       await _firestore.addProveedor(p);
     } catch (e) {
       _error = 'Error al guardar proveedor';
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -58,7 +69,7 @@ class PagarViewModel extends ChangeNotifier {
       await _firestore.actualizarEstadoProveedor(id, estado);
     } catch (e) {
       _error = 'Error al actualizar estado';
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -67,7 +78,7 @@ class PagarViewModel extends ChangeNotifier {
       await _firestore.updateProveedor(p);
     } catch (e) {
       _error = 'Error al actualizar proveedor';
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -76,7 +87,7 @@ class PagarViewModel extends ChangeNotifier {
       await _firestore.deleteProveedor(id);
     } catch (e) {
       _error = 'Error al eliminar proveedor';
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -86,6 +97,14 @@ class PagarViewModel extends ChangeNotifier {
 
   void clearError() {
     _error = null;
-    notifyListeners();
+    _safeNotify();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _subscription?.cancel();
+    _authSub?.cancel();
+    super.dispose();
   }
 }

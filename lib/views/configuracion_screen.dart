@@ -23,6 +23,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   @override
   void initState() {
     super.initState();
+    widget.viewModel.addListener(_onChanged);
     _token = FcmService().token;
     FcmService().onTokenChanged = (t) {
       if (mounted) setState(() => _token = t);
@@ -30,8 +31,13 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     _preciosVM = PreciosViewModel();
   }
 
+  void _onChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   void dispose() {
+    widget.viewModel.removeListener(_onChanged);
     _preciosVM.dispose();
     super.dispose();
   }
@@ -39,206 +45,200 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final vm = widget.viewModel;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Configuración'),
-        centerTitle: true,
-      ),
-      body: ListenableBuilder(
-        listenable: widget.viewModel,
-        builder: (context, _) {
-          final vm = widget.viewModel;
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side:
-                      BorderSide(color: theme.colorScheme.outlineVariant),
+      appBar: AppBar(title: const Text('Configuración'), centerTitle: true),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: theme.colorScheme.outlineVariant),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Text(
+                    'Información de la Empresa',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Text(
-                        'Información de la Empresa',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.business),
-                      title: const Text('Nombre del Negocio'),
-                      subtitle: Text(vm.businessName),
-                      trailing: const Icon(Icons.edit),
-                      onTap: () =>
-                          _editarTexto(context, 'Nombre del Negocio',
-                              vm.businessName, vm.setBusinessName),
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.pin_drop),
-                      title: const Text('Dirección'),
-                      subtitle:
-                          Text(vm.address.isEmpty ? 'Agregar dirección' : vm.address),
-                      trailing: const Icon(Icons.edit),
-                      onTap: () => _editarTexto(
-                          context, 'Dirección', vm.address, vm.setAddress),
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.phone),
-                      title: const Text('Teléfono'),
-                      subtitle:
-                          Text(vm.phone.isEmpty ? 'Agregar teléfono' : vm.phone),
-                      trailing: const Icon(Icons.edit),
-                      onTap: () =>
-                          _editarTexto(context, 'Teléfono', vm.phone, vm.setPhone),
-                    ),
-                  ],
+                ListTile(
+                  leading: const Icon(Icons.business),
+                  title: const Text('Nombre del Negocio'),
+                  subtitle: Text(vm.businessName),
+                  trailing: const Icon(Icons.edit),
+                  onTap: () => _editarTexto(
+                    context,
+                    'Nombre del Negocio',
+                    vm.businessName,
+                    vm.setBusinessName,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side:
-                      BorderSide(color: theme.colorScheme.outlineVariant),
+                ListTile(
+                  leading: const Icon(Icons.pin_drop),
+                  title: const Text('Dirección'),
+                  subtitle: Text(
+                    vm.address.isEmpty ? 'Agregar dirección' : vm.address,
+                  ),
+                  trailing: const Icon(Icons.edit),
+                  onTap: () => _editarTexto(
+                    context,
+                    'Dirección',
+                    vm.address,
+                    vm.setAddress,
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Text(
-                        'Productos',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    ListTile(
-                      leading: const Icon(Icons.price_change_outlined),
-                      title: const Text('Configuración de Precios'),
-                      subtitle: const Text('Editar precios y costos de todas las presentaciones'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => ConfiguracionPreciosScreen(
-                            viewModel: _preciosVM,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                ListTile(
+                  leading: const Icon(Icons.phone),
+                  title: const Text('Teléfono'),
+                  subtitle: Text(
+                    vm.phone.isEmpty ? 'Agregar teléfono' : vm.phone,
+                  ),
+                  trailing: const Icon(Icons.edit),
+                  onTap: () =>
+                      _editarTexto(context, 'Teléfono', vm.phone, vm.setPhone),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side:
-                      BorderSide(color: theme.colorScheme.outlineVariant),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: theme.colorScheme.outlineVariant),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Text(
+                    'Productos',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Text(
-                        'Preferencias',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                ListTile(
+                  leading: const Icon(Icons.price_change_outlined),
+                  title: const Text('Configuración de Precios'),
+                  subtitle: const Text(
+                    'Editar precios y costos de todas las presentaciones',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          ConfiguracionPreciosScreen(viewModel: _preciosVM),
                     ),
-                    SwitchListTile(
-                      title: const Text('Notificaciones'),
-                      subtitle: const Text(
-                          'Recibir alertas de stock bajo'),
-                      value: vm.notificationsEnabled,
-                      onChanged: (v) => vm.setNotificationsEnabled(v),
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading:
-                          const Icon(Icons.monetization_on_outlined),
-                      title: const Text('Moneda'),
-                      subtitle: const Text('S/ (Sol Peruano)'),
-                    ),
-                    const Divider(height: 1),
-                    ListTile(
-                      leading: const Icon(Icons.palette_outlined),
-                      title: const Text('Tema'),
-                      subtitle: Text(
-                          vm.themeMode == ThemeMode.dark
-                              ? 'Oscuro'
-                              : 'Claro'),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => _cambiarTema(context, vm),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side:
-                      BorderSide(color: theme.colorScheme.outlineVariant),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Text(
-                        'Acerca de',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: theme.colorScheme.outlineVariant),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Text(
+                    'Preferencias',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
                     ),
-                    ListTile(
-                      leading: const Icon(Icons.info_outline),
-                      title: const Text('Versión'),
-                      subtitle: Text(AppConstants.appVersion),
-                    ),
-                    if (_token != null) ...[
-                      const Divider(height: 1),
-                      ListTile(
-                        leading:
-                            const Icon(Icons.notifications_active),
-                        title: const Text('Token FCM'),
-                        subtitle: Text(
-                          _token!,
-                          style: const TextStyle(fontSize: 10),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: IconButton(
-                          icon: Icon(_copiado ? Icons.check : Icons.copy),
-                          onPressed: _copiar,
-                        ),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          );
-        },
+                SwitchListTile(
+                  title: const Text('Notificaciones'),
+                  subtitle: const Text('Recibir alertas de stock bajo'),
+                  value: vm.notificationsEnabled,
+                  onChanged: (v) => vm.setNotificationsEnabled(v),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.monetization_on_outlined),
+                  title: const Text('Moneda'),
+                  subtitle: const Text('S/ (Sol Peruano)'),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.palette_outlined),
+                  title: const Text('Tema'),
+                  subtitle: Text(
+                    vm.themeMode == ThemeMode.dark ? 'Oscuro' : 'Claro',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _cambiarTema(context, vm),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: theme.colorScheme.outlineVariant),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Text(
+                    'Acerca de',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: const Text('Versión'),
+                  subtitle: Text(AppConstants.appVersion),
+                ),
+                if (_token != null) ...[
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.notifications_active),
+                    title: const Text('Token FCM'),
+                    subtitle: Text(
+                      _token!,
+                      style: const TextStyle(fontSize: 10),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: IconButton(
+                      icon: Icon(_copiado ? Icons.check : Icons.copy),
+                      onPressed: _copiar,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -252,8 +252,12 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     });
   }
 
-  void _editarTexto(BuildContext context, String titulo,
-      String valorActual, Future<void> Function(String) onSave) {
+  void _editarTexto(
+    BuildContext context,
+    String titulo,
+    String valorActual,
+    Future<void> Function(String) onSave,
+  ) {
     final controller = TextEditingController(text: valorActual);
     showDialog(
       context: context,
@@ -262,9 +266,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
         content: TextField(
           controller: controller,
           autofocus: true,
-          decoration: InputDecoration(
-            border: const OutlineInputBorder(),
-          ),
+          decoration: InputDecoration(border: const OutlineInputBorder()),
         ),
         actions: [
           TextButton(
@@ -302,8 +304,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                 ),
                 title: const Text('Claro'),
                 trailing: vm.themeMode == ThemeMode.light
-                    ? Icon(Icons.check,
-                        color: dialogTheme.colorScheme.primary)
+                    ? Icon(Icons.check, color: dialogTheme.colorScheme.primary)
                     : null,
                 onTap: () {
                   vm.setThemeMode(ThemeMode.light);
@@ -319,8 +320,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                 ),
                 title: const Text('Oscuro'),
                 trailing: vm.themeMode == ThemeMode.dark
-                    ? Icon(Icons.check,
-                        color: dialogTheme.colorScheme.primary)
+                    ? Icon(Icons.check, color: dialogTheme.colorScheme.primary)
                     : null,
                 onTap: () {
                   vm.setThemeMode(ThemeMode.dark);

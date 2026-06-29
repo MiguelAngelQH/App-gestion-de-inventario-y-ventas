@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:smart_ventas/models/compra.dart';
+import 'package:smart_ventas/models/producto.dart';
+import 'package:smart_ventas/models/proveedor.dart';
 import 'package:smart_ventas/services/firestore_service.dart';
 
 class CompraViewModel extends ChangeNotifier {
@@ -9,12 +11,17 @@ class CompraViewModel extends ChangeNotifier {
 
   List<Compra> _compras = [];
   List<Compra> _comprasFiltradas = [];
+  List<Proveedor> _proveedores = [];
   String _filtroEstado = 'todas';
   bool _isLoading = true;
+  bool _disposed = false;
   String? _error;
   StreamSubscription? _subscription;
+  StreamSubscription? _provSubscription;
+  StreamSubscription? _authSub;
 
   List<Compra> get compras => _comprasFiltradas;
+  List<Proveedor> get proveedores => _proveedores;
   String get filtroEstado => _filtroEstado;
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -26,7 +33,27 @@ class CompraViewModel extends ChangeNotifier {
 
   CompraViewModel() {
     _subscribe();
-    FirebaseAuth.instance.authStateChanges().listen((_) => _subscribe());
+    _subscribeProveedores();
+    _authSub = FirebaseAuth.instance.authStateChanges().listen((_) {
+      _subscribe();
+      _subscribeProveedores();
+    });
+  }
+
+  void _safeNotify() {
+    if (!_disposed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_disposed) notifyListeners();
+      });
+    }
+  }
+
+  void _subscribeProveedores() {
+    _provSubscription?.cancel();
+    _provSubscription = _firestore.getProveedores().listen((proveedores) {
+      _proveedores = proveedores;
+      _safeNotify();
+    });
   }
 
   void _subscribe() {
@@ -43,7 +70,7 @@ class CompraViewModel extends ChangeNotifier {
     _comprasFiltradas = _compras.where((c) {
       return _filtroEstado == 'todas' || c.estado == _filtroEstado;
     }).toList();
-    notifyListeners();
+    _safeNotify();
   }
 
   void setFiltroEstado(String estado) {
@@ -57,9 +84,57 @@ class CompraViewModel extends ChangeNotifier {
       return id;
     } catch (e) {
       _error = 'Error al registrar la compra';
-      notifyListeners();
+      _safeNotify();
       return null;
     }
+  }
+
+  Future<String?> crearProductoDesdeCompra({
+    required String nombre,
+    required String categoria,
+    required String unidad,
+    required double costo,
+    required double stock,
+    String proveedorId = '',
+    String proveedorNombre = '',
+  }) async {
+    try {
+      final producto = Producto(
+        id: '',
+        nombre: nombre,
+        categoria: categoria,
+        presentaciones: [
+          Presentacion(
+            nombre: unidad,
+            unidad: unidad,
+            precio: 0,
+            costo: costo,
+            stock: stock,
+          ),
+        ],
+        proveedorId: proveedorId,
+        proveedorNombre: proveedorNombre,
+      );
+      final id = await _firestore.addProducto(producto);
+      return id;
+    } catch (e) {
+      _error = 'Error al crear producto desde compra';
+      _safeNotify();
+      return null;
+    }
+  }
+
+  Future<String> crearProveedorSiNoExiste(String nombre) async {
+    final existente = _proveedores.where(
+      (p) => p.nombre.toLowerCase() == nombre.toLowerCase(),
+    ).firstOrNull;
+    if (existente != null) return existente.id;
+
+    final nuevoId = await _firestore.addProveedor(Proveedor(
+      id: '',
+      nombre: nombre,
+    ));
+    return nuevoId;
   }
 
   Future<void> updateEstado(String id, String estado) async {
@@ -67,7 +142,7 @@ class CompraViewModel extends ChangeNotifier {
       await _firestore.updateCompraEstado(id, estado);
     } catch (e) {
       _error = 'Error al actualizar estado';
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -76,12 +151,21 @@ class CompraViewModel extends ChangeNotifier {
       await _firestore.deleteCompra(id);
     } catch (e) {
       _error = 'Error al eliminar compra';
-      notifyListeners();
+      _safeNotify();
     }
   }
 
   void clearError() {
     _error = null;
-    notifyListeners();
+    _safeNotify();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _subscription?.cancel();
+    _provSubscription?.cancel();
+    _authSub?.cancel();
+    super.dispose();
   }
 }

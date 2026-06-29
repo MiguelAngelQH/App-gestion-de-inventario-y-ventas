@@ -1,5 +1,6 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:smart_ventas/models/usuario.dart';
 import 'package:smart_ventas/services/auth_service.dart';
 
@@ -12,6 +13,8 @@ class AuthViewModel extends ChangeNotifier {
   Usuario? _usuario;
   String? _error;
   bool _isLoading = false;
+  bool _disposed = false;
+  StreamSubscription? _authSub;
 
   AuthStatus get status => _status;
   Usuario? get usuario => _usuario;
@@ -20,13 +23,21 @@ class AuthViewModel extends ChangeNotifier {
   bool get isAuthenticated => _status == AuthStatus.authenticated;
 
   AuthViewModel() {
-    _authService.authStateChanges.listen((usuario) {
+    _authSub = _authService.authStateChanges.listen((usuario) {
       _usuario = usuario;
       _status = usuario != null
           ? AuthStatus.authenticated
           : AuthStatus.unauthenticated;
-      notifyListeners();
+      _safeNotify();
     });
+  }
+
+  void _safeNotify() {
+    if (!_disposed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_disposed) notifyListeners();
+      });
+    }
   }
 
   Future<bool> login({
@@ -36,7 +47,7 @@ class AuthViewModel extends ChangeNotifier {
     _isLoading = true;
     _error = null;
     _status = AuthStatus.loading;
-    notifyListeners();
+    _safeNotify();
 
     try {
       await _authService.signInWithEmailAndPassword(
@@ -45,19 +56,19 @@ class AuthViewModel extends ChangeNotifier {
       );
       _error = null;
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return true;
     } on FirebaseAuthException catch (e) {
       _error = _mapFirebaseError(e);
       _isLoading = false;
       _status = AuthStatus.unauthenticated;
-      notifyListeners();
+      _safeNotify();
       return false;
     } catch (e) {
       _error = 'Error de conexión. Verifica tu internet.';
       _isLoading = false;
       _status = AuthStatus.unauthenticated;
-      notifyListeners();
+      _safeNotify();
       return false;
     }
   }
@@ -69,7 +80,7 @@ class AuthViewModel extends ChangeNotifier {
     _isLoading = true;
     _error = null;
     _status = AuthStatus.loading;
-    notifyListeners();
+    _safeNotify();
 
     try {
       await _authService.registerWithEmailAndPassword(
@@ -78,19 +89,19 @@ class AuthViewModel extends ChangeNotifier {
       );
       _error = null;
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return true;
     } on FirebaseAuthException catch (e) {
       _error = _mapFirebaseError(e);
       _isLoading = false;
       _status = AuthStatus.unauthenticated;
-      notifyListeners();
+      _safeNotify();
       return false;
     } catch (e) {
       _error = 'Error de conexión. Verifica tu internet.';
       _isLoading = false;
       _status = AuthStatus.unauthenticated;
-      notifyListeners();
+      _safeNotify();
       return false;
     }
   }
@@ -98,22 +109,22 @@ class AuthViewModel extends ChangeNotifier {
   Future<bool> resetPassword({required String email}) async {
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    _safeNotify();
 
     try {
       await _authService.sendPasswordResetEmail(email: email);
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return true;
     } on FirebaseAuthException catch (e) {
       _error = _mapFirebaseError(e);
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return false;
     } catch (e) {
       _error = 'Error de conexión. Verifica tu internet.';
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return false;
     }
   }
@@ -124,7 +135,14 @@ class AuthViewModel extends ChangeNotifier {
 
   void clearError() {
     _error = null;
-    notifyListeners();
+    _safeNotify();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _authSub?.cancel();
+    super.dispose();
   }
 
   String _mapFirebaseError(FirebaseAuthException e) {
