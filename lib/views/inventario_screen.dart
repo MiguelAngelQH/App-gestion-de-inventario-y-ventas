@@ -290,9 +290,9 @@ class _InventarioScreenState extends State<InventarioScreen> {
                     child: Column(
                       children: [
                         Text(
-                          producto.stockTotal % 1 == 0
-                              ? '${producto.stockTotal.toInt()}'
-                              : producto.stockTotal.toStringAsFixed(1),
+                          producto.stock % 1 == 0
+                              ? '${producto.stock.toInt()}'
+                              : producto.stock.toStringAsFixed(1),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,

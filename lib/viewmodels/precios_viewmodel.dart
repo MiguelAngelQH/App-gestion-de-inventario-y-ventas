@@ -62,9 +62,8 @@ class PreciosViewModel extends ChangeNotifier {
   }
 
   Future<void> actualizarCosto(
-      String productoId, String presentacionId, double nuevoCosto) async {
-    await _firestore.actualizarCostoPresentacion(
-        productoId, presentacionId, nuevoCosto);
+      String productoId, double nuevoCosto) async {
+    await _firestore.actualizarCostoProducto(productoId, nuevoCosto);
   }
 
   @override

@@ -9,31 +9,30 @@ import 'package:smart_ventas/viewmodels/producto_viewmodel.dart';
 
 class _ItemSeleccionado {
   final Producto? producto;
-  final Presentacion? presentacion;
   final String nombre;
   final String categoria;
   final String unidad;
   final double cantidad;
   final double costo;
+  final double precioVenta;
 
   _ItemSeleccionado._({
     this.producto,
-    this.presentacion,
     required this.nombre,
     required this.categoria,
     required this.unidad,
     required this.cantidad,
     required this.costo,
+    this.precioVenta = 0,
   });
 
   factory _ItemSeleccionado.existente(
-      Producto p, Presentacion pr, double cant, double cost) {
+      Producto p, double cant, double cost) {
     return _ItemSeleccionado._(
       producto: p,
-      presentacion: pr,
       nombre: p.nombre,
       categoria: p.categoria,
-      unidad: pr.nombre,
+      unidad: p.presentaciones.isNotEmpty ? p.presentaciones.first.nombre : 'unidad',
       cantidad: cant,
       costo: cost,
     );
@@ -45,22 +44,22 @@ class _ItemSeleccionado {
     String unidad,
     double cant,
     double cost,
+    {double precioVenta = 0}
   ) {
     return _ItemSeleccionado._(
       producto: null,
-      presentacion: null,
       nombre: nombre,
       categoria: categoria,
       unidad: unidad,
       cantidad: cant,
       costo: cost,
+      precioVenta: precioVenta,
     );
   }
 
   bool get esNuevo => producto == null;
   String get productoId => producto?.id ?? '';
-  String get presentacionId => presentacion?.id ?? '';
-  String get presentacionNombre => presentacion?.nombre ?? unidad;
+  String get presentacionNombre => unidad;
   double get subtotal => cantidad * costo;
 }
 
@@ -126,23 +125,34 @@ class _CompraFormScreenState extends State<CompraFormScreen> {
       return;
     }
 
+    for (final item in _items) {
+      if (item.esNuevo && item.precioVenta <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('"${item.nombre}": debe tener un precio de venta mayor a 0'),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        return;
+      }
+    }
+
     setState(() => _guardando = true);
 
     final itemsCompra = <ItemCompra>[];
 
     for (final item in _items) {
       String pid;
-      String presId;
       String presNombre;
 
       if (item.esNuevo) {
-        // Crear producto en Firestore
         final nuevoId = await widget.compraViewModel.crearProductoDesdeCompra(
           nombre: item.nombre,
           categoria: item.categoria,
           unidad: item.unidad,
           costo: item.costo,
           stock: item.cantidad,
+          precioVenta: item.precioVenta,
           proveedorId: _proveedorId ?? '',
           proveedorNombre: _proveedorNombre,
         );
@@ -156,11 +166,9 @@ class _CompraFormScreenState extends State<CompraFormScreen> {
           return;
         }
         pid = nuevoId;
-        presId = '';
         presNombre = item.unidad;
       } else {
         pid = item.productoId;
-        presId = item.presentacionId;
         presNombre = item.presentacionNombre;
       }
 
@@ -168,7 +176,7 @@ class _CompraFormScreenState extends State<CompraFormScreen> {
         productoId: pid,
         productoNombre: item.nombre,
         categoria: item.categoria,
-        presentacionId: presId,
+        presentacionId: '',
         presentacionNombre: presNombre,
         cantidad: item.cantidad,
         costoUnitario: item.costo,
@@ -365,7 +373,7 @@ class _CompraFormScreenState extends State<CompraFormScreen> {
         if (_proveedores.isEmpty)
           const DropdownMenuItem<String>(
             value: null,
-            child: Text('No hay proveedores — crea uno'),
+            child: Text('No hay proveedores \u2014 crea uno'),
           )
         else
           ..._proveedores.map((prov) => DropdownMenuItem<String>(
@@ -457,7 +465,7 @@ class _CompraFormScreenState extends State<CompraFormScreen> {
             ),
             const SizedBox(width: 8),
             ChoiceChip(
-              label: const Text('Crédito'),
+              label: const Text('Cr\u00e9dito'),
               selected: _esCredito,
               onSelected: (_) => setState(() => _esCredito = true),
               visualDensity: VisualDensity.compact,
@@ -490,10 +498,10 @@ class _SeleccionarProductoCompraDialogState
   final _searchCtrl = TextEditingController();
   final _cantidadCtrl = TextEditingController(text: '1');
   final _costoCtrl = TextEditingController(text: '0');
+  final _precioVentaCtrl = TextEditingController(text: '0');
   final _nuevoNombreCtrl = TextEditingController();
   String _busqueda = '';
   Producto? _seleccionado;
-  Presentacion? _presentacion;
   String _unidad = 'unidad';
   bool _modoNuevo = false;
   String _nuevaCategoria = 'General';
@@ -518,7 +526,6 @@ class _SeleccionarProductoCompraDialogState
         if (_busqueda.isEmpty) {
           _modoNuevo = false;
           _seleccionado = null;
-          _presentacion = null;
         }
       });
     });
@@ -529,6 +536,7 @@ class _SeleccionarProductoCompraDialogState
     _searchCtrl.dispose();
     _cantidadCtrl.dispose();
     _costoCtrl.dispose();
+    _precioVentaCtrl.dispose();
     _nuevoNombreCtrl.dispose();
     super.dispose();
   }
@@ -536,12 +544,9 @@ class _SeleccionarProductoCompraDialogState
   void _seleccionarExistente(Producto p) {
     setState(() {
       _seleccionado = p;
-      _presentacion = p.presentaciones.isNotEmpty ? p.presentaciones.first : null;
       _modoNuevo = false;
-      if (_presentacion != null) {
-        _costoCtrl.text = _presentacion!.costo.toStringAsFixed(2);
-        _unidad = _presentacion!.nombre;
-      }
+      _costoCtrl.text = p.costo.toStringAsFixed(2);
+      _unidad = p.presentaciones.isNotEmpty ? p.presentaciones.first.nombre : 'unidad';
     });
   }
 
@@ -549,9 +554,9 @@ class _SeleccionarProductoCompraDialogState
     setState(() {
       _modoNuevo = true;
       _seleccionado = null;
-      _presentacion = null;
       _unidad = 'unidad';
       _costoCtrl.text = '0';
+      _precioVentaCtrl.text = '0';
       _nuevoNombreCtrl.text = _busqueda;
     });
   }
@@ -562,9 +567,10 @@ class _SeleccionarProductoCompraDialogState
     if (cant <= 0) return false;
     if (costo < 0) return false;
     if (_modoNuevo) {
-      return _nuevoNombreCtrl.text.trim().isNotEmpty;
+      final pv = double.tryParse(_precioVentaCtrl.text) ?? 0;
+      return _nuevoNombreCtrl.text.trim().isNotEmpty && pv > 0;
     }
-    return _seleccionado != null && _presentacion != null;
+    return _seleccionado != null;
   }
 
   @override
@@ -654,36 +660,6 @@ class _SeleccionarProductoCompraDialogState
                 ),
               ),
 
-            // Existing product variant selector
-            if (_seleccionado != null && _seleccionado!.presentaciones.length > 1)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: DropdownButtonFormField<Presentacion>(
-                  initialValue: _presentacion,
-                  decoration: const InputDecoration(
-                    labelText: 'Variante',
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  ),
-                  items: _seleccionado!.presentaciones
-                      .map((pr) => DropdownMenuItem(
-                            value: pr,
-                            child: Text('${pr.nombre} — ${Formatters.currency(pr.costo)}/${pr.unidad}',
-                                style: const TextStyle(fontSize: 13)),
-                          ))
-                      .toList(),
-                  onChanged: (v) {
-                    setState(() {
-                      _presentacion = v;
-                      if (v != null) {
-                        _costoCtrl.text = v.costo.toStringAsFixed(2);
-                        _unidad = v.nombre;
-                      }
-                    });
-                  },
-                ),
-              ),
-
             // New product: name + category + unit
             if (_modoNuevo) ...[
               TextField(
@@ -699,7 +675,7 @@ class _SeleccionarProductoCompraDialogState
               DropdownButtonFormField<String>(
                 initialValue: _nuevaCategoria,
                 decoration: const InputDecoration(
-                  labelText: 'Categoría',
+                  labelText: 'Categor\u00eda',
                   isDense: true,
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
@@ -735,7 +711,7 @@ class _SeleccionarProductoCompraDialogState
                   child: TextField(
                     decoration: InputDecoration(
                       labelText: _seleccionado != null
-                          ? 'Cantidad (stock: ${_presentacion?.stock.toStringAsFixed(1) ?? '0'})'
+                          ? 'Cantidad (stock: ${_seleccionado!.stock.toStringAsFixed(1)})'
                           : 'Cantidad',
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -759,6 +735,20 @@ class _SeleccionarProductoCompraDialogState
                 ),
               ],
             ),
+            if (_modoNuevo) ...[
+              const SizedBox(height: 8),
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: 'Precio de venta',
+                  prefixText: 'S/ ',
+                  hintText: 'A cu\u00e1nto lo vender\u00e1s',
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+                keyboardType: TextInputType.number,
+                controller: _precioVentaCtrl,
+              ),
+            ],
           ],
         ),
       ),
@@ -776,10 +766,11 @@ class _SeleccionarProductoCompraDialogState
                   if (cant <= 0 || costo < 0) return;
                   if (_modoNuevo) {
                     final nombre = _nuevoNombreCtrl.text.trim();
-                    widget.onSeleccionar(_ItemSeleccionado.nuevo(nombre, _nuevaCategoria, _unidad, cant, costo));
-                  } else if (_seleccionado != null && _presentacion != null) {
+                    final pv = double.tryParse(_precioVentaCtrl.text) ?? 0;
+                    widget.onSeleccionar(_ItemSeleccionado.nuevo(nombre, _nuevaCategoria, _unidad, cant, costo, precioVenta: pv));
+                  } else if (_seleccionado != null) {
                     widget.onSeleccionar(_ItemSeleccionado.existente(
-                        _seleccionado!, _presentacion!, cant, costo));
+                        _seleccionado!, cant, costo));
                   }
                   Navigator.pop(context);
                 },

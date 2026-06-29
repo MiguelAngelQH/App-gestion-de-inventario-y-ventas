@@ -53,6 +53,8 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
   late final TextEditingController _descripcionCtrl;
   late final TextEditingController _codigoCtrl;
   late final TextEditingController _marcaCtrl;
+  late final TextEditingController _stockCtrl;
+  late final TextEditingController _costoCtrl;
   String _categoria = 'General';
   String _proveedorId = '';
   List<_VarForm> _variants = [];
@@ -66,6 +68,8 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
     _descripcionCtrl = TextEditingController(text: p?.descripcion ?? '');
     _codigoCtrl = TextEditingController(text: p?.codigoBarras ?? '');
     _marcaCtrl = TextEditingController(text: p?.marca ?? '');
+    _stockCtrl = TextEditingController(text: p != null ? p.stock.toString() : '0');
+    _costoCtrl = TextEditingController(text: p != null ? p.costo.toString() : '0');
     _categoria = p?.categoria ?? 'General';
     _proveedorId = p?.proveedorId ?? '';
     if (p != null && p.presentaciones.isNotEmpty) {
@@ -74,9 +78,14 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
             nombreCtrl: TextEditingController(text: pr.nombre),
             unidad: _unidades.contains(pr.unidad) ? pr.unidad : 'unidad',
             precioCtrl: TextEditingController(text: pr.precio.toString()),
-            costoCtrl: TextEditingController(text: pr.costo.toString()),
-            stockCtrl: TextEditingController(text: pr.stock.toString()),
           )).toList();
+    } else if (p == null) {
+      _variants = [_VarForm(
+        id: '',
+        nombreCtrl: TextEditingController(text: 'Unidad'),
+        unidad: 'unidad',
+        precioCtrl: TextEditingController(),
+      )];
     }
   }
 
@@ -86,11 +95,11 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
     _descripcionCtrl.dispose();
     _codigoCtrl.dispose();
     _marcaCtrl.dispose();
+    _stockCtrl.dispose();
+    _costoCtrl.dispose();
     for (final v in _variants) {
       v.nombreCtrl.dispose();
       v.precioCtrl.dispose();
-      v.costoCtrl.dispose();
-      v.stockCtrl.dispose();
     }
     super.dispose();
   }
@@ -102,8 +111,6 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
         nombreCtrl: TextEditingController(),
         unidad: 'unidad',
         precioCtrl: TextEditingController(text: '0'),
-        costoCtrl: TextEditingController(text: '0'),
-        stockCtrl: TextEditingController(text: '0'),
       ));
     });
   }
@@ -112,8 +119,6 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
     final v = _variants[index];
     v.nombreCtrl.dispose();
     v.precioCtrl.dispose();
-    v.costoCtrl.dispose();
-    v.stockCtrl.dispose();
     setState(() => _variants.removeAt(index));
   }
 
@@ -159,7 +164,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('No se encontró un producto con este código de barras'),
+            content: const Text('No se encontr\u00f3 un producto con este c\u00f3digo de barras'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -187,16 +192,16 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
           children: [
             _campoLectura('Nombre', nombre!),
             if (descripcion != null && descripcion.isNotEmpty)
-              _campoLectura('Descripción', descripcion),
+              _campoLectura('Descripci\u00f3n', descripcion),
             if (marca != null && marca.isNotEmpty)
               _campoLectura('Marca', marca),
             if (proveedorNombre != null && proveedorNombre.isNotEmpty)
               _campoLectura('Proveedor', proveedorNombre),
             if (categoria != null && categoria.isNotEmpty)
-              _campoLectura('Categoría', categoria),
+              _campoLectura('Categor\u00eda', categoria),
             const SizedBox(height: 12),
             Text(
-              'Se llenarán los datos automáticamente.\nDeberás agregar las variantes manualmente.',
+              'Se llenar\u00e1n los datos autom\u00e1ticamente.\nStock y costo se cargar\u00e1n al registrar compras.',
               style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
                     color: Theme.of(ctx).colorScheme.onSurfaceVariant,
                   ),
@@ -264,36 +269,40 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
       return;
     }
 
+    final stock = double.tryParse(_stockCtrl.text) ?? 0;
+    final costo = double.tryParse(_costoCtrl.text) ?? 0;
+
+    if (stock < 0) {
+      _mostrarErrorDialog(
+        'Stock inv\u00e1lido',
+        'El stock no puede ser negativo.',
+      );
+      return;
+    }
+    if (costo < 0) {
+      _mostrarErrorDialog(
+        'Costo inv\u00e1lido',
+        'El costo no puede ser negativo.',
+      );
+      return;
+    }
+
     for (final v in _variants) {
       final nom = v.nombreCtrl.text.trim();
       final precio = double.tryParse(v.precioCtrl.text) ?? 0;
-      final costo = double.tryParse(v.costoCtrl.text) ?? 0;
-      final stock = double.tryParse(v.stockCtrl.text) ?? 0;
       if (precio <= 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('"$nom": el precio de venta debe ser mayor a 0')),
-        );
-        return;
-      }
-      if (costo < 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('"$nom": el costo no puede ser negativo')),
-        );
-        return;
-      }
-      if (stock < 0) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('"$nom": el stock no puede ser negativo')),
+        _mostrarErrorDialog(
+          'Precio inv\u00e1lido en "$nom"',
+          'El precio de venta debe ser mayor a 0.\n\nSi no estableces un precio, no podr\u00e1s vender este producto.',
         );
         return;
       }
       if (costo > precio) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '"$nom": el costo (S/ ${costo.toStringAsFixed(2)}) supera al precio de venta (S/ ${precio.toStringAsFixed(2)})',
-            ),
-          ),
+        _mostrarErrorDialog(
+          'Precio inv\u00e1lido en "$nom"',
+          'El costo (S/ ${costo.toStringAsFixed(2)}) es mayor al precio de venta (S/ ${precio.toStringAsFixed(2)}).\n\n'
+              'Esto significa que perder\u00e1s S/ ${(costo - precio).toStringAsFixed(2)} por cada unidad que vendas.\n\n'
+              'Corrige el precio de venta o reduce el costo.',
         );
         return;
       }
@@ -305,8 +314,6 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
         nombre: v.nombreCtrl.text.trim(),
         unidad: v.unidad,
         precio: double.tryParse(v.precioCtrl.text) ?? 0,
-        costo: double.tryParse(v.costoCtrl.text) ?? 0,
-        stock: double.tryParse(v.stockCtrl.text) ?? 0,
       );
     }).toList();
 
@@ -321,6 +328,8 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
       marca: _marcaCtrl.text.trim(),
       proveedorId: _proveedorId,
       proveedorNombre: provNombre,
+      stock: stock,
+      costo: costo,
       presentaciones: presentaciones,
     );
 
@@ -338,6 +347,29 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
     }
 
     if (mounted) Navigator.pop(context);
+  }
+
+  void _mostrarErrorDialog(String titulo, String mensaje) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(Icons.error_outline, color: Colors.red.shade600, size: 22),
+            const SizedBox(width: 8),
+            Expanded(child: Text(titulo, style: const TextStyle(fontSize: 16))),
+          ],
+        ),
+        content: Text(mensaje, style: const TextStyle(fontSize: 14)),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _contribuirAlCatalogo(String barcode, Producto producto) async {
@@ -389,7 +421,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                     (v == null || v.trim().isEmpty) ? 'Requerido' : null,
               ),
               const SizedBox(height: 14),
-              // Descripción + Marca
+              // Descripci\u00f3n + Marca
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -398,8 +430,8 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                     child: TextFormField(
                       controller: _descripcionCtrl,
                       maxLines: 2,
-                      decoration: _dec('Descripción', Icons.description_outlined,
-                          help: 'Opcional: sabor, tamaño, detalles del producto'),
+                      decoration: _dec('Descripci\u00f3n', Icons.description_outlined,
+                          help: 'Opcional: sabor, tama\u00f1o, detalles del producto'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -408,7 +440,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                     child: TextFormField(
                       controller: _marcaCtrl,
                       decoration: _dec('Marca', Icons.badge_outlined,
-                          help: 'Ej: Gloria, Nestlé, Molitalia'),
+                          help: 'Ej: Gloria, Nestl\u00e9, Molitalia'),
                     ),
                   ),
                 ],
@@ -418,7 +450,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
               DropdownButtonFormField<String>(
                 initialValue: _proveedorId,
                 decoration: _dec('Proveedor', Icons.local_shipping_outlined,
-                    help: 'Selecciona quién te vende este producto'),
+                    help: 'Selecciona qui\u00e9n te vende este producto'),
                 items: [
                   const DropdownMenuItem(value: '', child: Text('Sin proveedor')),
                   ...proveedores.map((prov) => DropdownMenuItem(
@@ -429,13 +461,13 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                 onChanged: (v) => setState(() => _proveedorId = v ?? ''),
               ),
               const SizedBox(height: 14),
-              // Categoría + Código
+              // Categor\u00eda + C\u00f3digo
               Row(
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       initialValue: _categoria,
-                      decoration: _dec('Categoría', Icons.category_outlined,
+                      decoration: _dec('Categor\u00eda', Icons.category_outlined,
                           help: 'Organiza tu inventario y reportes'),
                       items: AppConstants.categorias
                           .map((c) => DropdownMenuItem(value: c, child: Text(c)))
@@ -448,15 +480,52 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                     child: TextFormField(
                       controller: _codigoCtrl,
                       decoration: InputDecoration(
-                        labelText: 'Código de barras',
+                        labelText: 'C\u00f3digo de barras',
                         prefixIcon: const Icon(Icons.qr_code),
                         suffixIcon: IconButton(
                           icon: const Icon(Icons.camera_alt_outlined),
                           onPressed: _escanearCodigo,
-                          tooltip: 'Escanear código',
+                          tooltip: 'Escanear c\u00f3digo',
                         ),
                         isDense: true,
                       ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              // Stock + Costo (product-level)
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _stockCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: _dec('Stock actual', Icons.inventory_2_outlined, isDense: true,
+                          help: 'Cantidad disponible actualmente. Se actualizar\u00e1 con compras y ventas.'),
+                      validator: (val) {
+                        if (val == null || val.isEmpty) return 'Req';
+                        final n = double.tryParse(val);
+                        if (n == null) return 'Inv';
+                        if (n < 0) return '<0';
+                        return null;
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _costoCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: _dec('Tu costo x unidad', Icons.shopping_cart_outlined, isDense: true,
+                          help: 'Cu\u00e1nto te cost\u00f3 adquirir este producto'),
+                      validator: (val) {
+                        if (val == null || val.isEmpty) return 'Req';
+                        final n = double.tryParse(val);
+                        if (n == null) return 'Inv';
+                        if (n < 0) return '<0';
+                        return null;
+                      },
                     ),
                   ),
                 ],
@@ -468,7 +537,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                 children: [
                   Icon(Icons.ballot_outlined, size: 20, color: theme.colorScheme.primary),
                   const SizedBox(width: 8),
-                  Text('Variantes', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                  Text('Presentaciones de venta', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const Spacer(),
                   TextButton.icon(
                     onPressed: _agregarVariant,
@@ -484,7 +553,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                     padding: const EdgeInsets.all(20),
                     child: Center(
                       child: Text(
-                        'Agrega al menos una variante.\nEj: "Por Kilo", "Bolsa 20kg", "Unidad"',
+                        'Agrega al menos una presentaci\u00f3n.\nEj: "Por Kilo", "Bolsa 20kg", "Unidad"',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                       ),
@@ -504,7 +573,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                         children: [
                           Row(
                             children: [
-                              Text('Variante ${i + 1}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                              Text('Presentaci\u00f3n ${i + 1}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                               const Spacer(),
                               if (_variants.length > 1)
                                 IconButton(
@@ -521,7 +590,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                                 child: TextFormField(
                                   controller: v.nombreCtrl,
                                   decoration: _dec('Nombre', Icons.label_outline, isDense: true,
-                                      help: 'Ej: "Por Kilo", "Botella 1L", "Caja 20kg"'),
+                                      help: 'Ej: "Unidad", "Caja de 12", "Botella 1L"'),
                                   validator: (val) => (val == null || val.trim().isEmpty) ? 'Req' : null,
                                 ),
                               ),
@@ -531,7 +600,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                                 child: DropdownButtonFormField<String>(
                                   initialValue: v.unidad,
                                   decoration: _dec('Unidad', Icons.scale, isDense: true,
-                                      help: 'Cómo se vende: kg, litros, unidades, etc.'),
+                                      help: 'C\u00f3mo se vende: kg, litros, unidades, etc.'),
                                   items: _unidades.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
                                   onChanged: (val) => setState(() => v.unidad = val ?? 'unidad'),
                                 ),
@@ -539,57 +608,19 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          // Precio + Costo
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
-                                  controller: v.precioCtrl,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  decoration: _dec('Precio venta', Icons.monetization_on_outlined, isDense: true,
-                                      help: 'Precio al que vendes esta variante'),
-                                  validator: (val) {
-                                    if (val == null || val.isEmpty) return 'Req';
-                                    final n = double.tryParse(val);
-                                    if (n == null) return 'Inv';
-                                    if (n <= 0) return '>0';
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: v.costoCtrl,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  decoration: _dec('Tu costo', Icons.shopping_cart_outlined, isDense: true,
-                                      help: 'Cuánto te costó adquirir esta variante'),
-                                  validator: (val) {
-                                    if (val == null || val.isEmpty) return 'Req';
-                                    final n = double.tryParse(val);
-                                    if (n == null) return 'Inv';
-                                    if (n < 0) return '<0';
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: v.stockCtrl,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  decoration: _dec('Stock', Icons.inventory_2_outlined, isDense: true,
-                                      help: 'Cantidad disponible actualmente'),
-                                  validator: (val) {
-                                    if (val == null || val.isEmpty) return 'Req';
-                                    final n = double.tryParse(val);
-                                    if (n == null) return 'Inv';
-                                    if (n < 0) return '<0';
-                                    return null;
-                                  },
-                                ),
-                              ),
-                            ],
+                          // Precio (solo precio, sin costo ni stock)
+                          TextFormField(
+                            controller: v.precioCtrl,
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            decoration: _dec('Precio de venta', Icons.monetization_on_outlined, isDense: true,
+                                help: 'Precio al que vendes esta presentaci\u00f3n'),
+                            validator: (val) {
+                              if (val == null || val.isEmpty) return 'Req';
+                              final n = double.tryParse(val);
+                              if (n == null) return 'Inv';
+                              if (n <= 0) return '>0';
+                              return null;
+                            },
                           ),
                         ],
                       ),
@@ -598,7 +629,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                 }),
               const SizedBox(height: 24),
 
-              // Botón guardar
+              // Bot\u00f3n guardar
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -624,15 +655,11 @@ class _VarForm {
   TextEditingController nombreCtrl;
   String unidad;
   TextEditingController precioCtrl;
-  TextEditingController costoCtrl;
-  TextEditingController stockCtrl;
 
   _VarForm({
     required this.id,
     required this.nombreCtrl,
     required this.unidad,
     required this.precioCtrl,
-    required this.costoCtrl,
-    required this.stockCtrl,
   });
 }

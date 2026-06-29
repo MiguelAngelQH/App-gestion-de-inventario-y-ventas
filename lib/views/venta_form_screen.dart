@@ -38,7 +38,7 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
   void _agregarProducto() {
     final productos = widget.productoViewModel.productos
         .where((p) =>
-            p.stockTotal > 0 && !_items.any((i) => i.productoId == p.id))
+            p.stock > 0 && !_items.any((i) => i.productoId == p.id))
         .toList();
 
     if (productos.isEmpty) {
@@ -62,7 +62,7 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
               presentacionNombre: presentacion.nombre,
               cantidad: cantidad,
               precioUnitario: presentacion.precio,
-              costoUnitario: presentacion.costo,
+              costoUnitario: producto.costo,
             ));
           });
         },
@@ -165,16 +165,15 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
       context: context,
       builder: (ctx) {
         var sel = presentacion;
-        String? error;
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             final pr = sel;
-            final stock = pr?.stock ?? 0;
+            final stock = producto.stock;
             final cantVal = double.tryParse(ctrl.text);
             final cantOk = cantVal != null && cantVal > 0;
             final stockOk = cantVal != null && cantVal <= stock;
             final puedeAgregar = pr != null && cantOk && stockOk;
-            final pierde = pr != null && pr.costo > pr.precio;
+            final pierde = pr != null && producto.costo > pr.precio;
 
             return AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -219,12 +218,12 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                           ),
                           if (pierde) ...[
                             const SizedBox(height: 4),
-                            Text('Costo: ${Formatters.currency(presentacion.costo)} — se vende con pérdida',
+                            Text('Costo: ${Formatters.currency(producto.costo)} — se vende con p\u00e9rdida',
                               style: TextStyle(fontSize: 11, color: Colors.orange.shade700),
                             ),
                           ] else ...[
                             const SizedBox(height: 4),
-                            Text('Costo: ${Formatters.currency(presentacion.costo)} — Ganancia: ${Formatters.currency(presentacion.precio - presentacion.costo)}',
+                            Text('Costo: ${Formatters.currency(producto.costo)} — Ganancia: ${Formatters.currency(presentacion.precio - producto.costo)}',
                               style: TextStyle(fontSize: 11, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
                             ),
                           ],
@@ -258,31 +257,35 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                                 ),
                               ))
                           .toList(),
-                      onChanged: (v) => setDialogState(() {
-                        sel = v;
-                        error = null;
-                      }),
+                      onChanged: (v) => setDialogState(() => sel = v),
                     ),
                     if (pierde)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
-                        child: Text('Costo S/ ${pr.costo.toStringAsFixed(2)} — se vende con pérdida',
+                        child: Text('Costo S/ ${producto.costo.toStringAsFixed(2)} — se vende con p\u00e9rdida',
                           style: TextStyle(fontSize: 11, color: Colors.orange.shade700),
                         ),
                       ),
                   ],
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   TextField(
                     decoration: InputDecoration(
                       labelText: 'Cantidad (stock: ${stock.toStringAsFixed(1)})',
                       prefixIcon: const Icon(Icons.production_quantity_limits),
                       border: const OutlineInputBorder(),
-                      errorText: error,
                     ),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     controller: ctrl,
-                    onChanged: (_) => setDialogState(() => error = null),
+                    onChanged: (_) => setDialogState(() {}),
                   ),
+                  if (pr != null && cantVal != null && cantVal > stock)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        'Stock insuficiente: solo tienes ${stock.toStringAsFixed(1)} unidades',
+                        style: TextStyle(fontSize: 12, color: Colors.red.shade600),
+                      ),
+                    ),
                 ],
               ),
               actions: [
@@ -295,7 +298,13 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                       ? () => Navigator.pop(ctx, MapEntry(pr, cantVal))
                       : null,
                   icon: const Icon(Icons.add_shopping_cart, size: 18),
-                  label: Text(pr != null && !cantOk ? 'Cantidad inv\u00e1lida' : 'Agregar a la venta'),
+                  label: Text(pr != null
+                      ? (!cantOk
+                          ? 'Cantidad inv\u00e1lida'
+                          : !stockOk
+                              ? 'Stock insuficiente'
+                              : 'Agregar a la venta')
+                      : 'Selecciona variante'),
                 ),
               ],
             );
@@ -316,7 +325,7 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
           presentacionNombre: pr.nombre,
           cantidad: cantidad,
           precioUnitario: pr.precio,
-          costoUnitario: pr.costo,
+          costoUnitario: producto.costo,
         ));
       });
       ScaffoldMessenger.of(context).showSnackBar(
@@ -393,7 +402,7 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                 DropdownButtonFormField<String>(
                   initialValue: _metodoPago,
                   decoration: const InputDecoration(
-                    labelText: 'Método de pago',
+                    labelText: 'M\u00e9todo de pago',
                     prefixIcon: Icon(Icons.payment),
                   ),
                   items: AppConstants.metodosPago
@@ -414,7 +423,7 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                     IconButton(
                       onPressed: _escanearCodigo,
                       icon: const Icon(Icons.qr_code_scanner),
-                      tooltip: 'Escanear código de barras',
+                      tooltip: 'Escanear c\u00f3digo de barras',
                     ),
                     FilledButton.tonalIcon(
                       onPressed: _agregarProducto,
@@ -571,7 +580,7 @@ class _SeleccionarProductoDialogState
               items: widget.productos
                   .map((p) => DropdownMenuItem(
                         value: p,
-                        child: Text('${p.nombre} (stock: ${p.stockTotal.toStringAsFixed(1)})'),
+                        child: Text('${p.nombre} (stock: ${p.stock.toStringAsFixed(1)})'),
                       ))
                   .toList(),
               onChanged: (v) {
@@ -591,7 +600,7 @@ class _SeleccionarProductoDialogState
                 items: _seleccionado!.presentaciones
                     .map((pr) => DropdownMenuItem(
                           value: pr,
-                          child: Text('${pr.nombre} — ${Formatters.currency(pr.precio)}/${pr.unidad} (stock: ${pr.stock.toStringAsFixed(1)})'),
+                          child: Text('${pr.nombre} — ${Formatters.currency(pr.precio)}/${pr.unidad}'),
                         ))
                     .toList(),
                 onChanged: (v) =>

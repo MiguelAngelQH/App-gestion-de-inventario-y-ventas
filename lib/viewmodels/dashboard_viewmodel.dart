@@ -157,7 +157,7 @@ class DashboardViewModel extends ChangeNotifier {
           unawaited(FcmService().showLocalNotification(
             id: id.hashCode,
             title: 'Stock Bajo',
-            body: '${p.nombre} — stock actual: ${p.stockTotal.toStringAsFixed(1)}',
+            body: '${p.nombre} — stock actual: ${p.stock.toStringAsFixed(1)}',
           ));
         }
       }

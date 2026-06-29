@@ -80,7 +80,7 @@ class _ConfiguracionPreciosScreenState
                     _PriceField(
                       label: 'Precio',
                       value: pres.precio,
-                      pairedValue: pres.costo,
+                      pairedValue: prod.costo,
                       pairedLabel: 'Costo',
                       isPrecio: true,
                       onSave: (v) => widget.viewModel.actualizarPrecio(
@@ -92,13 +92,12 @@ class _ConfiguracionPreciosScreenState
                     const SizedBox(width: 8),
                     _PriceField(
                       label: 'Costo',
-                      value: pres.costo,
+                      value: prod.costo,
                       pairedValue: pres.precio,
                       pairedLabel: 'Precio',
                       isPrecio: false,
                       onSave: (v) => widget.viewModel.actualizarCosto(
                         prod.id,
-                        pres.id,
                         v,
                       ),
                     ),

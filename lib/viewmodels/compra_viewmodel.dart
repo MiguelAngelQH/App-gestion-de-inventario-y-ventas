@@ -95,6 +95,7 @@ class CompraViewModel extends ChangeNotifier {
     required String unidad,
     required double costo,
     required double stock,
+    double precioVenta = 0,
     String proveedorId = '',
     String proveedorNombre = '',
   }) async {
@@ -103,13 +104,13 @@ class CompraViewModel extends ChangeNotifier {
         id: '',
         nombre: nombre,
         categoria: categoria,
+        stock: stock,
+        costo: costo,
         presentaciones: [
           Presentacion(
             nombre: unidad,
             unidad: unidad,
-            precio: 0,
-            costo: costo,
-            stock: stock,
+            precio: precioVenta,
           ),
         ],
         proveedorId: proveedorId,
