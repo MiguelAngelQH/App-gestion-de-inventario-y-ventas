@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ngrok-tunnel
+  namespace: "2023205111"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ngrok-tunnel
+  template:
+    metadata:
+      labels:
+        app: ngrok-tunnel
+    spec:
+      containers:
+      - name: ngrok
+        image: alpine:latest
+        imagePullPolicy: Always
+        command:
+          - sh
+          - -c
+          - |
+            apk add --no-cache curl unzip ca-certificates > /dev/null 2>&1
+            curl -sLo /tmp/ngrok.zip https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip
+            unzip -o /tmp/ngrok.zip -d /tmp/ > /dev/null 2>&1
+            chmod +x /tmp/ngrok
+            NGROK_AUTHTOKEN=3ESuJC3f9FOv23dbC7lxIPwkH3s_2c5k7g3ibsRN9tCrCZZLy /tmp/ngrok http http://172.16.10.31:30349 --log=stdout

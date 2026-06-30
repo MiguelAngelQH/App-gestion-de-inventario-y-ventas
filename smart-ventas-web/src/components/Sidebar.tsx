@@ -7,7 +7,7 @@ import { LayoutDashboard, Package, DollarSign, ArrowDownToLine, Users, Building2
 import { useTheme } from '@/lib/ThemeProvider';
 
 const navItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/productos', label: 'Productos', icon: Package },
   { href: '/ventas', label: 'Ventas', icon: DollarSign },
   { href: '/compras', label: 'Compras', icon: ArrowDownToLine },
@@ -34,7 +34,7 @@ export default function Sidebar() {
     }
   };
 
-  if (pathname === '/login') return null;
+  if (pathname === '/login' || pathname === '/') return null;
 
   return (
     <aside className={`relative flex flex-col h-screen sticky top-0 transition-all duration-300 flex-shrink-0 ${collapsed ? 'w-20' : 'w-64'}`}>

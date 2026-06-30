@@ -33,7 +33,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push('/');
+      router.push('/dashboard');
     } catch (err: any) {
       setError('Error de conexion');
     } finally {

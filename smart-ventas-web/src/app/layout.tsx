@@ -6,8 +6,8 @@ import ParticleBackground from "@/components/ParticleBackground";
 import { ToastProvider } from "@/components/Toast";
 
 export const metadata: Metadata = {
-  title: "SmartVentas - Panel de Administracion",
-  description: "Panel de administracion para SmartVentas",
+  title: "SmartVentas - Gestion inteligente para tu negocio",
+  description: "App movil y panel web para gestionar inventario, ventas, compras, cuentas por cobrar/pagar y reportes. Todo sincronizado en la nube.",
 };
 
 export default function RootLayout({
