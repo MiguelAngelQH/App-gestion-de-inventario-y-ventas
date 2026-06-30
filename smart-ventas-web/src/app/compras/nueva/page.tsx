@@ -4,15 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Plus, X, ArrowDownToLine, Minus, Search } from 'lucide-react';
-import { Producto, Presentacion, formatearMoneda } from '@/lib/types';
+import { Producto, formatearMoneda } from '@/lib/types';
 
 interface ItemCompraForm {
   productoId: string;
   productoNombre: string;
-  presentacionId: string;
-  presentacionNombre: string;
   categoria: string;
-  factor: number;
   cantidad: number;
   costoUnitario: number;
   subtotal: number;
@@ -59,18 +56,16 @@ export default function NuevaCompraPage() {
 
   const total = items.reduce((sum, item) => sum + item.subtotal, 0);
 
-  const agregarItem = (producto: Producto, presentacion: Presentacion) => {
-    if (items.some(i => i.presentacionId === presentacion.id)) return;
+  const agregarItem = (producto: Producto) => {
+    if (items.some(i => i.productoId === producto.id)) return;
+    const costoInicial = producto.costo ?? 0;
     setItems([...items, {
       productoId: producto.id,
       productoNombre: producto.nombre,
-      presentacionId: presentacion.id,
-      presentacionNombre: presentacion.nombreVisual || presentacion.unidad,
       categoria: producto.categoria,
-      factor: presentacion.factor,
       cantidad: 1,
-      costoUnitario: presentacion.costo,
-      subtotal: presentacion.costo,
+      costoUnitario: costoInicial,
+      subtotal: costoInicial,
     }]);
     setShowProductSelector(false);
     setSearchTerm('');
@@ -175,10 +170,9 @@ export default function NuevaCompraPage() {
         ) : (
           <div className="space-y-3">
             {items.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-tertiary)]">
+                  <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-tertiary)]">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-[var(--text-primary)] truncate">{item.productoNombre}</p>
-                  <p className="text-xs text-[var(--text-muted)]">{item.presentacionNombre}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => actualizarCantidad(idx, item.cantidad - 1)} className="btn-secondary p-1"><Minus size={14} /></button>
@@ -259,20 +253,17 @@ export default function NuevaCompraPage() {
             </div>
             <div className="flex-1 overflow-y-auto space-y-2">
               {filteredProductos.map(p => (
-                <div key={p.id} className="card p-3">
-                  <p className="text-sm font-medium text-[var(--text-primary)]">{p.nombre}</p>
-                  <p className="text-xs text-[var(--text-muted)] mb-2">Stock: {p.stockTotal} {p.unidadBase}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {(p.presentaciones || []).map(pr => (
-                      <button
-                        key={pr.id}
-                        onClick={() => agregarItem(p, pr)}
-                        className="btn-secondary text-xs py-1 px-3"
-                      >
-                        {pr.nombreVisual || pr.unidad} - Costo: {formatearMoneda(pr.costo)}
-                      </button>
-                    ))}
+                <div key={p.id} className="card p-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-[var(--text-primary)]">{p.nombre}</p>
+                    <p className="text-xs text-[var(--text-muted)]">Stock: {p.stock} | Costo: {formatearMoneda(p.costo ?? 0)}</p>
                   </div>
+                  <button
+                    onClick={() => agregarItem(p)}
+                    className="btn-primary text-xs py-1 px-3"
+                  >
+                    Agregar
+                  </button>
                 </div>
               ))}
               {filteredProductos.length === 0 && (

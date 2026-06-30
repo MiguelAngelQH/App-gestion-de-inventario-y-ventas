@@ -8,6 +8,19 @@ export async function PATCH(request: NextRequest) {
     const { productoId, presentacionId, precio, costo } = body;
     const uid = await requireAuth(request);
 
+    if (costo !== undefined) {
+      // Cost is now at product level, not per presentation
+      if (!productoId) {
+        return NextResponse.json({ error: 'productoId requerido' }, { status: 400 });
+      }
+      const doc = await db.collection('productos').doc(productoId).get();
+      if (!doc.exists || doc.data()?.uid !== uid) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+      }
+      await db.collection('productos').doc(productoId).update({ costo });
+      return NextResponse.json({ success: true });
+    }
+
     if (!productoId || !presentacionId) {
       return NextResponse.json({ error: 'productoId y presentacionId requeridos' }, { status: 400 });
     }
@@ -26,7 +39,6 @@ export async function PATCH(request: NextRequest) {
     for (const p of presentaciones) {
       if (p.id === presentacionId) {
         if (precio !== undefined) p.precio = precio;
-        if (costo !== undefined) p.costo = costo;
         updated = true;
         break;
       }

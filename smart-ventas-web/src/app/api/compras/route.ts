@@ -16,26 +16,19 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function actualizarCostoPresentacion(
-  productoId: string, presentacionId: string, nuevoCosto: number
+async function actualizarCostoProducto(
+  productoId: string, cantidad: number, nuevoCosto: number
 ) {
   const doc = await db.collection('productos').doc(productoId).get();
   if (!doc.exists) return;
   const data = doc.data() as any;
-  const presentaciones = Array.isArray(data?.presentaciones)
-    ? data.presentaciones.map((p: any) => ({ ...p }))
-    : [];
-  let updated = false;
-  for (const p of presentaciones) {
-    if (p.id === presentacionId) {
-      p.costo = nuevoCosto;
-      updated = true;
-      break;
-    }
-  }
-  if (updated) {
-    await db.collection('productos').doc(productoId).update({ presentaciones });
-  }
+  const stockActual = data.stock ?? 0;
+  const costoActual = data.costo ?? 0;
+  // Weighted average: (stockAnterior * costoActual + cantidad * nuevoCosto) / (stockAnterior + cantidad)
+  const nuevoTotal = stockActual + cantidad;
+  if (nuevoTotal <= 0) return;
+  const costoPromedio = ((stockActual * costoActual) + (cantidad * nuevoCosto)) / nuevoTotal;
+  await db.collection('productos').doc(productoId).update({ costo: costoPromedio });
 }
 
 export async function POST(request: NextRequest) {
@@ -54,14 +47,14 @@ export async function POST(request: NextRequest) {
     for (const item of body.items ?? []) {
       const prodRef = db.collection('productos').doc(item.productoId);
       batch.update(prodRef, {
-        stockTotal: FieldValue.increment(item.cantidad * (item.factor || 1)),
+        stock: FieldValue.increment(item.cantidad),
       });
     }
 
     await batch.commit();
 
     for (const item of body.items ?? []) {
-      await actualizarCostoPresentacion(item.productoId, item.presentacionId, item.costoUnitario);
+      await actualizarCostoProducto(item.productoId, item.cantidad, item.costoUnitario);
     }
 
     const doc = await compraRef.get();

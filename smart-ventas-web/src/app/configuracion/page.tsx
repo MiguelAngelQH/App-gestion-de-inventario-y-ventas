@@ -1,8 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Link from 'next/link';
-import { Settings, DollarSign, ChevronRight } from 'lucide-react';
+import { Settings } from 'lucide-react';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -22,20 +21,13 @@ export default function ConfiguracionPage() {
         <p className="text-sm text-[var(--text-secondary)] mt-1">Administra las preferencias del sistema</p>
       </motion.div>
 
-      <motion.div variants={itemVariants} className="space-y-3">
-        <Link
-          href="/configuracion/precios"
-          className="card p-4 flex items-center gap-4 hover:shadow-md transition-shadow group"
-        >
-          <div className="w-12 h-12 rounded-xl bg-green-50 dark:bg-green-500/10 flex items-center justify-center flex-shrink-0">
-            <DollarSign size={24} className="text-green-600 dark:text-green-400" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-[var(--text-primary)]">Configuración de Precios</h3>
-            <p className="text-sm text-[var(--text-secondary)]">Edita precios y costos de todas las presentaciones</p>
-          </div>
-          <ChevronRight size={20} className="text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-colors flex-shrink-0" />
-        </Link>
+      <motion.div variants={itemVariants} className="card p-8 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
+          <Settings size={32} className="text-blue-600 dark:text-blue-400" />
+        </div>
+        <p className="text-[var(--text-secondary)] text-sm">
+          La configuración de precios ahora se gestiona directamente desde la sección <strong>Productos</strong>.
+        </p>
       </motion.div>
     </motion.div>
   );

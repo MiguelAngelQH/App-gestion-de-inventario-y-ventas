@@ -1,10 +1,8 @@
 export interface Presentacion {
   id: string;
-  nombreVisual: string;
+  nombre: string;
   unidad: string;
   precio: number;
-  costo: number;
-  factor: number;
 }
 
 export interface Producto {
@@ -16,9 +14,7 @@ export interface Producto {
   marca: string;
   proveedorId: string;
   proveedorNombre: string;
-  unidadBase: string;
-  stockTotal: number;
-  precio: number;
+  stock: number;
   costo: number;
   presentaciones: Presentacion[];
   fechaCreacion: string;
@@ -30,7 +26,6 @@ export interface ItemVenta {
   categoria: string;
   presentacionId: string;
   presentacionNombre: string;
-  factor: number;
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
@@ -55,7 +50,6 @@ export interface ItemCompra {
   categoria: string;
   presentacionId: string;
   presentacionNombre: string;
-  factor: number;
   cantidad: number;
   costoUnitario: number;
   subtotal: number;

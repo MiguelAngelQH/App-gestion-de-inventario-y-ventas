@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     for (const item of body.items ?? []) {
       const prodRef = db.collection('productos').doc(item.productoId);
       batch.update(prodRef, {
-        stockTotal: FieldValue.increment(-(item.cantidad * (item.factor || 1))),
+        stock: FieldValue.increment(-item.cantidad),
       });
     }
 

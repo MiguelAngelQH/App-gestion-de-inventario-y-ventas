@@ -155,64 +155,74 @@ export default function VentasPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={e => e.stopPropagation()}
-            className="card p-6 w-full max-w-lg space-y-4 mx-4"
+            className="card overflow-hidden w-full max-w-lg mx-4"
           >
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-[var(--text-primary)]">Detalle de Venta</h2>
-              <button onClick={() => setSelected(null)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                  <Eye size={20} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Detalle de Venta</h2>
+                  <p className="text-xs text-emerald-200">V-{selected.id.substring(0, 8).toUpperCase()}</p>
+                </div>
+              </div>
+              <button onClick={() => setSelected(null)} className="text-white/80 hover:text-white transition-colors">
                 <X size={20} />
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div className="bg-[var(--bg-tertiary)] rounded-xl px-4 py-3">
-                <p className="text-xs text-[var(--text-muted)] mb-1">Folio</p>
-                <p className="text-[var(--text-primary)] font-mono">V-{selected.id.substring(0, 8).toUpperCase()}</p>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="bg-[var(--bg-tertiary)] rounded-xl px-4 py-3">
+                  <p className="text-xs text-[var(--text-muted)] mb-1">Folio</p>
+                  <p className="text-[var(--text-primary)] font-mono">V-{selected.id.substring(0, 8).toUpperCase()}</p>
+                </div>
+                <div className="bg-[var(--bg-tertiary)] rounded-xl px-4 py-3">
+                  <p className="text-xs text-[var(--text-muted)] mb-1">Fecha</p>
+                  <p className="text-[var(--text-primary)]">{formatearFechaHora(selected.fecha)}</p>
+                </div>
+                <div className="bg-[var(--bg-tertiary)] rounded-xl px-4 py-3">
+                  <p className="text-xs text-[var(--text-muted)] mb-1">Cliente</p>
+                  <p className="text-[var(--text-primary)]">{selected.clienteNombre || '—'}</p>
+                </div>
+                <div className="bg-[var(--bg-tertiary)] rounded-xl px-4 py-3">
+                  <p className="text-xs text-[var(--text-muted)] mb-1">Metodo de pago</p>
+                  <p className="text-[var(--text-primary)]">{selected.metodoPago}</p>
+                </div>
+                <div className="bg-[var(--bg-tertiary)] rounded-xl px-4 py-3">
+                  <p className="text-xs text-[var(--text-muted)] mb-1">Estado</p>
+                  <StatusBadge estado={selected.estado} />
+                </div>
               </div>
-              <div className="bg-[var(--bg-tertiary)] rounded-xl px-4 py-3">
-                <p className="text-xs text-[var(--text-muted)] mb-1">Fecha</p>
-                <p className="text-[var(--text-primary)]">{formatearFechaHora(selected.fecha)}</p>
-              </div>
-              <div className="bg-[var(--bg-tertiary)] rounded-xl px-4 py-3">
-                <p className="text-xs text-[var(--text-muted)] mb-1">Cliente</p>
-                <p className="text-[var(--text-primary)]">{selected.clienteNombre || '—'}</p>
-              </div>
-              <div className="bg-[var(--bg-tertiary)] rounded-xl px-4 py-3">
-                <p className="text-xs text-[var(--text-muted)] mb-1">Metodo de pago</p>
-                <p className="text-[var(--text-primary)]">{selected.metodoPago}</p>
-              </div>
-              <div className="bg-[var(--bg-tertiary)] rounded-xl px-4 py-3">
-                <p className="text-xs text-[var(--text-muted)] mb-1">Estado</p>
-                <StatusBadge estado={selected.estado} />
-              </div>
-            </div>
 
-            <div className="card overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr><th className="text-left p-3">Producto</th><th className="text-right p-3">Cant.</th><th className="text-right p-3">P/U</th><th className="text-right p-3">Subtotal</th></tr>
-                </thead>
-                <tbody>
-                  {selected.items.map((item, i) => (
-                    <tr key={i}>
-                      <td className="text-[var(--text-primary)]">{item.productoNombre}</td>
-                      <td className="text-right text-[var(--text-secondary)]">{item.cantidad}</td>
-                      <td className="text-right text-[var(--text-secondary)]">{formatearMoneda(item.precioUnitario)}</td>
-                      <td className="text-right text-[var(--text-primary)] font-medium">{formatearMoneda(item.subtotal)}</td>
+              <div className="card overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr><th className="text-left p-3">Producto</th><th className="text-right p-3">Cant.</th><th className="text-right p-3">P/U</th><th className="text-right p-3">Subtotal</th></tr>
+                  </thead>
+                  <tbody>
+                    {selected.items.map((item, i) => (
+                      <tr key={i}>
+                        <td className="text-[var(--text-primary)]">{item.productoNombre}</td>
+                        <td className="text-right text-[var(--text-secondary)]">{item.cantidad}</td>
+                        <td className="text-right text-[var(--text-secondary)]">{formatearMoneda(item.precioUnitario)}</td>
+                        <td className="text-right text-[var(--text-primary)] font-medium">{formatearMoneda(item.subtotal)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t border-[var(--border)]">
+                      <td colSpan={3} className="p-3 text-right text-[var(--text-secondary)] font-medium">Total</td>
+                      <td className="p-3 text-right text-[var(--accent)] font-bold">{formatearMoneda(selected.total)}</td>
                     </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t border-[var(--border)]">
-                    <td colSpan={3} className="p-3 text-right text-[var(--text-secondary)] font-medium">Total</td>
-                    <td className="p-3 text-right text-[var(--accent)] font-bold">{formatearMoneda(selected.total)}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+                  </tfoot>
+                </table>
+              </div>
 
-            <button onClick={() => setSelected(null)} className="w-full py-2.5 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors bg-[var(--bg-tertiary)] rounded-xl">
-              Cerrar
-            </button>
+              <button onClick={() => setSelected(null)} className="w-full py-2.5 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors bg-[var(--bg-tertiary)] rounded-xl">
+                Cerrar
+              </button>
+            </div>
           </motion.div>
         </motion.div>
       )}

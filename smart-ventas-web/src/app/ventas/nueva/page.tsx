@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Plus, X, ShoppingCart, Minus, Search } from 'lucide-react';
-import { Producto, Presentacion, formatearMoneda, METODOS_PAGO } from '@/lib/types';
+import { Producto, formatearMoneda, METODOS_PAGO } from '@/lib/types';
 
 interface ItemVentaForm {
   productoId: string;
@@ -12,7 +12,6 @@ interface ItemVentaForm {
   presentacionId: string;
   presentacionNombre: string;
   categoria: string;
-  factor: number;
   cantidad: number;
   precioUnitario: number;
   costoUnitario: number;
@@ -61,18 +60,17 @@ export default function NuevaVentaPage() {
 
   const total = items.reduce((sum, item) => sum + item.subtotal, 0);
 
-  const agregarItem = (producto: Producto, presentacion: Presentacion) => {
-    if (items.some(i => i.presentacionId === presentacion.id)) return;
+  const agregarItem = (producto: Producto, presentacion: { id: string; nombre: string; precio: number }) => {
+    if (items.some(i => i.productoId === producto.id && i.presentacionId === presentacion.id)) return;
     setItems([...items, {
       productoId: producto.id,
       productoNombre: producto.nombre,
       presentacionId: presentacion.id,
-      presentacionNombre: presentacion.nombreVisual || presentacion.unidad,
+      presentacionNombre: presentacion.nombre,
       categoria: producto.categoria,
-      factor: presentacion.factor,
       cantidad: 1,
       precioUnitario: presentacion.precio,
-      costoUnitario: presentacion.costo,
+      costoUnitario: producto.costo ?? 0,
       subtotal: presentacion.precio,
     }]);
     setShowProductSelector(false);
@@ -253,16 +251,16 @@ export default function NuevaVentaPage() {
               {filteredProductos.map(p => (
                 <div key={p.id} className="card p-3">
                   <p className="text-sm font-medium text-[var(--text-primary)]">{p.nombre}</p>
-                  <p className="text-xs text-[var(--text-muted)] mb-2">Stock: {p.stockTotal} {p.unidadBase}</p>
+                  <p className="text-xs text-[var(--text-muted)] mb-2">Stock: {p.stock}</p>
                   <div className="flex flex-wrap gap-2">
                     {(p.presentaciones || []).map(pr => (
                       <button
                         key={pr.id}
-                        onClick={() => agregarItem(p, pr)}
-                        disabled={p.stockTotal <= 0}
+                        onClick={() => agregarItem(p, { id: pr.id, nombre: pr.nombre || pr.unidad, precio: pr.precio })}
+                        disabled={p.stock <= 0}
                         className="btn-secondary text-xs py-1 px-3 disabled:opacity-40"
                       >
-                        {pr.nombreVisual || pr.unidad} - {formatearMoneda(pr.precio)}
+                        {pr.nombre || pr.unidad} - {formatearMoneda(pr.precio)}
                       </button>
                     ))}
                   </div>

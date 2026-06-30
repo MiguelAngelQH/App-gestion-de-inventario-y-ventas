@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, X, DollarSign, CheckCircle2, Pencil, Trash2 } from 'lucide-react';
+import { Plus, X, DollarSign, CheckCircle2, Pencil, Trash2, User, Phone, Mail, MapPin, Calendar, CreditCard } from 'lucide-react';
 import { Cliente, formatearMoneda, formatearFecha } from '@/lib/types';
 import StatusBadge from '@/components/StatusBadge';
 
@@ -192,22 +192,52 @@ export default function ClientesPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={e => e.stopPropagation()}
-            className="card p-6 w-full max-w-md space-y-4 mx-4"
+            className="card overflow-hidden w-full max-w-md mx-4"
           >
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-[var(--text-primary)]">Nuevo Cliente</h2>
-              <button onClick={() => setFormOpen(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"><X size={20} /></button>
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                  <User size={20} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Nuevo Cliente</h2>
+                  <p className="text-xs text-blue-200">Registra un nuevo cliente en el sistema</p>
+                </div>
+              </div>
+              <button onClick={() => setFormOpen(false)} className="text-white/80 hover:text-white transition-colors"><X size={20} /></button>
             </div>
-            <input placeholder="Nombre" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="w-full" />
-            <input placeholder="Telefono" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} className="w-full" />
-            <input placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="w-full" />
-            <input placeholder="Direccion" value={form.direccion} onChange={e => setForm({ ...form, direccion: e.target.value })} className="w-full" />
-            <input type="number" step="0.01" placeholder="Deuda inicial" value={form.deuda} onChange={e => setForm({ ...form, deuda: parseFloat(e.target.value) || 0 })} className="w-full" />
-            <label className="text-sm text-[var(--text-muted)]">Fecha de vencimiento</label>
-            <input type="date" value={form.fechaVencimiento} onChange={e => setForm({ ...form, fechaVencimiento: e.target.value })} className="w-full" />
-            <div className="flex gap-3 justify-end pt-2">
-              <button onClick={() => setFormOpen(false)} className="btn-secondary">Cancelar</button>
-              <button onClick={guardar} className="btn-primary">Guardar</button>
+            <div className="p-6 space-y-4">
+              <div className="relative">
+                <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                <input placeholder="Nombre del cliente" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="w-full pl-10" />
+              </div>
+              <div className="relative">
+                <Phone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                <input placeholder="Teléfono" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} className="w-full pl-10" />
+              </div>
+              <div className="relative">
+                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                <input placeholder="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="w-full pl-10" />
+              </div>
+              <div className="relative">
+                <MapPin size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                <input placeholder="Dirección" value={form.direccion} onChange={e => setForm({ ...form, direccion: e.target.value })} className="w-full pl-10" />
+              </div>
+              <div className="relative">
+                <CreditCard size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                <input type="number" step="0.01" placeholder="Deuda inicial" value={form.deuda} onChange={e => setForm({ ...form, deuda: parseFloat(e.target.value) || 0 })} className="w-full pl-10" />
+              </div>
+              <div>
+                <label className="text-xs text-[var(--text-muted)] mb-1.5 block font-medium">Fecha de vencimiento</label>
+                <div className="relative">
+                  <Calendar size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                  <input type="date" value={form.fechaVencimiento} onChange={e => setForm({ ...form, fechaVencimiento: e.target.value })} className="w-full pl-10" />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end pt-2">
+                <button onClick={() => setFormOpen(false)} className="btn-secondary">Cancelar</button>
+                <button onClick={guardar} className="btn-primary">Guardar Cliente</button>
+              </div>
             </div>
           </motion.div>
         </motion.div>
@@ -224,19 +254,35 @@ export default function ClientesPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={e => e.stopPropagation()}
-            className="card p-6 w-full max-w-sm space-y-4 mx-4"
+            className="card overflow-hidden w-full max-w-sm mx-4"
           >
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-[var(--text-primary)]">Registrar Pago</h2>
-              <button onClick={() => setPagoOpen(null)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"><X size={20} /></button>
+            <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                  <DollarSign size={20} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Registrar Pago</h2>
+                  <p className="text-xs text-green-200">Registra el pago de este cliente</p>
+                </div>
+              </div>
+              <button onClick={() => setPagoOpen(null)} className="text-white/80 hover:text-white transition-colors"><X size={20} /></button>
             </div>
-            <input type="number" step="0.01" placeholder="Monto" value={montoPago} onChange={e => setMontoPago(parseFloat(e.target.value) || 0)} className="w-full" />
-            <input placeholder="Nota (opcional)" value={notaPago} onChange={e => setNotaPago(e.target.value)} className="w-full" />
-            <div className="flex gap-3 justify-end pt-2">
-              <button onClick={() => setPagoOpen(null)} className="btn-secondary">Cancelar</button>
-              <button onClick={() => registrarPago(pagoOpen)} className="btn-primary flex items-center gap-2">
-                <DollarSign size={16} /> Registrar Pago
-              </button>
+            <div className="p-6 space-y-4">
+              <div className="relative">
+                <DollarSign size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                <input type="number" step="0.01" placeholder="Monto del pago" value={montoPago} onChange={e => setMontoPago(parseFloat(e.target.value) || 0)} className="w-full pl-10" />
+              </div>
+              <div className="relative">
+                <CreditCard size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                <input placeholder="Nota (opcional)" value={notaPago} onChange={e => setNotaPago(e.target.value)} className="w-full pl-10" />
+              </div>
+              <div className="flex gap-3 justify-end pt-2">
+                <button onClick={() => setPagoOpen(null)} className="btn-secondary">Cancelar</button>
+                <button onClick={() => registrarPago(pagoOpen)} className="btn-primary">
+                  <DollarSign size={16} /> Registrar Pago
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>
@@ -253,22 +299,52 @@ export default function ClientesPage() {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             onClick={e => e.stopPropagation()}
-            className="card p-6 w-full max-w-md space-y-4 mx-4"
+            className="card overflow-hidden w-full max-w-md mx-4"
           >
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-bold text-[var(--text-primary)]">Editar Cliente</h2>
-              <button onClick={() => setEditOpen(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"><X size={20} /></button>
+            <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                  <Pencil size={20} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Editar Cliente</h2>
+                  <p className="text-xs text-amber-200">Modifica los datos del cliente</p>
+                </div>
+              </div>
+              <button onClick={() => setEditOpen(false)} className="text-white/80 hover:text-white transition-colors"><X size={20} /></button>
             </div>
-            <input placeholder="Nombre" value={editForm.nombre} onChange={e => setEditForm({ ...editForm, nombre: e.target.value })} className="w-full" />
-            <input placeholder="Telefono" value={editForm.telefono} onChange={e => setEditForm({ ...editForm, telefono: e.target.value })} className="w-full" />
-            <input placeholder="Email" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} className="w-full" />
-            <input placeholder="Direccion" value={editForm.direccion} onChange={e => setEditForm({ ...editForm, direccion: e.target.value })} className="w-full" />
-            <input type="number" step="0.01" placeholder="Deuda" value={editForm.deuda} onChange={e => setEditForm({ ...editForm, deuda: parseFloat(e.target.value) || 0 })} className="w-full" />
-            <label className="text-sm text-[var(--text-muted)]">Fecha de vencimiento</label>
-            <input type="date" value={editForm.fechaVencimiento} onChange={e => setEditForm({ ...editForm, fechaVencimiento: e.target.value })} className="w-full" />
-            <div className="flex gap-3 justify-end pt-2">
-              <button onClick={() => setEditOpen(false)} className="btn-secondary">Cancelar</button>
-              <button onClick={guardarEdit} className="btn-primary">Guardar</button>
+            <div className="p-6 space-y-4">
+              <div className="relative">
+                <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                <input placeholder="Nombre" value={editForm.nombre} onChange={e => setEditForm({ ...editForm, nombre: e.target.value })} className="w-full pl-10" />
+              </div>
+              <div className="relative">
+                <Phone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                <input placeholder="Teléfono" value={editForm.telefono} onChange={e => setEditForm({ ...editForm, telefono: e.target.value })} className="w-full pl-10" />
+              </div>
+              <div className="relative">
+                <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                <input placeholder="Email" value={editForm.email} onChange={e => setEditForm({ ...editForm, email: e.target.value })} className="w-full pl-10" />
+              </div>
+              <div className="relative">
+                <MapPin size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                <input placeholder="Dirección" value={editForm.direccion} onChange={e => setEditForm({ ...editForm, direccion: e.target.value })} className="w-full pl-10" />
+              </div>
+              <div className="relative">
+                <CreditCard size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                <input type="number" step="0.01" placeholder="Deuda" value={editForm.deuda} onChange={e => setEditForm({ ...editForm, deuda: parseFloat(e.target.value) || 0 })} className="w-full pl-10" />
+              </div>
+              <div>
+                <label className="text-xs text-[var(--text-muted)] mb-1.5 block font-medium">Fecha de vencimiento</label>
+                <div className="relative">
+                  <Calendar size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+                  <input type="date" value={editForm.fechaVencimiento} onChange={e => setEditForm({ ...editForm, fechaVencimiento: e.target.value })} className="w-full pl-10" />
+                </div>
+              </div>
+              <div className="flex gap-3 justify-end pt-2">
+                <button onClick={() => setEditOpen(false)} className="btn-secondary">Cancelar</button>
+                <button onClick={guardarEdit} className="btn-primary">Guardar Cambios</button>
+              </div>
             </div>
           </motion.div>
         </motion.div>
