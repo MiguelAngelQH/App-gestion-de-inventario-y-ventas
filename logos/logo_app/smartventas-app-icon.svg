@@ -1,0 +1,47 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Icono app SmartVentas</title>
+<desc>Icono cuadrado con bordes redondeados sobre fondo blanco, con una "S" en degradado teal a azul índigo formada por un gráfico de barras ascendente a la izquierda y un estante con cajas a la derecha, con un acento ámbar.</desc>
+<defs>
+<linearGradient id="sGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+<stop offset="0%" stop-color="#00897B"/>
+<stop offset="55%" stop-color="#0F7A9E"/>
+<stop offset="100%" stop-color="#1565C0"/>
+</linearGradient>
+<linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+<stop offset="0%" stop-color="#FFFFFF"/>
+<stop offset="100%" stop-color="#FAFAF9"/>
+</linearGradient>
+<filter id="cardShadow" x="-30%" y="-30%" width="160%" height="160%">
+<feDropShadow dx="0" dy="22" stdDeviation="28" flood-color="#0B2530" flood-opacity="0.18"/>
+</filter>
+<filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+<feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#0B2530" flood-opacity="0.20"/>
+</filter>
+</defs>
+
+<rect x="72" y="72" width="880" height="880" rx="196" fill="url(#bgGrad)" stroke="#EDEBE6" stroke-width="2" filter="url(#cardShadow)"/>
+
+<path d="M 664 332
+C 664 266 588 232 512 232
+C 418 232 344 276 344 356
+C 344 428 410 462 500 480
+C 418 498 344 534 344 618
+C 344 700 428 754 512 754
+C 604 754 672 716 672 654"
+fill="none" stroke="url(#sGrad)" stroke-width="108" stroke-linecap="round" stroke-linejoin="round"/>
+
+<g filter="url(#softShadow)">
+<rect x="390" y="388" width="30" height="44" rx="7" fill="#FFFFFF"/>
+<rect x="428" y="366" width="30" height="66" rx="7" fill="#FFFFFF"/>
+<rect x="466" y="338" width="30" height="94" rx="7" fill="#FFFFFF"/>
+<rect x="504" y="308" width="30" height="124" rx="7" fill="#FFFFFF"/>
+</g>
+<circle cx="519" cy="298" r="15" fill="#FF8F00"/>
+
+<g filter="url(#softShadow)">
+<rect x="520" y="654" width="150" height="16" rx="6" fill="#FF8F00"/>
+<rect x="528" y="600" width="40" height="52" rx="8" fill="#FFFFFF"/>
+<rect x="576" y="582" width="40" height="70" rx="8" fill="#FFFFFF"/>
+<rect x="624" y="606" width="40" height="46" rx="8" fill="#FFFFFF"/>
+</g>
+</svg>

@@ -22,8 +22,8 @@ export default function ConfiguracionPage() {
       </motion.div>
 
       <motion.div variants={itemVariants} className="card p-8 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
-          <Settings size={32} className="text-blue-600 dark:text-blue-400" />
+        <div className="w-16 h-16 rounded-2xl bg-teal-50 dark:bg-teal-600/10 flex items-center justify-center mx-auto mb-4">
+          <Settings size={32} className="text-teal-600 dark:text-teal-400" />
         </div>
         <p className="text-[var(--text-secondary)] text-sm">
           La configuración de precios ahora se gestiona directamente desde la sección <strong>Productos</strong>.

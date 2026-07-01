@@ -32,7 +32,7 @@ export default function ParticleBackground() {
     resize();
     window.addEventListener('resize', resize);
 
-    const count = Math.min(120, Math.floor(window.innerWidth / 8));
+    const count = Math.min(180, Math.floor(window.innerWidth / 5));
     particlesRef.current = Array.from({ length: count }, () => {
       const x = Math.random() * canvas.width;
       const y = Math.random() * canvas.height;
@@ -42,8 +42,8 @@ export default function ParticleBackground() {
         baseY: y,
         vx: (Math.random() - 0.5) * 0.5,
         vy: (Math.random() - 0.5) * 0.5,
-        size: Math.random() * 3 + 1.5,
-        alpha: Math.random() * 0.5 + 0.2,
+        size: Math.random() * 4 + 2,
+        alpha: Math.random() * 0.6 + 0.25,
       };
     });
 
@@ -68,17 +68,17 @@ export default function ParticleBackground() {
         const dy = mouse.y - p.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        if (dist < 200 && dist > 0) {
-          const force = (200 - dist) / 200 * 0.05;
+        if (dist < 300 && dist > 0) {
+          const force = (300 - dist) / 300 * 0.12;
           p.vx -= dx / dist * force;
           p.vy -= dy / dist * force;
         }
 
-        p.vx += (p.baseX - p.x) * 0.001;
-        p.vy += (p.baseY - p.y) * 0.001;
+        p.vx += (p.baseX - p.x) * 0.002;
+        p.vy += (p.baseY - p.y) * 0.002;
 
-        p.vx *= 0.97;
-        p.vy *= 0.97;
+        p.vx *= 0.95;
+        p.vy *= 0.95;
 
         p.x += p.vx;
         p.y += p.vy;
@@ -93,12 +93,12 @@ export default function ParticleBackground() {
           const dx2 = p.x - p2.x;
           const dy2 = p.y - p2.y;
           const dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
-          if (dist2 < 140) {
+          if (dist2 < 200) {
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(37, 99, 235, ${0.1 * (1 - dist2 / 140)})`;
-            ctx.lineWidth = 0.5;
+            ctx.strokeStyle = `rgba(37, 99, 235, ${0.15 * (1 - dist2 / 200)})`;
+            ctx.lineWidth = 0.8;
             ctx.stroke();
           }
         }

@@ -56,3 +56,7 @@ out/
 *.tsbuildinfo
 next-env.d.ts
 .git-backup/
+
+# Temp / generated docs
+smart-ventas-web/PLAN_ACTUALIZACION.md
+smart-ventas-web/SmartVentas_Informe_Tecnico.docx

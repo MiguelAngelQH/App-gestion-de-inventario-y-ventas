@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:smart_ventas/utils/constants.dart';
 import 'package:smart_ventas/viewmodels/auth_viewmodel.dart';
 
@@ -150,10 +151,10 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ],
                       ),
-                      child: Icon(
-                        Icons.store_rounded,
-                        size: 60,
-                        color: const Color(0xFF00897B),
+                      child: SvgPicture.asset(
+                        'assets/smartventas-app-icon.svg',
+                        width: 60,
+                        height: 60,
                       ),
                     ),
                   ),

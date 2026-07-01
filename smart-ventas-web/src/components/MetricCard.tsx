@@ -7,7 +7,7 @@ interface Props {
   color?: string;
 }
 
-export default function MetricCard({ titulo, valor, icono: Icon, color = 'from-blue-500 to-indigo-500' }: Props) {
+export default function MetricCard({ titulo, valor, icono: Icon, color = 'from-teal-600 to-blue-800' }: Props) {
   return (
     <div className="card p-5 relative overflow-hidden group">
       <div className="flex items-start justify-between mb-2">

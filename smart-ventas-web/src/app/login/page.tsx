@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Mail, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
-import ParticleBackground from '@/components/ParticleBackground';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, Lock, LogIn, Eye, EyeOff, X, ArrowRight, CheckCircle2 } from 'lucide-react';
+import GradientOrbs from '@/components/GradientOrbs';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -13,6 +13,12 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+
+  const [showForgot, setShowForgot] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetError, setResetError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,11 +47,38 @@ export default function LoginPage() {
     }
   };
 
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetError('');
+    setResetLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/send-reset-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resetEmail }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setResetError(data.error || 'Error al enviar el correo');
+        return;
+      }
+
+      setResetSent(true);
+    } catch {
+      setResetError('Error de conexion');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 relative overflow-hidden">
-      <ParticleBackground />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(59,130,246,0.08),transparent_50%)] pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(99,102,241,0.06),transparent_50%)] pointer-events-none" />
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-teal-50 via-white to-blue-50 relative overflow-hidden">
+      <GradientOrbs />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(0,137,123,0.08),transparent_50%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(21,101,192,0.06),transparent_50%)] pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -53,12 +86,9 @@ export default function LoginPage() {
         transition={{ duration: 0.5 }}
         className="relative w-full max-w-md mx-4 z-10"
       >
-        <div className="bg-white rounded-2xl shadow-xl shadow-blue-500/5 border border-blue-100/50 p-8 md:p-10">
+        <div className="bg-white rounded-2xl shadow-xl shadow-teal-600/5 border border-teal-100/50 p-8 md:p-10">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/20">
-              <span className="text-white font-bold text-2xl">S</span>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900">SmartVentas</h1>
+            <img src="/smartventas-logo-horizontal.svg" alt="SmartVentas" className="h-24 mx-auto mb-6" />
             <p className="text-gray-500 mt-2 text-sm">Panel de Administracion</p>
           </div>
 
@@ -84,7 +114,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                  className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/10 transition-all"
                   placeholder="correo@ejemplo.com"
                   required
                 />
@@ -101,7 +131,7 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all"
+                  className="w-full pl-10 pr-10 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/10 transition-all"
                   placeholder="Ingrese su contrasena"
                   required
                 />
@@ -115,10 +145,20 @@ export default function LoginPage() {
               </div>
             </div>
 
+            <div className="flex justify-end -mt-2">
+              <button
+                type="button"
+                onClick={() => { setShowForgot(true); setResetEmail(''); setResetSent(false); setResetError(''); }}
+                className="text-sm text-teal-600 hover:text-teal-700 transition-colors font-medium"
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
+
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium rounded-xl transition-all shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3 bg-gradient-to-r from-teal-600 to-blue-800 hover:from-teal-700 hover:to-blue-900 text-white font-medium rounded-xl transition-all shadow-lg shadow-teal-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -132,6 +172,97 @@ export default function LoginPage() {
           </form>
         </div>
       </motion.div>
+
+      <AnimatePresence>
+        {showForgot && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowForgot(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8 relative"
+            >
+              <button
+                onClick={() => setShowForgot(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={20} />
+              </button>
+
+              {resetSent ? (
+                <div className="text-center py-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-teal-600/20">
+                    <CheckCircle2 size={32} className="text-white" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">Correo enviado</h2>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    Si existe una cuenta con <strong>{resetEmail}</strong>, recibirás un enlace para restablecer tu contraseña.
+                  </p>
+                  <button
+                    onClick={() => setShowForgot(false)}
+                    className="mt-6 text-sm text-teal-600 hover:text-teal-700 font-medium"
+                  >
+                    Volver al inicio de sesion
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-500 to-blue-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-teal-600/20">
+                    <Lock size={24} className="text-white" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 text-center mb-2">Recuperar contraseña</h2>
+                  <p className="text-sm text-gray-500 text-center mb-6">
+                    Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.
+                  </p>
+
+                  <form onSubmit={handleResetPassword} className="space-y-4">
+                    {resetError && (
+                      <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">
+                        {resetError}
+                      </div>
+                    )}
+
+                    <div className="relative">
+                      <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        type="email"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/10 transition-all"
+                        placeholder="correo@ejemplo.com"
+                        required
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={resetLoading}
+                      className="w-full py-3 bg-gradient-to-r from-teal-600 to-blue-800 hover:from-teal-700 hover:to-blue-900 text-white font-medium rounded-xl transition-all shadow-lg shadow-teal-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {resetLoading ? (
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          Enviar enlace
+                          <ArrowRight size={18} />
+                        </>
+                      )}
+                    </button>
+                  </form>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,0 +1,25 @@
+<svg width="900" height="240" viewBox="0 0 900 240" xmlns="http://www.w3.org/2000/svg" role="img">
+<title>Logotipo horizontal SmartVentas</title>
+<desc>Logotipo horizontal con un icono hexagonal que contiene dos flechas curvas en bucle infinito, teal y azul, junto al texto "SmartVentas" en bold gris oscuro y el subtítulo "Gestión inteligente para tu negocio" en gris claro.</desc>
+<defs>
+<linearGradient id="hexStroke" x1="0%" y1="0%" x2="0%" y2="100%">
+<stop offset="0%" stop-color="#00897B"/>
+<stop offset="100%" stop-color="#1565C0"/>
+</linearGradient>
+<linearGradient id="hexFill" x1="0%" y1="0%" x2="0%" y2="100%">
+<stop offset="0%" stop-color="#FFFFFF"/>
+<stop offset="100%" stop-color="#F0FAF8"/>
+</linearGradient>
+</defs>
+
+<polygon points="130,20 216.6,70 216.6,170 130,220 43.4,170 43.4,70" fill="url(#hexFill)" stroke="url(#hexStroke)" stroke-width="5"/>
+
+<path d="M 78,100 C 105,65 155,65 182,100" fill="none" stroke="#00897B" stroke-width="9" stroke-linecap="round"/>
+<polygon points="182,100 168,90 172,104" fill="#00897B"/>
+
+<path d="M 182,140 C 155,175 105,175 78,140" fill="none" stroke="#1565C0" stroke-width="9" stroke-linecap="round"/>
+<polygon points="78,140 92,150 88,134" fill="#1565C0"/>
+
+<text x="260" y="140" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="700" fill="#1F2937">SmartVentas</text>
+<text x="262" y="178" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="300" fill="#6B7280">Gestión inteligente para tu negocio</text>
+</svg>

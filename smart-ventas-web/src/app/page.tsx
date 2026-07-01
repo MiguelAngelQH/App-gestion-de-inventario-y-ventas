@@ -20,8 +20,8 @@ const features = [
 ];
 
 const screens = [
-  { name: 'Dashboard', color: 'from-emerald-500 to-teal-600', icon: TrendingUp, desc: 'Metricas en tiempo real' },
-  { name: 'Inventario', color: 'from-blue-500 to-indigo-600', icon: Package, desc: 'Control de productos' },
+  { name: 'Dashboard', color: 'from-teal-600 to-blue-800', icon: TrendingUp, desc: 'Metricas en tiempo real' },
+  { name: 'Inventario', color: 'from-teal-600 to-blue-800', icon: Package, desc: 'Control de productos' },
   { name: 'Ventas', color: 'from-amber-500 to-orange-600', icon: DollarSign, desc: 'Registro de ventas' },
   { name: 'Reportes', color: 'from-purple-500 to-violet-600', icon: BarChart3, desc: 'Analisis y graficos' },
 ];
@@ -53,10 +53,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
-                <span className="text-white font-bold text-base">S</span>
-              </div>
-              <span className="text-lg font-bold text-[var(--text-primary)]">SmartVentas</span>
+              <img src="/smartventas-logo-horizontal.svg" alt="SmartVentas" className="h-10 w-auto" />
             </div>
             <div className="flex items-center gap-4">
               <button onClick={() => scrollTo('features')} className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors hidden sm:block">Funciones</button>
@@ -64,7 +61,7 @@ export default function LandingPage() {
               <button onClick={() => scrollTo('download')} className="text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors hidden sm:block">Descargar</button>
               <a
                 href="/dashboard"
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/20"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-gradient-to-r from-teal-600 to-blue-800 text-white hover:from-teal-700 hover:to-blue-900 transition-all shadow-lg shadow-teal-600/20"
               >
                 <ExternalLink size={15} />
                 Panel Admin
@@ -76,11 +73,11 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-transparent to-indigo-600/10" />
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-600/10 via-transparent to-blue-800/10" />
         <div className="absolute inset-0">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-[120px]" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-[120px]" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-blue-400/5 to-indigo-400/5 rounded-full blur-[100px]" />
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-600/20 rounded-full blur-[120px]" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-800/20 rounded-full blur-[120px]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-teal-500/5 to-blue-800/5 rounded-full blur-[100px]" />
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
@@ -89,7 +86,7 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-medium mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-600/10 border border-teal-600/20 text-teal-600 dark:text-teal-400 text-xs font-medium mb-6">
               <TrendingUp size={14} />
               Gestion inteligente para tu negocio
             </div>
@@ -102,7 +99,7 @@ export default function LandingPage() {
             className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-[var(--text-primary)] leading-tight mb-6"
           >
             Controla tu{' '}
-            <span className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-teal-500 via-purple-500 to-amber-600 bg-clip-text text-transparent">
               negocio
             </span>
             {' '}desde cualquier lugar
@@ -124,7 +121,7 @@ export default function LandingPage() {
             transition={{ duration: 0.8, delay: 0.8 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <button onClick={() => scrollTo('download')} className="flex items-center gap-2 px-8 py-3.5 rounded-xl text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all shadow-xl shadow-blue-500/25 hover:shadow-blue-500/40">
+            <button onClick={() => scrollTo('download')} className="flex items-center gap-2 px-8 py-3.5 rounded-xl text-base font-semibold bg-gradient-to-r from-teal-600 to-blue-800 text-white hover:from-teal-700 hover:to-blue-900 transition-all shadow-xl shadow-teal-600/25 hover:shadow-teal-600/40">
               <Download size={20} />
               Descargar App
             </button>
@@ -150,7 +147,7 @@ export default function LandingPage() {
 
       {/* Features */}
       <section id="features" className="py-24 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-500/5 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-teal-600/5 to-transparent" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -180,8 +177,8 @@ export default function LandingPage() {
                   whileHover={{ y: -4 }}
                   className="card p-6 hover:shadow-lg transition-all duration-300 group cursor-default"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-500/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <Icon size={24} className="text-blue-600 dark:text-blue-400" />
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-teal-600/20 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <Icon size={24} className="text-teal-600 dark:text-teal-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">{feature.title}</h3>
                   <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{feature.desc}</p>
@@ -194,7 +191,7 @@ export default function LandingPage() {
 
       {/* App Screens Mockups */}
       <section id="screens" className="py-24 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-indigo-500/5 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-blue-800/5 to-transparent" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -271,7 +268,7 @@ export default function LandingPage() {
 
       {/* Download Section */}
       <section id="download" className="py-24 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-teal-600/5 to-transparent" />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -280,8 +277,8 @@ export default function LandingPage() {
             transition={{ duration: 0.6 }}
             className="card p-8 sm:p-12 text-center relative overflow-hidden"
           >
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 rounded-full blur-[80px]" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 rounded-full blur-[80px]" />
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-teal-600/10 to-blue-800/10 rounded-full blur-[80px]" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-br from-teal-600/10 to-blue-800/10 rounded-full blur-[80px]" />
 
             <div className="relative z-10">
               <motion.div
@@ -289,7 +286,7 @@ export default function LandingPage() {
                 whileInView={{ scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
-                className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/20"
+                className="w-16 h-16 rounded-2xl bg-gradient-to-br from-teal-600 to-blue-800 flex items-center justify-center mx-auto mb-6 shadow-lg shadow-teal-600/20"
               >
                 <Smartphone size={32} className="text-white" />
               </motion.div>
@@ -308,10 +305,10 @@ export default function LandingPage() {
                   href="#"
                   className="flex items-center gap-3 px-8 py-4 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] hover:opacity-90 transition-all font-semibold shadow-xl"
                 >
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M3 20.5V3.5c0-.67.34-1.26.87-1.63L14.69 12 .87 22.13C.34 21.76 0 21.17 0 20.5zM21.63 12.63c.24-.34.37-.76.37-1.13 0-.37-.13-.79-.37-1.13L17.25 7.5 14.69 12l2.56 4.5 4.38-3.87zM4.5 20.5l10.25-7.5L4.5 5.5v5.25L10 12l-5.5 1.25v5.25z"/></svg>
+                  <svg viewBox="0 0 24 24" fill="#3DDC84" className="w-6 h-6"><path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v5c0 .83.67 1.5 1.5 1.5S5 15.33 5 14.5v-5C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-5c0-.83-.67-1.5-1.5-1.5zM12 2C8.69 2 6 4.69 6 8h12c0-3.31-2.69-6-6-6z"/></svg>
                   <div className="text-left">
-                    <div className="text-xs opacity-80">Disponible en</div>
-                    <div className="text-base font-bold">Google Play</div>
+                    <div className="text-xs opacity-80">Descargar APK</div>
+                    <div className="text-base font-bold">Android</div>
                   </div>
                 </motion.a>
 
@@ -324,7 +321,7 @@ export default function LandingPage() {
                   <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
                   <div className="text-left">
                     <div className="text-xs opacity-80">Proximamente</div>
-                    <div className="text-base font-bold">App Store</div>
+                    <div className="text-base font-bold">iOS</div>
                   </div>
                 </motion.a>
               </div>
@@ -333,7 +330,7 @@ export default function LandingPage() {
                 <p className="text-sm text-[var(--text-secondary)] mb-4">¿Ya tienes cuenta?</p>
                 <a
                   href="/dashboard"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg shadow-blue-500/20"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium bg-gradient-to-r from-teal-600 to-blue-800 text-white hover:from-teal-700 hover:to-blue-900 transition-all shadow-lg shadow-teal-600/20"
                 >
                   <ExternalLink size={16} />
                   Ir al Panel de Administracion
@@ -349,9 +346,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-              <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                <span className="text-white font-bold text-xs">S</span>
-              </div>
+              <img src="/smartventas-favicon.svg" alt="SmartVentas" className="w-6 h-6" />
               SmartVentas v1.2.0
             </div>
             <div className="flex items-center gap-6 text-sm text-[var(--text-muted)]">

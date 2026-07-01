@@ -164,7 +164,7 @@ export default function ProductosPage() {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-teal-600/30 border-t-teal-600 rounded-full animate-spin" />
           <p className="text-sm text-[var(--text-muted)]">Cargando productos...</p>
         </div>
       </div>
@@ -200,7 +200,7 @@ export default function ProductosPage() {
           </select>
         </div>
         <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] cursor-pointer select-none px-3 py-2.5 card">
-          <input type="checkbox" checked={showLowStock} onChange={e => setShowLowStock(e.target.checked)} className="w-4 h-4 rounded accent-blue-600" />
+          <input type="checkbox" checked={showLowStock} onChange={e => setShowLowStock(e.target.checked)} className="w-4 h-4 rounded accent-teal-600" />
           Stock bajo
         </label>
       </motion.div>
@@ -216,8 +216,8 @@ export default function ProductosPage() {
                   <tr key={p.id}>
                     <td>
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 flex items-center justify-center">
-                          <Package size={16} className="text-blue-600 dark:text-blue-400" />
+                        <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-600/10 border border-blue-100 dark:border-teal-600/20 flex items-center justify-center">
+                          <Package size={16} className="text-teal-600 dark:text-teal-400" />
                         </div>
                         <span className="font-medium text-[var(--text-primary)]">{p.nombre}</span>
                       </div>
@@ -227,7 +227,7 @@ export default function ProductosPage() {
                     <td>
                       <div className="flex flex-wrap gap-1">
                         {(p.presentaciones || []).map(pr => (
-                          <span key={pr.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-500/10 text-xs font-medium text-blue-700 dark:text-blue-300">
+                          <span key={pr.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 dark:bg-teal-600/10 text-xs font-medium text-teal-700 dark:text-teal-300">
                             {formatearMoneda(pr.precio)}/{pr.unidad}
                           </span>
                         ))}

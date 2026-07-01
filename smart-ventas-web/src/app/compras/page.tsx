@@ -54,7 +54,7 @@ export default function ComprasPage() {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-teal-600/30 border-t-teal-600 rounded-full animate-spin" />
           <p className="text-sm text-[var(--text-muted)]">Cargando compras...</p>
         </div>
       </div>
@@ -155,14 +155,14 @@ export default function ComprasPage() {
             onClick={e => e.stopPropagation()}
             className="card overflow-hidden w-full max-w-lg mx-4"
           >
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-teal-600 to-blue-800 px-6 py-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                   <Eye size={20} className="text-white" />
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-white">Detalle de Compra</h2>
-                  <p className="text-xs text-blue-200">C-{selected.id.substring(0, 8).toUpperCase()}</p>
+                  <p className="text-xs text-teal-200">C-{selected.id.substring(0, 8).toUpperCase()}</p>
                 </div>
               </div>
               <button onClick={() => setSelected(null)} className="text-white/80 hover:text-white transition-colors">

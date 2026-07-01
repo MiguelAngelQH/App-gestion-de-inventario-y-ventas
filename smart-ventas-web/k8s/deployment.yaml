@@ -17,13 +17,25 @@ spec:
       dnsPolicy: Default
       containers:
       - name: web
-        image: zaynok/smart-ventas-web:v18
+        image: zaynok/smart-ventas-web:v26
         imagePullPolicy: Always
         ports:
         - containerPort: 3000
         env:
         - name: HOSTNAME
           value: "0.0.0.0"
+        - name: SMTP_HOST
+          value: "smtp.gmail.com"
+        - name: SMTP_PORT
+          value: "587"
+        - name: SMTP_USER
+          value: "miguelangelxd669@gmail.com"
+        - name: SMTP_PASS
+          value: "pkxc pdgk ihys iihg"
+        - name: SMTP_FROM
+          value: "\"SmartVentas\" <miguelangelxd669@gmail.com>"
+        - name: SMTP_SECURE
+          value: "false"
 ---
 apiVersion: v1
 kind: Service

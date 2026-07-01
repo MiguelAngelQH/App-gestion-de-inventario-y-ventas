@@ -77,7 +77,7 @@ export default function Dashboard() {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-teal-600/30 border-t-teal-600 rounded-full animate-spin" />
           <p className="text-sm text-[var(--text-muted)]">Cargando dashboard...</p>
         </div>
       </div>
@@ -92,13 +92,13 @@ export default function Dashboard() {
       </motion.div>
 
       <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard titulo="Ventas Hoy" valor={formatearMoneda(metrics?.ventasHoy ?? 0)} icono={DollarSign} color="from-emerald-500 to-teal-600" />
-        <MetricCard titulo="Ventas (7 dias)" valor={formatearMoneda(metrics?.ventasSemana ?? 0)} icono={TrendingUp} color="from-blue-500 to-indigo-600" />
+        <MetricCard titulo="Ventas Hoy" valor={formatearMoneda(metrics?.ventasHoy ?? 0)} icono={DollarSign} color="from-teal-600 to-blue-800" />
+        <MetricCard titulo="Ventas (7 dias)" valor={formatearMoneda(metrics?.ventasSemana ?? 0)} icono={TrendingUp} color="from-teal-600 to-blue-800" />
         <MetricCard titulo="Ganancia Total" valor={formatearMoneda(metrics?.gananciaTotal ?? 0)} icono={Award} color="from-amber-500 to-orange-600" />
         <MetricCard titulo="Stock Bajo" valor={String(metrics?.stockBajo ?? 0)} icono={AlertTriangle} color="from-red-500 to-rose-600" />
         <MetricCard titulo="Cuentas por Cobrar" valor={formatearMoneda(metrics?.cuentasCobrar ?? 0)} icono={Receipt} color="from-purple-500 to-violet-600" />
         <MetricCard titulo="Cuentas por Pagar" valor={formatearMoneda(metrics?.cuentasPagar ?? 0)} icono={CreditCard} color="from-pink-500 to-rose-600" />
-        <MetricCard titulo="Ventas Hoy (cant.)" valor={String(metrics?.ventasCountHoy ?? 0)} icono={ShoppingCart} color="from-sky-500 to-blue-600" />
+        <MetricCard titulo="Ventas Hoy (cant.)" valor={String(metrics?.ventasCountHoy ?? 0)} icono={ShoppingCart} color="from-teal-500 to-blue-800" />
       </motion.div>
 
       <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -112,8 +112,8 @@ export default function Dashboard() {
           <div className="space-y-4">
             {reportes.topProductos.map((p, i) => (
               <div key={p.id} className="flex items-center gap-4">
-                <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs font-bold text-blue-600 dark:text-blue-400">#{i + 1}</span>
+                <div className="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-600/10 border border-blue-100 dark:border-teal-600/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xs font-bold text-teal-600 dark:text-teal-400">#{i + 1}</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between mb-1.5">
@@ -125,7 +125,7 @@ export default function Dashboard() {
                       initial={{ width: 0 }}
                       animate={{ width: `${Math.min(100, (p.cantidad / Math.max(...reportes.topProductos.map(x => x.cantidad))) * 100)}%` }}
                       transition={{ duration: 1, delay: 0.3 + i * 0.1 }}
-                      className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500"
+                      className="h-full rounded-full bg-gradient-to-r from-teal-600 to-blue-800"
                     />
                   </div>
                 </div>

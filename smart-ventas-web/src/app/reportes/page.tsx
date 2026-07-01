@@ -98,7 +98,7 @@ export default function ReportesPage() {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-teal-600/30 border-t-teal-600 rounded-full animate-spin" />
           <p className="text-sm text-[var(--text-muted)]">Cargando reportes...</p>
         </div>
       </div>
@@ -167,7 +167,7 @@ export default function ReportesPage() {
               <div className="space-y-4">
                 {data.topProductos.map((p, i) => (
                   <div key={p.id} className="flex items-center gap-4">
-                    <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-600/10 border border-blue-100 dark:border-teal-600/20 flex items-center justify-center flex-shrink-0">
                       <span className="text-xs font-bold text-[var(--accent)]">#{i + 1}</span>
                     </div>
                     <div className="flex-1 min-w-0">

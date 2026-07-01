@@ -23,7 +23,7 @@ export const useToast = () => useContext(ToastContext);
 const TOAST_ICONS = {
   success: { icon: CheckCircle2, color: 'text-green-500' },
   error: { icon: AlertCircle, color: 'text-red-500' },
-  info: { icon: Info, color: 'text-blue-500' },
+  info: { icon: Info, color: 'text-teal-600' },
   warning: { icon: AlertTriangle, color: 'text-amber-500' },
 };
 

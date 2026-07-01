@@ -34,16 +34,14 @@ export default function Sidebar() {
     }
   };
 
-  if (pathname === '/login' || pathname === '/') return null;
+  if (pathname === '/login' || pathname === '/' || pathname.startsWith('/reset-password')) return null;
 
   return (
     <aside className={`relative flex flex-col h-screen sticky top-0 transition-all duration-300 flex-shrink-0 ${collapsed ? 'w-20' : 'w-64'}`}>
       <div className="absolute inset-0 border-r border-[var(--border)] bg-[var(--bg-secondary)] rounded-r-2xl shadow-sm" />
       <div className="relative flex flex-col h-full z-10">
         <div className="p-5 border-b border-[var(--border)] flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-md">
-            <span className="text-white font-bold text-lg">S</span>
-          </div>
+          <img src="/smartventas-favicon.svg" alt="SmartVentas" className="w-10 h-10 flex-shrink-0" />
           {!collapsed && (
             <div className="overflow-hidden">
               <h1 className="text-lg font-bold text-[var(--text-primary)]">SmartVentas</h1>
@@ -62,11 +60,11 @@ export default function Sidebar() {
                 href={item.href}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all duration-200 group ${
                   active
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400 font-medium'
+                    ? 'bg-teal-50 text-teal-700 dark:bg-teal-600/10 dark:text-teal-400 font-medium'
                     : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]'
                 }`}
               >
-                <Icon size={20} className={`flex-shrink-0 ${active ? 'text-blue-600 dark:text-blue-400' : ''}`} />
+                <Icon size={20} className={`flex-shrink-0 ${active ? 'text-teal-600 dark:text-teal-400' : ''}`} />
                 {!collapsed && <span>{item.label}</span>}
               </Link>
             );
