@@ -232,6 +232,7 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                     ),
                   ] else ...[
                     DropdownButtonFormField<Presentacion>(
+                      isExpanded: true,
                       initialValue: sel,
                       decoration: const InputDecoration(
                         labelText: 'Variante',
@@ -400,13 +401,14 @@ class _VentaFormScreenState extends State<VentaFormScreen> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
+                  isExpanded: true,
                   initialValue: _metodoPago,
                   decoration: const InputDecoration(
                     labelText: 'M\u00e9todo de pago',
                     prefixIcon: Icon(Icons.payment),
                   ),
                   items: AppConstants.metodosPago
-                      .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                      .map((m) => DropdownMenuItem(value: m, child: Text(m, overflow: TextOverflow.ellipsis)))
                       .toList(),
                   onChanged: (v) =>
                       setState(() => _metodoPago = v ?? 'Efectivo'),
@@ -575,12 +577,13 @@ class _SeleccionarProductoDialogState
         mainAxisSize: MainAxisSize.min,
         children: [
             DropdownButtonFormField<Producto>(
+              isExpanded: true,
               initialValue: _seleccionado,
               decoration: const InputDecoration(labelText: 'Producto'),
               items: widget.productos
                   .map((p) => DropdownMenuItem(
                         value: p,
-                        child: Text('${p.nombre} (stock: ${p.stock.toStringAsFixed(1)})'),
+                        child: Text('${p.nombre} (stock: ${p.stock.toStringAsFixed(1)})', overflow: TextOverflow.ellipsis),
                       ))
                   .toList(),
               onChanged: (v) {
@@ -595,12 +598,13 @@ class _SeleccionarProductoDialogState
             if (_seleccionado != null && _seleccionado!.presentaciones.isNotEmpty) ...[
               const SizedBox(height: 16),
               DropdownButtonFormField<Presentacion>(
+                isExpanded: true,
                 initialValue: _presentacion,
                 decoration: const InputDecoration(labelText: 'Variante'),
                 items: _seleccionado!.presentaciones
                     .map((pr) => DropdownMenuItem(
                           value: pr,
-                          child: Text('${pr.nombre} — ${Formatters.currency(pr.precio)}/${pr.unidad}'),
+                          child: Text('${pr.nombre} — ${Formatters.currency(pr.precio)}/${pr.unidad}', overflow: TextOverflow.ellipsis),
                         ))
                     .toList(),
                 onChanged: (v) =>

@@ -448,6 +448,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
               const SizedBox(height: 14),
               // Proveedor
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue: _proveedorId,
                 decoration: _dec('Proveedor', Icons.local_shipping_outlined,
                     help: 'Selecciona qui\u00e9n te vende este producto'),
@@ -455,7 +456,7 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                   const DropdownMenuItem(value: '', child: Text('Sin proveedor')),
                   ...proveedores.map((prov) => DropdownMenuItem(
                         value: prov.id,
-                        child: Text(prov.nombre),
+                        child: Text(prov.nombre, overflow: TextOverflow.ellipsis),
                       )),
                 ],
                 onChanged: (v) => setState(() => _proveedorId = v ?? ''),
@@ -466,11 +467,12 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
+                      isExpanded: true,
                       initialValue: _categoria,
                       decoration: _dec('Categor\u00eda', Icons.category_outlined,
                           help: 'Organiza tu inventario y reportes'),
                       items: AppConstants.categorias
-                          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                          .map((c) => DropdownMenuItem(value: c, child: Text(c, overflow: TextOverflow.ellipsis)))
                           .toList(),
                       onChanged: (v) => setState(() => _categoria = v ?? 'General'),
                     ),
@@ -598,10 +600,11 @@ class _ProductoFormScreenState extends State<ProductoFormScreen> {
                               Expanded(
                                 flex: 2,
                                 child: DropdownButtonFormField<String>(
+                                  isExpanded: true,
                                   initialValue: v.unidad,
                                   decoration: _dec('Unidad', Icons.scale, isDense: true,
                                       help: 'C\u00f3mo se vende: kg, litros, unidades, etc.'),
-                                  items: _unidades.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
+                                  items: _unidades.map((u) => DropdownMenuItem(value: u, child: Text(u, overflow: TextOverflow.ellipsis))).toList(),
                                   onChanged: (val) => setState(() => v.unidad = val ?? 'unidad'),
                                 ),
                               ),

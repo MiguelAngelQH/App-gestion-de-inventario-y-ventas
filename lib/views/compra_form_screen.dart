@@ -378,7 +378,7 @@ class _CompraFormScreenState extends State<CompraFormScreen> {
         else
           ..._proveedores.map((prov) => DropdownMenuItem<String>(
                 value: prov.id,
-                child: Text(prov.nombre),
+                child: Text(prov.nombre, overflow: TextOverflow.ellipsis),
               )),
         const DropdownMenuItem<String>(
           value: '__nuevo__',
@@ -673,6 +673,7 @@ class _SeleccionarProductoCompraDialogState
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue: _nuevaCategoria,
                 decoration: const InputDecoration(
                   labelText: 'Categor\u00eda',
@@ -680,7 +681,7 @@ class _SeleccionarProductoCompraDialogState
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
                 items: widget.categorias
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 13))))
+                    .map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis)))
                     .toList(),
                 onChanged: (v) => setState(() => _nuevaCategoria = v ?? 'General'),
               ),
@@ -690,6 +691,7 @@ class _SeleccionarProductoCompraDialogState
             // Unit (always visible when no product selected or in new mode)
             if (_seleccionado == null || _modoNuevo)
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue: _unidad,
                 decoration: const InputDecoration(
                   labelText: 'Unidad',
@@ -697,7 +699,7 @@ class _SeleccionarProductoCompraDialogState
                   contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
                 items: _unidades
-                    .map((u) => DropdownMenuItem(value: u, child: Text(u, style: const TextStyle(fontSize: 13))))
+                    .map((u) => DropdownMenuItem(value: u, child: Text(u, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis)))
                     .toList(),
                 onChanged: (v) => setState(() => _unidad = v ?? 'unidad'),
               ),
