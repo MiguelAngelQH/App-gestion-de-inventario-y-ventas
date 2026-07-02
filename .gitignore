@@ -60,3 +60,9 @@ next-env.d.ts
 # Temp / generated docs
 smart-ventas-web/PLAN_ACTUALIZACION.md
 smart-ventas-web/SmartVentas_Informe_Tecnico.docx
+
+# Android build reports
+android/build/reports/
+
+# APK files (too large for git)
+*.apk

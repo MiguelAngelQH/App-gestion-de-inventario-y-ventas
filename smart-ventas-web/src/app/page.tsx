@@ -302,15 +302,18 @@ export default function LandingPage() {
                 <motion.a
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  href="#"
+                  href="/SmartVentas-v1.2.0.apk"
+                  download
                   className="flex items-center gap-3 px-8 py-4 rounded-xl bg-[var(--text-primary)] text-[var(--bg-primary)] hover:opacity-90 transition-all font-semibold shadow-xl"
                 >
                   <svg viewBox="0 0 24 24" fill="#3DDC84" className="w-6 h-6"><path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8C2.67 8 2 8.67 2 9.5v5c0 .83.67 1.5 1.5 1.5S5 15.33 5 14.5v-5C5 8.67 4.33 8 3.5 8zm17 0c-.83 0-1.5.67-1.5 1.5v5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-5c0-.83-.67-1.5-1.5-1.5zM12 2C8.69 2 6 4.69 6 8h12c0-3.31-2.69-6-6-6z"/></svg>
+                  <span className="sr-only">Descargar APK Android</span>
                   <div className="text-left">
                     <div className="text-xs opacity-80">Descargar APK</div>
                     <div className="text-base font-bold">Android</div>
                   </div>
                 </motion.a>
+
 
                 <motion.a
                   whileHover={{ scale: 1.02 }}
