@@ -632,7 +632,7 @@ class _SeleccionarProductoCompraDialogState
                                   ),
                                 ),
                               ),
-                              title: Text(p.nombre, style: const TextStyle(fontSize: 13)),
+                              title: Text(p.nombre, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis),
                               subtitle: p.marca.isNotEmpty
                                   ? Text(p.marca,
                                       style: TextStyle(

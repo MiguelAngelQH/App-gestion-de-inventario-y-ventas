@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:smart_ventas/services/connectivity_service.dart';
 import 'package:smart_ventas/utils/formatters.dart';
 import 'package:smart_ventas/viewmodels/dashboard_viewmodel.dart';
+import 'package:smart_ventas/widgets/connectivity_indicator.dart';
 import 'package:smart_ventas/widgets/reusable_widgets.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -13,6 +15,8 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  final ConnectivityService _connectivity = ConnectivityService();
+
   @override
   void initState() {
     super.initState();
@@ -26,6 +30,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void dispose() {
     widget.viewModel.removeListener(_onChanged);
+    _connectivity.dispose();
     super.dispose();
   }
 
@@ -48,9 +53,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           onPressed: () => Scaffold.of(context).openDrawer(),
         ),
         actions: [
+          ConnectivityIndicator(service: _connectivity),
           if (widget.viewModel.usingServerData)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.only(right: 4),
               child: Chip(
                 label: const Text('Servidor', style: TextStyle(fontSize: 11)),
                 visualDensity: VisualDensity.compact,

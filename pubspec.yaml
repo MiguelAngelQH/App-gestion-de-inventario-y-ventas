@@ -62,16 +62,22 @@ dependencies:
   # SVG rendering for logos
   flutter_svg: ^2.0.17
 
+  # Connectivity
+  connectivity_plus: ^6.1.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/smartventas-app-icon.svg"
+  adaptive_icon_background: "#00897B"
+  adaptive_icon_foreground: "assets/smartventas-app-icon.svg"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

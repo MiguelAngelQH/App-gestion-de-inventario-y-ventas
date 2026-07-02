@@ -116,13 +116,12 @@ class AuthViewModel extends ChangeNotifier {
       _isLoading = false;
       _safeNotify();
       return true;
-    } on FirebaseAuthException catch (e) {
-      _error = _mapFirebaseError(e);
-      _isLoading = false;
-      _safeNotify();
-      return false;
     } catch (e) {
-      _error = 'Error de conexión. Verifica tu internet.';
+      if (e is FirebaseAuthException) {
+        _error = _mapFirebaseError(e);
+      } else {
+        _error = e.toString().replaceFirst('Exception: ', '');
+      }
       _isLoading = false;
       _safeNotify();
       return false;

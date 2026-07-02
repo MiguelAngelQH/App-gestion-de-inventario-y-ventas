@@ -1,8 +1,14 @@
+import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart' as firebase;
+import 'package:http/http.dart' as http;
 import 'package:smart_ventas/models/usuario.dart';
 
 class AuthService {
   final firebase.FirebaseAuth _auth = firebase.FirebaseAuth.instance;
+
+  // Cambia esta URL por la de tu propio servidor/ngrok
+  static const String _resetApiBaseUrl =
+      'https://germinate-compress-try.ngrok-free.dev';
 
   Usuario? _mapUsuario(firebase.User? user) {
     if (user == null) return null;
@@ -41,7 +47,14 @@ class AuthService {
   }
 
   Future<void> sendPasswordResetEmail({required String email}) async {
-    await _auth.sendPasswordResetEmail(email: email.trim());
+    final uri = Uri.parse('$_resetApiBaseUrl/api/auth/send-reset-email');
+    final response = await http
+        .post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({'email': email.trim()}))
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode != 200) {
+      final body = jsonDecode(response.body);
+      throw Exception(body['error'] ?? 'Error al enviar el correo');
+    }
   }
 
   Future<void> signOut() async {
